@@ -148,6 +148,13 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
   };
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
+    // Optimistically update local state
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId ? { ...task, status: newStatus } : task
+      )
+    );
+
     const { error } = await supabase
       .from("tasks")
       .update({ status: newStatus })
@@ -156,12 +163,21 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     if (error) {
       toast.error("Failed to update status");
       console.error("Error updating status:", error);
+      // Revert on error
+      fetchTasks();
     } else {
       toast.success("Status updated");
     }
   };
 
   const handleUrgencyChange = async (taskId: string, newUrgency: string) => {
+    // Optimistically update local state
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId ? { ...task, urgency: newUrgency } : task
+      )
+    );
+
     const { error } = await supabase
       .from("tasks")
       .update({ urgency: newUrgency })
@@ -170,6 +186,8 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     if (error) {
       toast.error("Failed to update urgency");
       console.error("Error updating urgency:", error);
+      // Revert on error
+      fetchTasks();
     } else {
       toast.success("Urgency updated");
     }
