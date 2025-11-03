@@ -10,9 +10,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TaskDialog } from "./TaskDialog";
 import { Edit2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface Task {
   id: string;
@@ -139,6 +147,34 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     return false;
   };
 
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status: newStatus })
+      .eq("id", taskId);
+
+    if (error) {
+      toast.error("Failed to update status");
+      console.error("Error updating status:", error);
+    } else {
+      toast.success("Status updated");
+    }
+  };
+
+  const handleUrgencyChange = async (taskId: string, newUrgency: string) => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ urgency: newUrgency })
+      .eq("id", taskId);
+
+    if (error) {
+      toast.error("Failed to update urgency");
+      console.error("Error updating urgency:", error);
+    } else {
+      toast.success("Urgency updated");
+    }
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -182,14 +218,49 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                       {task.deadline ? format(new Date(task.deadline), "MMM dd") : "-"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={getStatusColor(task.status)}>
-                        {task.status}
-                      </Badge>
+                      {canEdit(task) ? (
+                        <Select
+                          value={task.status}
+                          onValueChange={(value) => handleStatusChange(task.id, value)}
+                        >
+                          <SelectTrigger className={`w-32 h-8 ${getStatusColor(task.status)}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="To Do">To Do</SelectItem>
+                            <SelectItem value="Doing">Doing</SelectItem>
+                            <SelectItem value="Done">Done</SelectItem>
+                            <SelectItem value="Approved">Approved</SelectItem>
+                            <SelectItem value="On Hold">On Hold</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className={getStatusColor(task.status)}>
+                          {task.status}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={getUrgencyColor(task.urgency)}>
-                        {task.urgency}
-                      </Badge>
+                      {canEdit(task) ? (
+                        <Select
+                          value={task.urgency}
+                          onValueChange={(value) => handleUrgencyChange(task.id, value)}
+                        >
+                          <SelectTrigger className={`w-32 h-8 ${getUrgencyColor(task.urgency)}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Low">Low</SelectItem>
+                            <SelectItem value="Mid">Mid</SelectItem>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Immediate">Immediate</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className={getUrgencyColor(task.urgency)}>
+                          {task.urgency}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {delay !== null && delay > 0 ? (
