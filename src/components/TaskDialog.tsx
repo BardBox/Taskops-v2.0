@@ -104,7 +104,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
     setUsers(data || []);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, keepOpen = false) => {
     e.preventDefault();
     setLoading(true);
 
@@ -140,8 +140,22 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
         toast.success("Task created successfully!");
       }
 
-      onOpenChange(false);
-      if (onClose) onClose();
+      if (keepOpen) {
+        // Reset form for next task
+        setFormData({
+          task_name: "",
+          client_id: "",
+          assignee_id: "",
+          deadline: "",
+          status: "To Do",
+          urgency: "Mid",
+          asset_link: "",
+          notes: "",
+        });
+      } else {
+        onOpenChange(false);
+        if (onClose) onClose();
+      }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -295,6 +309,16 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
             >
               Cancel
             </Button>
+            {!task && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={(e) => handleSubmit(e as any, true)}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Create and Add More"}
+              </Button>
+            )}
             <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : task ? "Update Task" : "Create Task"}
             </Button>
