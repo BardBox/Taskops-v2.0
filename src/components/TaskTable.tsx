@@ -17,8 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { TaskDialog } from "./TaskDialog";
-import { Edit2, ExternalLink } from "lucide-react";
+import { Edit2, ExternalLink, FileText, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -49,6 +55,10 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [sortField, setSortField] = useState<string>("date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     fetchTasks();
@@ -127,11 +137,75 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     if (!deadline) return null;
 
     const deadlineDate = new Date(deadline);
+    // Use submission date if exists, otherwise use current date
     const compareDate = actualDelivery ? new Date(actualDelivery) : new Date();
     const diffTime = compareDate.getTime() - deadlineDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays > 0 ? diffDays : 0;
+  };
+
+  const getFilteredAndSortedTasks = () => {
+    let filtered = [...tasks];
+
+    // Apply year filter
+    if (filterYear !== "all") {
+      filtered = filtered.filter(task => {
+        const taskYear = new Date(task.date).getFullYear().toString();
+        return taskYear === filterYear;
+      });
+    }
+
+    // Apply month filter
+    if (filterMonth !== "all") {
+      filtered = filtered.filter(task => {
+        const taskMonth = (new Date(task.date).getMonth() + 1).toString();
+        return taskMonth === filterMonth;
+      });
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let compareValue = 0;
+
+      switch (sortField) {
+        case "urgency":
+          const urgencyOrder = { "Immediate": 4, "High": 3, "Mid": 2, "Low": 1 };
+          compareValue = urgencyOrder[a.urgency as keyof typeof urgencyOrder] - urgencyOrder[b.urgency as keyof typeof urgencyOrder];
+          break;
+        case "status":
+          compareValue = a.status.localeCompare(b.status);
+          break;
+        case "deadline":
+          const aDeadline = a.deadline ? new Date(a.deadline).getTime() : 0;
+          const bDeadline = b.deadline ? new Date(b.deadline).getTime() : 0;
+          compareValue = aDeadline - bDeadline;
+          break;
+        case "date":
+          compareValue = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        default:
+          compareValue = 0;
+      }
+
+      return sortDirection === "asc" ? compareValue : -compareValue;
+    });
+
+    return filtered;
+  };
+
+  const getAvailableYears = () => {
+    const years = tasks.map(task => new Date(task.date).getFullYear());
+    return Array.from(new Set(years)).sort((a, b) => b - a);
+  };
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
   const handleEditTask = (task: Task) => {
@@ -193,8 +267,74 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     }
   };
 
+  const filteredTasks = getFilteredAndSortedTasks();
+
   return (
     <>
+      <div className="mb-4 flex gap-4 flex-wrap items-center">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Year:</span>
+          <Select value={filterYear} onValueChange={setFilterYear}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {getAvailableYears().map(year => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Month:</span>
+          <Select value={filterMonth} onValueChange={setFilterMonth}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="1">January</SelectItem>
+              <SelectItem value="2">February</SelectItem>
+              <SelectItem value="3">March</SelectItem>
+              <SelectItem value="4">April</SelectItem>
+              <SelectItem value="5">May</SelectItem>
+              <SelectItem value="6">June</SelectItem>
+              <SelectItem value="7">July</SelectItem>
+              <SelectItem value="8">August</SelectItem>
+              <SelectItem value="9">September</SelectItem>
+              <SelectItem value="10">October</SelectItem>
+              <SelectItem value="11">November</SelectItem>
+              <SelectItem value="12">December</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Sort by:</span>
+          <Select value={sortField} onValueChange={setSortField}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="date">Date Created</SelectItem>
+              <SelectItem value="urgency">Urgency</SelectItem>
+              <SelectItem value="status">Status</SelectItem>
+              <SelectItem value="deadline">Deadline</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+          >
+            <ArrowUpDown className="h-4 w-4 mr-1" />
+            {sortDirection === "asc" ? "Asc" : "Desc"}
+          </Button>
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -207,19 +347,20 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
               <TableHead>Deadline</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Urgency</TableHead>
+              <TableHead>Submission</TableHead>
               <TableHead>Delay</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks.length === 0 ? (
+            {filteredTasks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                  No tasks yet. Create your first task to get started.
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                  No tasks found matching the selected filters.
                 </TableCell>
               </TableRow>
             ) : (
-              tasks.map((task) => {
+              filteredTasks.map((task) => {
                 const delay = calculateDelay(task.deadline, task.actual_delivery, task.status);
                 return (
                   <TableRow key={task.id}>
@@ -281,6 +422,9 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                       )}
                     </TableCell>
                     <TableCell>
+                      {task.actual_delivery ? format(new Date(task.actual_delivery), "MMM dd") : "-"}
+                    </TableCell>
+                    <TableCell>
                       {delay !== null && delay > 0 ? (
                         <span className="text-destructive font-medium">{delay}d</span>
                       ) : (
@@ -288,26 +432,40 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {canEdit(task) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditTask(task)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {task.asset_link && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(task.asset_link!, "_blank")}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                      <TooltipProvider>
+                        <div className="flex items-center gap-2">
+                          {canEdit(task) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditTask(task)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {task.asset_link && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(task.asset_link!, "_blank")}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {task.notes && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>{task.notes}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 );
