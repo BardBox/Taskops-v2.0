@@ -50,20 +50,27 @@ interface Task {
 interface TaskTableProps {
   userRole: string;
   userId: string;
+  filters?: {
+    year: string;
+    month: string;
+    status: string;
+    urgency: string;
+    clientId: string;
+    teamMemberId: string;
+    projectManagerId: string;
+    highlightToday: boolean;
+  };
 }
 
-export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<Task | null>(null);
-  const [filterYear, setFilterYear] = useState<string>("all");
-  const [filterMonth, setFilterMonth] = useState<string>("all");
   const [sortField, setSortField] = useState<string>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [highlightToday, setHighlightToday] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -155,20 +162,47 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
   const getFilteredAndSortedTasks = () => {
     let filtered = [...tasks];
 
-    // Apply year filter
-    if (filterYear !== "all") {
-      filtered = filtered.filter(task => {
-        const taskYear = new Date(task.date).getFullYear().toString();
-        return taskYear === filterYear;
-      });
-    }
+    if (filters) {
+      // Apply year filter
+      if (filters.year !== "all") {
+        filtered = filtered.filter(task => {
+          const taskYear = new Date(task.date).getFullYear().toString();
+          return taskYear === filters.year;
+        });
+      }
 
-    // Apply month filter
-    if (filterMonth !== "all") {
-      filtered = filtered.filter(task => {
-        const taskMonth = (new Date(task.date).getMonth() + 1).toString();
-        return taskMonth === filterMonth;
-      });
+      // Apply month filter
+      if (filters.month !== "all") {
+        filtered = filtered.filter(task => {
+          const taskMonth = (new Date(task.date).getMonth() + 1).toString();
+          return taskMonth === filters.month;
+        });
+      }
+
+      // Apply status filter
+      if (filters.status !== "all") {
+        filtered = filtered.filter(task => task.status === filters.status);
+      }
+
+      // Apply urgency filter
+      if (filters.urgency !== "all") {
+        filtered = filtered.filter(task => task.urgency === filters.urgency);
+      }
+
+      // Apply client filter
+      if (filters.clientId !== "all") {
+        filtered = filtered.filter(task => task.client_id === filters.clientId);
+      }
+
+      // Apply team member filter
+      if (filters.teamMemberId !== "all") {
+        filtered = filtered.filter(task => task.assignee_id === filters.teamMemberId);
+      }
+
+      // Apply PM filter
+      if (filters.projectManagerId !== "all") {
+        filtered = filtered.filter(task => task.assigned_by_id === filters.projectManagerId);
+      }
     }
 
     // Apply sorting
@@ -296,78 +330,28 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     <>
       <div className="mb-4 flex gap-4 flex-wrap items-center justify-between">
         <div className="flex gap-4 flex-wrap items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Year:</span>
-          <Select value={filterYear} onValueChange={setFilterYear}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="all">All</SelectItem>
-              {getAvailableYears().map(year => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Month:</span>
-          <Select value={filterMonth} onValueChange={setFilterMonth}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="1">January</SelectItem>
-              <SelectItem value="2">February</SelectItem>
-              <SelectItem value="3">March</SelectItem>
-              <SelectItem value="4">April</SelectItem>
-              <SelectItem value="5">May</SelectItem>
-              <SelectItem value="6">June</SelectItem>
-              <SelectItem value="7">July</SelectItem>
-              <SelectItem value="8">August</SelectItem>
-              <SelectItem value="9">September</SelectItem>
-              <SelectItem value="10">October</SelectItem>
-              <SelectItem value="11">November</SelectItem>
-              <SelectItem value="12">December</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Sort by:</span>
-          <Select value={sortField} onValueChange={setSortField}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="date">Date Created</SelectItem>
-              <SelectItem value="urgency">Urgency</SelectItem>
-              <SelectItem value="status">Status</SelectItem>
-              <SelectItem value="deadline">Deadline</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-          >
-            <ArrowUpDown className="h-4 w-4 mr-1" />
-            {sortDirection === "asc" ? "Asc" : "Desc"}
-          </Button>
-        </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Switch
-            id="highlight-today"
-            checked={highlightToday}
-            onCheckedChange={setHighlightToday}
-          />
-          <Label htmlFor="highlight-today" className="text-sm font-medium cursor-pointer">
-            Highlight Today
-          </Label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Sort by:</span>
+            <Select value={sortField} onValueChange={setSortField}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="date">Date Created</SelectItem>
+                <SelectItem value="urgency">Urgency</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
+                <SelectItem value="deadline">Deadline</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+            >
+              <ArrowUpDown className="h-4 w-4 mr-1" />
+              {sortDirection === "asc" ? "Asc" : "Desc"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -399,7 +383,7 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
             ) : (
               filteredTasks.map((task) => {
                 const delay = calculateDelay(task.deadline, task.actual_delivery, task.status);
-                const shouldHighlight = highlightToday && isToday(task.deadline);
+                const shouldHighlight = filters?.highlightToday && isToday(task.deadline);
                 return (
                   <TableRow 
                     key={task.id}
@@ -426,13 +410,16 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                           <SelectTrigger className={`w-32 h-8 ${getStatusColor(task.status)}`}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            <SelectItem value="To Do">To Do</SelectItem>
-                            <SelectItem value="Doing">Doing</SelectItem>
-                            <SelectItem value="Done">Done</SelectItem>
-                            <SelectItem value="Approved">Approved</SelectItem>
-                            <SelectItem value="On Hold">On Hold</SelectItem>
-                          </SelectContent>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="To Do">To Do</SelectItem>
+              <SelectItem value="Doing">Doing</SelectItem>
+              <SelectItem value="Done">Done</SelectItem>
+              <SelectItem value="Approved">Approved</SelectItem>
+              <SelectItem value="On Hold">On Hold</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
+              <SelectItem value="Needs Review">Needs Review</SelectItem>
+              <SelectItem value="Blocked">Blocked</SelectItem>
+            </SelectContent>
                         </Select>
                       ) : (
                         <Badge variant="outline" className={getStatusColor(task.status)}>
@@ -449,12 +436,12 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                           <SelectTrigger className={`w-32 h-8 ${getUrgencyColor(task.urgency)}`}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            <SelectItem value="Low">Low</SelectItem>
-                            <SelectItem value="Mid">Mid</SelectItem>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Immediate">Immediate</SelectItem>
-                          </SelectContent>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="Low">Low</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="High">High</SelectItem>
+              <SelectItem value="Immediate">Immediate</SelectItem>
+            </SelectContent>
                         </Select>
                       ) : (
                         <Badge variant="outline" className={getUrgencyColor(task.urgency)}>

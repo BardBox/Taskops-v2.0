@@ -13,7 +13,20 @@ interface Metrics {
   delayed: number;
 }
 
-export const DashboardMetrics = () => {
+interface DashboardMetricsProps {
+  filters?: {
+    year: string;
+    month: string;
+    status: string;
+    urgency: string;
+    clientId: string;
+    teamMemberId: string;
+    projectManagerId: string;
+    highlightToday: boolean;
+  };
+}
+
+export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
   const [metrics, setMetrics] = useState<Metrics>({
     total: 0,
     todo: 0,
@@ -43,12 +56,51 @@ export const DashboardMetrics = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [filters]);
 
   const fetchMetrics = async () => {
-    const { data: tasks, error } = await supabase
+    let query = supabase
       .from("tasks")
-      .select("status, deadline, actual_delivery");
+      .select("status, deadline, actual_delivery, date, urgency, client_id, assignee_id, assigned_by_id");
+
+    // Apply filters
+    if (filters) {
+      if (filters.year !== "all") {
+        const yearStart = `${filters.year}-01-01`;
+        const yearEnd = `${filters.year}-12-31`;
+        query = query.gte("date", yearStart).lte("date", yearEnd);
+      }
+      
+      if (filters.month !== "all") {
+        const year = filters.year !== "all" ? filters.year : new Date().getFullYear();
+        const monthStart = `${year}-${filters.month.padStart(2, '0')}-01`;
+        const lastDay = new Date(Number(year), Number(filters.month), 0).getDate();
+        const monthEnd = `${year}-${filters.month.padStart(2, '0')}-${lastDay}`;
+        query = query.gte("date", monthStart).lte("date", monthEnd);
+      }
+      
+      if (filters.status !== "all") {
+        query = query.eq("status", filters.status);
+      }
+      
+      if (filters.urgency !== "all") {
+        query = query.eq("urgency", filters.urgency);
+      }
+      
+      if (filters.clientId !== "all") {
+        query = query.eq("client_id", filters.clientId);
+      }
+      
+      if (filters.teamMemberId !== "all") {
+        query = query.eq("assignee_id", filters.teamMemberId);
+      }
+      
+      if (filters.projectManagerId !== "all") {
+        query = query.eq("assigned_by_id", filters.projectManagerId);
+      }
+    }
+
+    const { data: tasks, error } = await query;
 
     if (error) {
       console.error("Error fetching metrics:", error);
