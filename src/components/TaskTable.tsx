@@ -18,14 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { TaskDialog } from "./TaskDialog";
 import { SubmitDialog } from "./SubmitDialog";
+import { NotesDialog } from "./NotesDialog";
 import { Edit2, ExternalLink, FileText, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -44,6 +39,9 @@ interface Task {
   urgency: string;
   asset_link: string | null;
   notes: string | null;
+  reference_link_1: string | null;
+  reference_link_2: string | null;
+  reference_link_3: string | null;
   clients: { name: string } | null;
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
@@ -59,7 +57,8 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
-  const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<string | null>(null);
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+  const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<Task | null>(null);
   const [filterYear, setFilterYear] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [sortField, setSortField] = useState<string>("date");
@@ -103,7 +102,7 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
       return;
     }
 
-    setTasks(data || []);
+    setTasks(data as any || []);
   };
 
   const getStatusColor = (status: string) => {
@@ -139,7 +138,7 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
   };
 
   const calculateDelay = (deadline: string | null, actualDelivery: string | null, status: string) => {
-    if (status === "Approved" || status === "Cancelled") return null;
+    if (status === "Cancelled") return null;
     if (!deadline) return null;
 
     const deadlineDate = new Date(deadline);
@@ -221,6 +220,16 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     setDialogOpen(true);
   };
 
+  const handleOpenSubmitDialog = (task: Task) => {
+    setSelectedTaskForSubmit(task);
+    setSubmitDialogOpen(true);
+  };
+
+  const handleOpenNotesDialog = (task: Task) => {
+    setSelectedTask(task);
+    setNotesDialogOpen(true);
+  };
+
   const canEdit = (task: Task) => {
     if (userRole === "project_manager") return true;
     if (userRole === "team_member" && task.assignee_id === userId) {
@@ -281,11 +290,6 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
     if (!date) return false;
     const today = new Date().toISOString().split('T')[0];
     return date === today;
-  };
-
-  const handleOpenSubmitDialog = (taskId: string) => {
-    setSelectedTaskForSubmit(taskId);
-    setSubmitDialogOpen(true);
   };
 
   return (
@@ -475,46 +479,41 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                         variant="outline"
                         size="sm"
                         disabled={task.status !== "Done"}
-                        onClick={() => handleOpenSubmitDialog(task.id)}
+                        onClick={() => handleOpenSubmitDialog(task)}
                       >
                         Submit
                       </Button>
                     </TableCell>
                     <TableCell>
-                      <TooltipProvider>
-                        <div className="flex items-center gap-2">
-                          {canEdit(task) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditTask(task)}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {task.asset_link && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => window.open(task.asset_link!, "_blank")}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {task.notes && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p>{task.notes}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </TooltipProvider>
+                      <div className="flex items-center gap-2">
+                        {canEdit(task) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditTask(task)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {task.asset_link && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(task.asset_link!, "_blank")}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {(task.notes || task.reference_link_1 || task.reference_link_2 || task.reference_link_3) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenNotesDialog(task)}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -537,11 +536,22 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
       <SubmitDialog
         open={submitDialogOpen}
         onOpenChange={setSubmitDialogOpen}
-        taskId={selectedTaskForSubmit || ""}
+        taskId={selectedTaskForSubmit?.id || ""}
+        existingAssetLink={selectedTaskForSubmit?.asset_link}
         onSuccess={() => {
           fetchTasks();
           setSelectedTaskForSubmit(null);
         }}
+      />
+
+      <NotesDialog
+        open={notesDialogOpen}
+        onOpenChange={setNotesDialogOpen}
+        notes={selectedTask?.notes || null}
+        referenceLink1={selectedTask?.reference_link_1 || null}
+        referenceLink2={selectedTask?.reference_link_2 || null}
+        referenceLink3={selectedTask?.reference_link_3 || null}
+        taskName={selectedTask?.task_name || ""}
       />
     </>
   );
