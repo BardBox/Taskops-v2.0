@@ -49,6 +49,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
     client_id: "",
     assignee_id: "",
     deadline: "",
+    actual_delivery: "",
     status: "To Do",
     urgency: "Mid",
     asset_link: "",
@@ -67,17 +68,24 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           client_id: task.client_id || "",
           assignee_id: task.assignee_id || "",
           deadline: task.deadline || "",
+          actual_delivery: task.actual_delivery || "",
           status: task.status || "To Do",
           urgency: task.urgency || "Mid",
           asset_link: task.asset_link || "",
           notes: task.notes || "",
         });
       } else {
+        // Auto-set deadline to tomorrow if creating new task
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        
         setFormData({
           task_name: "",
           client_id: "",
           assignee_id: "",
-          deadline: "",
+          deadline: tomorrowStr,
+          actual_delivery: "",
           status: "To Do",
           urgency: "Mid",
           asset_link: "",
@@ -119,6 +127,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
         urgency: validated.urgency,
         client_id: validated.client_id || null,
         deadline: validated.deadline || null,
+        actual_delivery: formData.actual_delivery || null,
         asset_link: validated.asset_link || null,
         notes: validated.notes || null,
       };
@@ -141,12 +150,17 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
       }
 
       if (keepOpen) {
-        // Reset form for next task
+        // Reset form for next task with auto-set deadline
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        
         setFormData({
           task_name: "",
           client_id: "",
           assignee_id: "",
-          deadline: "",
+          deadline: tomorrowStr,
+          actual_delivery: "",
           status: "To Do",
           urgency: "Mid",
           asset_link: "",
@@ -235,6 +249,16 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                 type="date"
                 value={formData.deadline}
                 onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="actual_delivery">Submission Date</Label>
+              <Input
+                id="actual_delivery"
+                type="date"
+                value={formData.actual_delivery}
+                onChange={(e) => setFormData({ ...formData, actual_delivery: e.target.value })}
               />
             </div>
 
