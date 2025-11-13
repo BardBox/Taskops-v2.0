@@ -21,12 +21,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Client {
   id: string;
   name: string;
+  client_code: string;
+  premium_tag: string | null;
   created_at: string;
 }
 
@@ -37,6 +41,7 @@ export default function AdminClients() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [clientName, setClientName] = useState("");
+  const [premiumTag, setPremiumTag] = useState<string>("");
 
   const isOwner = userRole === "project_owner";
 
@@ -62,21 +67,36 @@ export default function AdminClients() {
   };
 
   const handleSaveClient = async () => {
+    if (!clientName.trim()) {
+      toast.error("Please enter a client name");
+      return;
+    }
+
     try {
       if (editingClient) {
         // Update existing client
         const { error } = await supabase
           .from("clients")
-          .update({ name: clientName })
+          .update({ 
+            name: clientName,
+            premium_tag: premiumTag || null
+          })
           .eq("id", editingClient.id);
 
         if (error) throw error;
         toast.success("Client updated successfully");
       } else {
+        // Get next client code
+        const { data: nextCode } = await supabase.rpc("generate_client_code" as any);
+        
         // Create new client
         const { error } = await supabase
           .from("clients")
-          .insert({ name: clientName });
+          .insert([{ 
+            name: clientName,
+            client_code: nextCode,
+            premium_tag: premiumTag || null
+          }]);
 
         if (error) throw error;
         toast.success("Client created successfully");
@@ -84,6 +104,7 @@ export default function AdminClients() {
 
       setDialogOpen(false);
       setClientName("");
+      setPremiumTag("");
       setEditingClient(null);
       fetchClients();
     } catch (error: any) {
@@ -95,6 +116,7 @@ export default function AdminClients() {
   const handleEditClient = (client: Client) => {
     setEditingClient(client);
     setClientName(client.name);
+    setPremiumTag(client.premium_tag || "");
     setDialogOpen(true);
   };
 
@@ -122,6 +144,7 @@ export default function AdminClients() {
   const openCreateDialog = () => {
     setEditingClient(null);
     setClientName("");
+    setPremiumTag("");
     setDialogOpen(true);
   };
 
@@ -150,7 +173,9 @@ export default function AdminClients() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>Client ID</TableHead>
+                <TableHead>Client Name</TableHead>
+                <TableHead>Premium Tag</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -158,7 +183,13 @@ export default function AdminClients() {
             <TableBody>
               {clients.map((client) => (
                 <TableRow key={client.id}>
+                  <TableCell className="font-mono text-sm">{client.client_code}</TableCell>
                   <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell>
+                    {client.premium_tag && (
+                      <Badge variant="secondary">{client.premium_tag}</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{new Date(client.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -167,7 +198,7 @@ export default function AdminClients() {
                         size="sm"
                         onClick={() => handleEditClient(client)}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Edit className="h-4 w-4" />
                       </Button>
                       {isOwner && (
                         <Button
@@ -206,6 +237,22 @@ export default function AdminClients() {
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="Enter client name"
               />
+            </div>
+            <div>
+              <Label>Premium Tag (Optional)</Label>
+              <Select value={premiumTag} onValueChange={setPremiumTag}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select premium tag" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="A">A</SelectItem>
+                  <SelectItem value="B">B</SelectItem>
+                  <SelectItem value="C">C</SelectItem>
+                  <SelectItem value="D">D</SelectItem>
+                  <SelectItem value="E">E</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
