@@ -36,6 +36,7 @@ interface User {
   id: string;
   email: string;
   full_name: string;
+  user_code: string;
   role: string;
 }
 
@@ -61,7 +62,7 @@ export default function AdminUsers() {
     try {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name");
+        .select("id, full_name, user_code");
 
       const { data: roles } = await supabase
         .from("user_roles")
@@ -69,14 +70,15 @@ export default function AdminUsers() {
 
       const { data: { users: authUsers } } = await (supabase.auth.admin as any).listUsers();
 
-      const usersData = profiles?.map((profile) => {
+      const usersData = profiles?.map((profile: any) => {
         const authUser = authUsers?.find((u: any) => u.id === profile.id);
-        const userRole = roles?.find((r) => r.user_id === profile.id);
+        const userRole = roles?.find((r: any) => r.user_id === profile.id);
 
         return {
           id: profile.id,
           email: authUser?.email || "",
           full_name: profile.full_name,
+          user_code: profile.user_code || "",
           role: userRole?.role || "team_member",
         };
       }) || [];
@@ -172,6 +174,7 @@ export default function AdminUsers() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>User ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
@@ -181,6 +184,7 @@ export default function AdminUsers() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell className="font-mono text-sm">{user.user_code}</TableCell>
                   <TableCell className="font-medium">{user.full_name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>

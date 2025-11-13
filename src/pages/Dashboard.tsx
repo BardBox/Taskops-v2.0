@@ -8,7 +8,7 @@ import { TaskTable } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Home, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -83,12 +83,21 @@ const Dashboard = () => {
   }
 
   const canCreateTasks = userRole === "project_manager" || userRole === "project_owner";
+  const isOwner = userRole === "project_owner";
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              title="Home"
+            >
+              <Home className="h-5 w-5" />
+            </Button>
             <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-xl font-bold text-primary-foreground">B</span>
             </div>
@@ -97,10 +106,18 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-2">
+            {isOwner && (
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+                <Settings className="h-4 w-4 mr-2" />
+                Admin
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 
