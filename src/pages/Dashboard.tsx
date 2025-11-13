@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskTable } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
+import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
 import { LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,6 +17,16 @@ const Dashboard = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    year: "all",
+    month: "all",
+    status: "all",
+    urgency: "all",
+    clientId: "all",
+    teamMemberId: "all",
+    projectManagerId: "all",
+    highlightToday: false,
+  });
 
   useEffect(() => {
     checkAuth();
@@ -71,7 +82,7 @@ const Dashboard = () => {
     );
   }
 
-  const canCreateTasks = userRole === "project_manager";
+  const canCreateTasks = userRole === "project_manager" || userRole === "project_owner";
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,8 +104,10 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        <DashboardMetrics />
+      <main className="container mx-auto px-4 py-8 space-y-6">
+        <DashboardMetrics filters={filters} />
+
+        <GlobalFilters filters={filters} onFiltersChange={setFilters} />
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -107,7 +120,7 @@ const Dashboard = () => {
             )}
           </CardHeader>
           <CardContent>
-            <TaskTable userRole={userRole} userId={user?.id || ""} />
+            <TaskTable userRole={userRole} userId={user?.id || ""} filters={filters} />
           </CardContent>
         </Card>
       </main>

@@ -52,7 +52,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
     assignee_id: "",
     deadline: "",
     status: "To Do",
-    urgency: "Mid",
+    urgency: "Medium",
     reference_link_1: "",
     reference_link_2: "",
     reference_link_3: "",
@@ -72,7 +72,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           assignee_id: task.assignee_id || "",
           deadline: task.deadline || "",
           status: task.status || "To Do",
-          urgency: task.urgency || "Mid",
+          urgency: task.urgency || "Medium",
           reference_link_1: task.reference_link_1 || "",
           reference_link_2: task.reference_link_2 || "",
           reference_link_3: task.reference_link_3 || "",
@@ -90,7 +90,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           assignee_id: "",
           deadline: tomorrowStr,
           status: "To Do",
-          urgency: "Mid",
+          urgency: "Medium",
           reference_link_1: "",
           reference_link_2: "",
           reference_link_3: "",
@@ -274,6 +274,9 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                   <SelectItem value="Done">Done</SelectItem>
                   <SelectItem value="Approved">Approved</SelectItem>
                   <SelectItem value="On Hold">On Hold</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  <SelectItem value="Needs Review">Needs Review</SelectItem>
+                  <SelectItem value="Blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -289,7 +292,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Mid">Mid</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
                   <SelectItem value="High">High</SelectItem>
                   <SelectItem value="Immediate">Immediate</SelectItem>
                 </SelectContent>

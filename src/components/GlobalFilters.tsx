@@ -1,0 +1,295 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+
+export interface FilterState {
+  year: string;
+  month: string;
+  status: string;
+  urgency: string;
+  clientId: string;
+  teamMemberId: string;
+  projectManagerId: string;
+  highlightToday: boolean;
+}
+
+interface GlobalFiltersProps {
+  filters: FilterState;
+  onFiltersChange: (filters: FilterState) => void;
+  compact?: boolean;
+}
+
+const MONTHS = [
+  { value: "1", label: "January" },
+  { value: "2", label: "February" },
+  { value: "3", label: "March" },
+  { value: "4", label: "April" },
+  { value: "5", label: "May" },
+  { value: "6", label: "June" },
+  { value: "7", label: "July" },
+  { value: "8", label: "August" },
+  { value: "9", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
+const STATUS_OPTIONS = [
+  "To Do",
+  "Doing",
+  "Done",
+  "Approved",
+  "On Hold",
+  "Cancelled",
+  "Needs Review",
+  "Blocked",
+];
+
+const URGENCY_OPTIONS = ["Low", "Medium", "High", "Immediate"];
+
+export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: GlobalFiltersProps) => {
+  const [years, setYears] = useState<number[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [projectManagers, setProjectManagers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchFilterOptions();
+    loadSavedFilters();
+  }, []);
+
+  useEffect(() => {
+    saveFilters();
+  }, [filters]);
+
+  const fetchFilterOptions = async () => {
+    // Fetch years from tasks
+    const { data: tasks } = await supabase
+      .from("tasks")
+      .select("date")
+      .order("date", { ascending: false });
+    
+    if (tasks) {
+      const uniqueYears = Array.from(
+        new Set(tasks.map(t => new Date(t.date).getFullYear()))
+      ).sort((a, b) => b - a);
+      setYears(uniqueYears);
+    }
+
+    // Fetch clients
+    const { data: clientsData } = await supabase
+      .from("clients")
+      .select("*")
+      .order("name");
+    setClients(clientsData || []);
+
+    // Fetch all users with their roles
+    const { data: usersData } = await supabase
+      .from("profiles")
+      .select(`
+        *,
+        user_roles!inner(role)
+      `)
+      .order("full_name");
+
+    if (usersData) {
+      const tms = usersData.filter((u: any) => 
+        u.user_roles?.role === "team_member"
+      );
+      const pms = usersData.filter((u: any) => 
+        u.user_roles?.role === "project_manager" || u.user_roles?.role === "project_owner"
+      );
+      setTeamMembers(tms);
+      setProjectManagers(pms);
+    }
+  };
+
+  const loadSavedFilters = () => {
+    const saved = sessionStorage.getItem("taskops_filters");
+    if (saved) {
+      try {
+        const parsedFilters = JSON.parse(saved);
+        onFiltersChange(parsedFilters);
+      } catch (e) {
+        console.error("Failed to load saved filters", e);
+      }
+    }
+  };
+
+  const saveFilters = () => {
+    sessionStorage.setItem("taskops_filters", JSON.stringify(filters));
+  };
+
+  const updateFilter = (key: keyof FilterState, value: any) => {
+    onFiltersChange({ ...filters, [key]: value });
+  };
+
+  if (compact) {
+    return (
+      <div className="flex gap-2 flex-wrap items-center">
+        <Select value={filters.status} onValueChange={(v) => updateFilter("status", v)}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">All Status</SelectItem>
+            {STATUS_OPTIONS.map(status => (
+              <SelectItem key={status} value={status}>{status}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.urgency} onValueChange={(v) => updateFilter("urgency", v)}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Urgency" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">All Urgency</SelectItem>
+            {URGENCY_OPTIONS.map(urgency => (
+              <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center gap-2">
+          <Switch
+            id="highlight-today-compact"
+            checked={filters.highlightToday}
+            onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
+          />
+          <Label htmlFor="highlight-today-compact" className="text-sm cursor-pointer">
+            Today
+          </Label>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Year</Label>
+          <Select value={filters.year} onValueChange={(v) => updateFilter("year", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {years.map(year => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Month</Label>
+          <Select value={filters.month} onValueChange={(v) => updateFilter("month", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {MONTHS.map(month => (
+                <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Status</Label>
+          <Select value={filters.status} onValueChange={(v) => updateFilter("status", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {STATUS_OPTIONS.map(status => (
+                <SelectItem key={status} value={status}>{status}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Urgency</Label>
+          <Select value={filters.urgency} onValueChange={(v) => updateFilter("urgency", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {URGENCY_OPTIONS.map(urgency => (
+                <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Client</Label>
+          <Select value={filters.clientId} onValueChange={(v) => updateFilter("clientId", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {clients.map(client => (
+                <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Team Member</Label>
+          <Select value={filters.teamMemberId} onValueChange={(v) => updateFilter("teamMemberId", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {teamMembers.map(tm => (
+                <SelectItem key={tm.id} value={tm.id}>{tm.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">PM</Label>
+          <Select value={filters.projectManagerId} onValueChange={(v) => updateFilter("projectManagerId", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {projectManagers.map(pm => (
+                <SelectItem key={pm.id} value={pm.id}>{pm.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Highlight</Label>
+          <div className="flex items-center h-10 gap-2">
+            <Switch
+              id="highlight-today"
+              checked={filters.highlightToday}
+              onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
+            />
+            <Label htmlFor="highlight-today" className="text-sm cursor-pointer">
+              Today
+            </Label>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
