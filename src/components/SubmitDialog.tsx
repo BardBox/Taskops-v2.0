@@ -16,15 +16,16 @@ interface SubmitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   taskId: string;
+  existingAssetLink?: string | null;
   onSuccess?: () => void;
 }
 
-export const SubmitDialog = ({ open, onOpenChange, taskId, onSuccess }: SubmitDialogProps) => {
+export const SubmitDialog = ({ open, onOpenChange, taskId, existingAssetLink, onSuccess }: SubmitDialogProps) => {
   const [loading, setLoading] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState({
     actual_delivery: today,
-    asset_link: "",
+    asset_link: existingAssetLink || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
