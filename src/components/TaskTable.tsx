@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
@@ -24,9 +25,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TaskDialog } from "./TaskDialog";
+import { SubmitDialog } from "./SubmitDialog";
 import { Edit2, ExternalLink, FileText, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 interface Task {
   id: string;
@@ -55,10 +58,13 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<string | null>(null);
   const [filterYear, setFilterYear] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [sortField, setSortField] = useState<string>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [highlightToday, setHighlightToday] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -268,10 +274,22 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
   };
 
   const filteredTasks = getFilteredAndSortedTasks();
+  
+  const isToday = (date: string | null) => {
+    if (!date) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return date === today;
+  };
+
+  const handleOpenSubmitDialog = (taskId: string) => {
+    setSelectedTaskForSubmit(taskId);
+    setSubmitDialogOpen(true);
+  };
 
   return (
     <>
-      <div className="mb-4 flex gap-4 flex-wrap items-center">
+      <div className="mb-4 flex gap-4 flex-wrap items-center justify-between">
+        <div className="flex gap-4 flex-wrap items-center">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Year:</span>
           <Select value={filterYear} onValueChange={setFilterYear}>
@@ -333,6 +351,18 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
             {sortDirection === "asc" ? "Asc" : "Desc"}
           </Button>
         </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Switch
+            id="highlight-today"
+            checked={highlightToday}
+            onCheckedChange={setHighlightToday}
+          />
+          <Label htmlFor="highlight-today" className="text-sm font-medium cursor-pointer">
+            Highlight Today
+          </Label>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -349,21 +379,26 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
               <TableHead>Urgency</TableHead>
               <TableHead>Submission</TableHead>
               <TableHead>Delay</TableHead>
+              <TableHead>Preview</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredTasks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                   No tasks found matching the selected filters.
                 </TableCell>
               </TableRow>
             ) : (
               filteredTasks.map((task) => {
                 const delay = calculateDelay(task.deadline, task.actual_delivery, task.status);
+                const shouldHighlight = highlightToday && isToday(task.deadline);
                 return (
-                  <TableRow key={task.id}>
+                  <TableRow 
+                    key={task.id}
+                    className={shouldHighlight ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}
+                  >
                     <TableCell className="whitespace-nowrap">
                       {format(new Date(task.date), "MMM dd")}
                     </TableCell>
@@ -432,6 +467,16 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                       )}
                     </TableCell>
                     <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={task.status !== "Done"}
+                        onClick={() => handleOpenSubmitDialog(task.id)}
+                      >
+                        Submit
+                      </Button>
+                    </TableCell>
+                    <TableCell>
                       <TooltipProvider>
                         <div className="flex items-center gap-2">
                           {canEdit(task) && (
@@ -482,6 +527,16 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
         onClose={() => {
           setSelectedTask(null);
           setDialogOpen(false);
+        }}
+      />
+      
+      <SubmitDialog
+        open={submitDialogOpen}
+        onOpenChange={setSubmitDialogOpen}
+        taskId={selectedTaskForSubmit || ""}
+        onSuccess={() => {
+          fetchTasks();
+          setSelectedTaskForSubmit(null);
         }}
       />
     </>

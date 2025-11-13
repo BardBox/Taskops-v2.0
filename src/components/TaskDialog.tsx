@@ -35,7 +35,9 @@ const taskSchema = z.object({
   deadline: z.string().optional(),
   status: z.string(),
   urgency: z.string(),
-  asset_link: z.string().url().optional().or(z.literal("")),
+  reference_link_1: z.string().url().optional().or(z.literal("")),
+  reference_link_2: z.string().url().optional().or(z.literal("")),
+  reference_link_3: z.string().url().optional().or(z.literal("")),
   notes: z.string().max(1000).optional(),
 });
 
@@ -49,10 +51,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
     client_id: "",
     assignee_id: "",
     deadline: "",
-    actual_delivery: "",
     status: "To Do",
     urgency: "Mid",
-    asset_link: "",
+    reference_link_1: "",
+    reference_link_2: "",
+    reference_link_3: "",
     notes: "",
   });
 
@@ -68,10 +71,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           client_id: task.client_id || "",
           assignee_id: task.assignee_id || "",
           deadline: task.deadline || "",
-          actual_delivery: task.actual_delivery || "",
           status: task.status || "To Do",
           urgency: task.urgency || "Mid",
-          asset_link: task.asset_link || "",
+          reference_link_1: task.reference_link_1 || "",
+          reference_link_2: task.reference_link_2 || "",
+          reference_link_3: task.reference_link_3 || "",
           notes: task.notes || "",
         });
       } else {
@@ -85,10 +89,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           client_id: "",
           assignee_id: "",
           deadline: tomorrowStr,
-          actual_delivery: "",
           status: "To Do",
           urgency: "Mid",
-          asset_link: "",
+          reference_link_1: "",
+          reference_link_2: "",
+          reference_link_3: "",
           notes: "",
         });
       }
@@ -127,8 +132,9 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
         urgency: validated.urgency,
         client_id: validated.client_id || null,
         deadline: validated.deadline || null,
-        actual_delivery: formData.actual_delivery || null,
-        asset_link: validated.asset_link || null,
+        reference_link_1: validated.reference_link_1 || null,
+        reference_link_2: validated.reference_link_2 || null,
+        reference_link_3: validated.reference_link_3 || null,
         notes: validated.notes || null,
       };
 
@@ -160,10 +166,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           client_id: "",
           assignee_id: "",
           deadline: tomorrowStr,
-          actual_delivery: "",
           status: "To Do",
           urgency: "Mid",
-          asset_link: "",
+          reference_link_1: "",
+          reference_link_2: "",
+          reference_link_3: "",
           notes: "",
         });
       } else {
@@ -253,16 +260,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="actual_delivery">Submission Date</Label>
-              <Input
-                id="actual_delivery"
-                type="date"
-                value={formData.actual_delivery}
-                onChange={(e) => setFormData({ ...formData, actual_delivery: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
               <Select
                 value={formData.status}
@@ -300,12 +297,34 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="asset_link">Asset Link</Label>
+              <Label htmlFor="reference_link_1">Reference Link 1</Label>
               <Input
-                id="asset_link"
+                id="reference_link_1"
                 type="url"
-                value={formData.asset_link}
-                onChange={(e) => setFormData({ ...formData, asset_link: e.target.value })}
+                value={formData.reference_link_1}
+                onChange={(e) => setFormData({ ...formData, reference_link_1: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="reference_link_2">Reference Link 2</Label>
+              <Input
+                id="reference_link_2"
+                type="url"
+                value={formData.reference_link_2}
+                onChange={(e) => setFormData({ ...formData, reference_link_2: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="reference_link_3">Reference Link 3</Label>
+              <Input
+                id="reference_link_3"
+                type="url"
+                value={formData.reference_link_3}
+                onChange={(e) => setFormData({ ...formData, reference_link_3: e.target.value })}
                 placeholder="https://..."
               />
             </div>
