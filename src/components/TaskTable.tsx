@@ -140,14 +140,17 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
 
   const calculateDelay = (deadline: string | null, actualDelivery: string | null, status: string) => {
     if (status === "Approved" || status === "Cancelled") return null;
-    if (!deadline || !actualDelivery) return null;
+    if (!deadline) return null;
 
     const deadlineDate = new Date(deadline);
-    const deliveryDate = new Date(actualDelivery);
-    const diffTime = deliveryDate.getTime() - deadlineDate.getTime();
+    const compareDate = actualDelivery ? new Date(actualDelivery) : new Date();
+    const diffTime = compareDate.getTime() - deadlineDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return diffDays > 0 ? diffDays : 0;
+    // Only show delay if submission happened OR current date is past deadline
+    if (!actualDelivery && diffDays <= 0) return null;
+
+    return diffDays;
   };
 
   const getFilteredAndSortedTasks = () => {
@@ -459,8 +462,10 @@ export const TaskTable = ({ userRole, userId }: TaskTableProps) => {
                       {task.actual_delivery ? format(new Date(task.actual_delivery), "MMM dd") : "-"}
                     </TableCell>
                     <TableCell>
-                      {delay !== null && delay > 0 ? (
-                        <span className="text-destructive font-medium">{delay}d</span>
+                      {delay !== null ? (
+                        <span className={`font-medium ${delay < 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                          {delay}d
+                        </span>
                       ) : (
                         "-"
                       )}
