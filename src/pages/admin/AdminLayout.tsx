@@ -75,10 +75,15 @@ export default function AdminLayout() {
               <SidebarTrigger />
               <h1 className="text-lg font-semibold">BardBox TaskOPS™ Admin</h1>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                Dashboard
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </header>
 
           <main className="flex-1 p-6 overflow-auto">
