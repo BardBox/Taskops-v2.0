@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, Monitor, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Loader2, Monitor, Moon, Sun, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/ThemeProvider";
+import { Slider } from "@/components/ui/slider";
+import { testSound } from "@/utils/notificationSounds";
 
 interface UserPreferences {
   dashboard_view: string;
@@ -21,6 +23,9 @@ interface UserPreferences {
   notifications_task_assigned: boolean;
   notifications_task_completed: boolean;
   notifications_task_updated: boolean;
+  notifications_sound_enabled: boolean;
+  notifications_sound_volume: number;
+  notifications_sound_type: string;
   theme: string;
 }
 
@@ -39,6 +44,9 @@ const Preferences = () => {
     notifications_task_assigned: true,
     notifications_task_completed: true,
     notifications_task_updated: true,
+    notifications_sound_enabled: true,
+    notifications_sound_volume: 0.7,
+    notifications_sound_type: "default",
     theme: "system",
   });
 
@@ -252,6 +260,99 @@ const Preferences = () => {
                   onCheckedChange={(checked) => updatePreference("notifications_task_updated", checked)}
                 />
               </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="flex items-center gap-2">
+                    {preferences.notifications_sound_enabled ? (
+                      <Volume2 className="h-4 w-4" />
+                    ) : (
+                      <VolumeX className="h-4 w-4" />
+                    )}
+                    Sound Notifications
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Play sounds when notifications arrive
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.notifications_sound_enabled}
+                  onCheckedChange={(checked) => updatePreference("notifications_sound_enabled", checked)}
+                />
+              </div>
+
+              {preferences.notifications_sound_enabled && (
+                <>
+                  <div className="space-y-3 pl-4">
+                    <div className="space-y-2">
+                      <Label>Sound Type</Label>
+                      <RadioGroup
+                        value={preferences.notifications_sound_type}
+                        onValueChange={(value) => {
+                          updatePreference("notifications_sound_type", value);
+                          testSound(value as any, preferences.notifications_sound_volume);
+                        }}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="default" id="sound-default" />
+                          <Label htmlFor="sound-default" className="font-normal cursor-pointer">
+                            Default - Simple beep
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="chime" id="sound-chime" />
+                          <Label htmlFor="sound-chime" className="font-normal cursor-pointer">
+                            Chime - Pleasant musical tone
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="bell" id="sound-bell" />
+                          <Label htmlFor="sound-bell" className="font-normal cursor-pointer">
+                            Bell - Bell-like ring
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="pop" id="sound-pop" />
+                          <Label htmlFor="sound-pop" className="font-normal cursor-pointer">
+                            Pop - Quick pop sound
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Volume</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {Math.round(preferences.notifications_sound_volume * 100)}%
+                        </span>
+                      </div>
+                      <Slider
+                        value={[preferences.notifications_sound_volume * 100]}
+                        onValueChange={(value) => updatePreference("notifications_sound_volume", value[0] / 100)}
+                        max={100}
+                        step={5}
+                        className="w-full"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => testSound(
+                          preferences.notifications_sound_type as any,
+                          preferences.notifications_sound_volume
+                        )}
+                        className="w-full"
+                      >
+                        Test Sound
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
