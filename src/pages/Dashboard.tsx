@@ -114,7 +114,10 @@ const Dashboard = () => {
               className="h-10 w-auto object-contain"
             />
             <div>
-              <p className="text-sm text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
+              <h1 className="text-lg font-semibold">
+                TaskOPS<sup className="text-xs">™</sup>
+              </h1>
+              <p className="text-xs text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

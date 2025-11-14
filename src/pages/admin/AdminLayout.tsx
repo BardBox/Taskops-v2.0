@@ -75,10 +75,15 @@ export default function AdminLayout() {
               <SidebarTrigger />
               <img 
                 src="/bardbox-logo.png" 
-                alt="BardBox Admin" 
+                alt="BardBox" 
                 className="h-8 w-auto object-contain"
               />
-              <span className="text-sm text-muted-foreground">Admin</span>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-semibold">
+                  TaskOPS<sup className="text-xs">™</sup>
+                </h1>
+                <span className="text-sm text-muted-foreground">Admin</span>
+              </div>
             </div>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="h-4 w-4 mr-2" />
