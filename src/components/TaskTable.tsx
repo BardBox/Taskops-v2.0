@@ -97,7 +97,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
 
   const fetchAppreciations = async () => {
     const { data } = await supabase
-      .from("task_appreciations")
+      .from("task_appreciations" as any)
       .select("task_id, given_by_id")
       .eq("given_by_id", userId);
       
@@ -115,7 +115,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     
     if (hasAppreciation) {
       const { error } = await supabase
-        .from("task_appreciations")
+        .from("task_appreciations" as any)
         .delete()
         .eq("task_id", taskId)
         .eq("given_by_id", userId);
@@ -128,8 +128,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       }
     } else {
       const { error } = await supabase
-        .from("task_appreciations")
-        .insert({ task_id: taskId, given_by_id: userId });
+        .from("task_appreciations" as any)
+        .insert({ task_id: taskId, given_by_id: userId } as any);
         
       if (!error) {
         const newMap = new Map(taskAppreciations);
