@@ -79,7 +79,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const fetchNotifications = async () => {
     try {
       const { data, error } = await supabase
-        .from("notifications")
+        .from("notifications" as any)
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
@@ -87,7 +87,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
 
       if (error) throw error;
 
-      setNotifications(data || []);
+      setNotifications((data || []) as any);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -98,7 +98,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
-        .from("notifications")
+        .from("notifications" as any)
         .update({ is_read: true, read_at: new Date().toISOString() })
         .eq("id", notificationId)
         .eq("user_id", userId);
@@ -119,7 +119,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const markAllAsRead = async () => {
     try {
       const { error } = await supabase
-        .from("notifications")
+        .from("notifications" as any)
         .update({ is_read: true, read_at: new Date().toISOString() })
         .eq("user_id", userId)
         .eq("is_read", false);
@@ -140,7 +140,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const deleteNotification = async (notificationId: string) => {
     try {
       const { error } = await supabase
-        .from("notifications")
+        .from("notifications" as any)
         .delete()
         .eq("id", notificationId)
         .eq("user_id", userId);

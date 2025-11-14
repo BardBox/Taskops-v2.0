@@ -59,18 +59,18 @@ const Preferences = () => {
 
   const fetchPreferences = async (userId: string) => {
     const { data, error } = await supabase
-      .from("user_preferences")
+      .from("user_preferences" as any)
       .select("*")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== "PGRST116") {
       console.error("Error fetching preferences:", error);
     } else if (data) {
-      setPreferences(data);
+      setPreferences(data as any);
       // Sync theme with context
-      if (data.theme) {
-        setTheme(data.theme as "light" | "dark" | "system");
+      if ((data as any).theme) {
+        setTheme((data as any).theme as "light" | "dark" | "system");
       }
     }
   };
@@ -86,7 +86,7 @@ const Preferences = () => {
 
     try {
       const { error } = await supabase
-        .from("user_preferences")
+        .from("user_preferences" as any)
         .upsert({
           user_id: user.id,
           ...preferences,
