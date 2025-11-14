@@ -30,9 +30,12 @@ const Index = () => {
             </div>
             <img 
               src="/bardbox-logo.png" 
-              alt="BardBox TaskOPS" 
+              alt="BardBox" 
               className="h-24 md:h-32 w-auto object-contain mx-auto"
             />
+            <h1 className="text-4xl md:text-5xl font-bold">
+              TaskOPS<sup className="text-2xl">™</sup>
+            </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl">
               Premium operational productivity system for creative teams
             </p>
