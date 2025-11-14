@@ -392,9 +392,11 @@ const Analytics = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-xl font-bold text-primary-foreground">B</span>
-            </div>
+            <img 
+              src="/bardbox-logo.png" 
+              alt="BardBox" 
+              className="h-10 w-auto object-contain"
+            />
             <div>
               <h1 className="text-xl font-bold">Analytics Dashboard</h1>
               <p className="text-sm text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>

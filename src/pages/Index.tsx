@@ -28,9 +28,11 @@ const Index = () => {
                 <span className="text-4xl font-bold text-primary-foreground">B</span>
               </div>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-              BardBox TaskOPS™
-            </h1>
+            <img 
+              src="/bardbox-logo.png" 
+              alt="BardBox TaskOPS" 
+              className="h-24 md:h-32 w-auto object-contain mx-auto"
+            />
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl">
               Premium operational productivity system for creative teams
             </p>
