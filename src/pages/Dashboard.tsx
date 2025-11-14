@@ -130,7 +130,7 @@ const Dashboard = () => {
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem onClick={() => toast.info("Account settings coming soon")}>
+              <DropdownMenuItem onClick={() => navigate("/account-settings")}>
                 <UserIcon className="h-4 w-4 mr-2" />
                 Account Settings
               </DropdownMenuItem>
