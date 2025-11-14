@@ -265,6 +265,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   };
 
   const canEdit = (task: Task) => {
+    if (userRole === "project_owner") return true;
     if (userRole === "project_manager") return true;
     if (userRole === "team_member" && task.assignee_id === userId) {
       return task.status !== "Approved";
