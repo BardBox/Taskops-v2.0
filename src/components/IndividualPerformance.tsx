@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, TrendingUp, TrendingDown, Award, Calendar } from "lucide-react";
+import { ArrowLeft, Star, TrendingUp, TrendingDown, Award, Calendar, Download } from "lucide-react";
+import { exportToPDF } from "@/utils/pdfExport";
+import { toast } from "sonner";
 import {
   ChartContainer,
   ChartTooltip,
@@ -177,6 +179,16 @@ export const IndividualPerformance = ({
     };
   };
 
+  const handleExport = async () => {
+    toast.info("Generating PDF...");
+    await exportToPDF(
+      "individual-performance",
+      `${individualName.replace(/\s+/g, '-')}-performance-${new Date().toISOString().split('T')[0]}.pdf`,
+      `${individualName} - Performance Report`
+    );
+    toast.success("PDF exported successfully!");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -192,7 +204,7 @@ export const IndividualPerformance = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="individual-performance">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -205,10 +217,16 @@ export const IndividualPerformance = ({
             <p className="text-muted-foreground">Individual Performance Analysis</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-          <span className="text-2xl font-bold">{qualityStars}</span>
-          <span className="text-sm text-muted-foreground">Quality Stars</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+            <span className="text-2xl font-bold">{qualityStars}</span>
+            <span className="text-sm text-muted-foreground">Quality Stars</span>
+          </div>
+          <Button onClick={handleExport} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export Report
+          </Button>
         </div>
       </div>
 
