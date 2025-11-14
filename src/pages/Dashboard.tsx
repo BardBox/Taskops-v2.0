@@ -8,7 +8,7 @@ import { TaskTable } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
-import { LogOut, Plus, Settings, User as UserIcon, Sliders, ArrowRight } from "lucide-react";
+import { LogOut, Plus, Settings, User as UserIcon, Sliders, ArrowRight, BarChart3, Home } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -132,8 +132,15 @@ const Dashboard = () => {
                 onClick={() => navigate("/dashboard")}
                 className="cursor-pointer"
               >
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Dashboard
+                <Home className="h-4 w-4 mr-2" />
+                Homepage
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => navigate("/analytics")}
+                className="cursor-pointer"
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Analytics Dashboard
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {isOwner && (
