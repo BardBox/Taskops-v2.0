@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { playNotificationSound } from "@/utils/notificationSounds";
+import { showBrowserNotification, getNotificationPermission } from "@/utils/browserNotifications";
 
 interface Task {
   id: string;
@@ -102,6 +103,15 @@ export const useTaskNotifications = (userId: string | undefined) => {
               duration: 5000,
             });
 
+            // Show browser notification
+            if (getNotificationPermission() === "granted") {
+              showBrowserNotification({
+                title: "New Task Assigned",
+                body: `${assignorName} assigned you "${newTask.task_name}"`,
+                tag: `task-${newTask.id}`,
+              });
+            }
+
             // Play notification sound
             if (preferences.notifications_sound_enabled) {
               playNotificationSound(
@@ -146,6 +156,15 @@ export const useTaskNotifications = (userId: string | undefined) => {
               duration: 5000,
             });
 
+            // Show browser notification
+            if (getNotificationPermission() === "granted") {
+              showBrowserNotification({
+                title: "Task Completed",
+                body: `"${newTask.task_name}" has been approved`,
+                tag: `task-${newTask.id}`,
+              });
+            }
+
             // Play notification sound
             if (preferences.notifications_sound_enabled) {
               playNotificationSound(
@@ -181,6 +200,15 @@ export const useTaskNotifications = (userId: string | undefined) => {
               description,
               duration: 5000,
             });
+
+            // Show browser notification
+            if (getNotificationPermission() === "granted") {
+              showBrowserNotification({
+                title: "Task Updated",
+                body: description,
+                tag: `task-${newTask.id}`,
+              });
+            }
 
             // Play notification sound
             if (preferences.notifications_sound_enabled) {
