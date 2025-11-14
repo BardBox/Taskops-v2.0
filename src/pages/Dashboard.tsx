@@ -134,7 +134,7 @@ const Dashboard = () => {
                 <UserIcon className="h-4 w-4 mr-2" />
                 Account Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Preferences coming soon")}>
+              <DropdownMenuItem onClick={() => navigate("/preferences")}>
                 <Sliders className="h-4 w-4 mr-2" />
                 Preferences
               </DropdownMenuItem>
