@@ -410,16 +410,16 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                           <SelectTrigger className={`w-32 h-8 ${getStatusColor(task.status)}`}>
                             <SelectValue />
                           </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="To Do">To Do</SelectItem>
-              <SelectItem value="Doing">Doing</SelectItem>
-              <SelectItem value="Done">Done</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="On Hold">On Hold</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
-              <SelectItem value="Needs Review">Needs Review</SelectItem>
-              <SelectItem value="Blocked">Blocked</SelectItem>
-            </SelectContent>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="To Do">To Do</SelectItem>
+                            <SelectItem value="Doing">Doing</SelectItem>
+                            <SelectItem value="Done">Done</SelectItem>
+                            <SelectItem value="Approved">Approved</SelectItem>
+                            <SelectItem value="On Hold">On Hold</SelectItem>
+                            <SelectItem value="Cancelled">Cancelled</SelectItem>
+                            <SelectItem value="Needs Review">Needs Review</SelectItem>
+                            <SelectItem value="Blocked">Blocked</SelectItem>
+                          </SelectContent>
                         </Select>
                       ) : (
                         <Badge variant="outline" className={getStatusColor(task.status)}>
@@ -436,12 +436,12 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                           <SelectTrigger className={`w-32 h-8 ${getUrgencyColor(task.urgency)}`}>
                             <SelectValue />
                           </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="Low">Low</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="High">High</SelectItem>
-              <SelectItem value="Immediate">Immediate</SelectItem>
-            </SelectContent>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Low">Low</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Immediate">Immediate</SelectItem>
+                          </SelectContent>
                         </Select>
                       ) : (
                         <Badge variant="outline" className={getUrgencyColor(task.urgency)}>
