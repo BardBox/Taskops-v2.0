@@ -26,6 +26,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { IndividualPerformance } from "@/components/IndividualPerformance";
 import { format } from "date-fns";
+import { exportToPDF } from "@/utils/pdfExport";
+import { Download } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -81,6 +83,16 @@ const Analytics = () => {
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [viewFilter, setViewFilter] = useState<string>("all");
   const [selectedIndividualId, setSelectedIndividualId] = useState<string | null>(null);
+
+  const handleExportOverview = async () => {
+    toast.info("Generating PDF...");
+    await exportToPDF(
+      "analytics-overview",
+      `analytics-overview-${new Date().toISOString().split('T')[0]}.pdf`,
+      "Analytics Overview Report"
+    );
+    toast.success("PDF exported successfully!");
+  };
 
   useEffect(() => {
     checkAuth();
@@ -448,11 +460,18 @@ const Analytics = () => {
           />
         ) : (
           <>
-            <div className="mb-6">
-              <h2 className="text-3xl font-bold tracking-tight">Performance Analytics</h2>
-              <p className="text-muted-foreground">Track team performance, client metrics, and quality indicators</p>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Performance Analytics</h2>
+                <p className="text-muted-foreground">Track team performance, client metrics, and quality indicators</p>
+              </div>
+              <Button onClick={handleExportOverview} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export Overview
+              </Button>
             </div>
 
+            <div id="analytics-overview">
             <Tabs defaultValue="team" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 lg:w-auto">
             <TabsTrigger value="team">Team Members</TabsTrigger>
@@ -714,6 +733,7 @@ const Analytics = () => {
             </Card>
           </TabsContent>
         </Tabs>
+            </div>
           </>
         )}
       </main>
