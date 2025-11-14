@@ -96,9 +96,9 @@ Deno.serve(async (req) => {
       case 'create': {
         const { email, password, full_name, role } = payload
 
-        // Validate PM can only create TMs
-        if (!isOwner && role !== 'team_member') {
-          return new Response(JSON.stringify({ error: 'Project Managers can only create Team Members' }), {
+        // Validate PM permissions for creating users
+        if (isPM && !isOwner && !['team_member', 'project_manager'].includes(role)) {
+          return new Response(JSON.stringify({ error: 'Project Managers can only create Team Members and Project Managers' }), {
             status: 403,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           })
@@ -115,6 +115,66 @@ Deno.serve(async (req) => {
         if (authError) throw authError
 
         return new Response(JSON.stringify({ success: true, user: authData.user }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'update': {
+        const { userId, full_name, email, role } = payload
+
+        // Get target user's current role
+        const { data: targetUserRole } = await supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .single()
+
+        // PMs cannot edit Project Owners
+        if (isPM && !isOwner && targetUserRole?.role === 'project_owner') {
+          return new Response(JSON.stringify({ error: 'Cannot edit project owners' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+
+        // PMs cannot set role to project_owner
+        if (isPM && !isOwner && role === 'project_owner') {
+          return new Response(JSON.stringify({ error: 'Cannot assign project owner role' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+
+        // Update user email if provided and changed
+        if (email) {
+          const { error: emailError } = await supabaseClient.auth.admin.updateUserById(
+            userId,
+            { email }
+          )
+          if (emailError) throw emailError
+        }
+
+        // Update profile
+        if (full_name) {
+          const { error: profileError } = await supabaseClient
+            .from('profiles')
+            .update({ full_name })
+            .eq('id', userId)
+
+          if (profileError) throw profileError
+        }
+
+        // Update role if provided
+        if (role) {
+          const { error: roleError } = await supabaseClient
+            .from('user_roles')
+            .update({ role })
+            .eq('user_id', userId)
+
+          if (roleError) throw roleError
+        }
+
+        return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }

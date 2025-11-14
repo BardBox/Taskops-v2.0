@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -45,6 +45,8 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
@@ -53,6 +55,7 @@ export default function AdminUsers() {
   });
 
   const isOwner = userRole === "project_owner";
+  const isPM = userRole === "project_manager";
 
   useEffect(() => {
     fetchUsers();
@@ -128,6 +131,51 @@ export default function AdminUsers() {
     }
   };
 
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'update',
+          userId: editingUser.id,
+          full_name: editingUser.full_name,
+          email: editingUser.email,
+          role: editingUser.role,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update user');
+      }
+
+      toast.success("User updated successfully");
+      setEditDialogOpen(false);
+      setEditingUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      toast.error(error.message || "Failed to update user");
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
     if (!isOwner) {
       toast.error("Only owners can delete users");
@@ -164,6 +212,12 @@ export default function AdminUsers() {
       console.error("Error deleting user:", error);
       toast.error(error.message || "Failed to delete user");
     }
+  };
+
+  const canEditUser = (user: User) => {
+    if (isOwner) return true;
+    if (isPM && user.role !== 'project_owner') return true;
+    return false;
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -206,7 +260,7 @@ export default function AdminUsers() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                {isOwner && <TableHead>Actions</TableHead>}
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -220,15 +274,28 @@ export default function AdminUsers() {
                       {user.role.replace("_", " ")}
                     </Badge>
                   </TableCell>
-                  {isOwner && (
+                  {(isOwner || isPM) && (
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-2">
+                        {canEditUser(user) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditUser(user)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {isOwner && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -279,24 +346,23 @@ export default function AdminUsers() {
               <Select
                 value={newUser.role}
                 onValueChange={(value) => setNewUser({ ...newUser, role: value })}
-                disabled={!isOwner}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="team_member">Team Member</SelectItem>
+                  {(isOwner || isPM) && (
+                    <SelectItem value="project_manager">Project Manager</SelectItem>
+                  )}
                   {isOwner && (
-                    <>
-                      <SelectItem value="project_manager">Project Manager</SelectItem>
-                      <SelectItem value="project_owner">Project Owner</SelectItem>
-                    </>
+                    <SelectItem value="project_owner">Project Owner</SelectItem>
                   )}
                 </SelectContent>
               </Select>
-              {!isOwner && (
+              {isPM && !isOwner && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  PMs can only create Team Members
+                  PMs can create Team Members and Project Managers
                 </p>
               )}
             </div>
@@ -307,6 +373,71 @@ export default function AdminUsers() {
               Cancel
             </Button>
             <Button onClick={handleCreateUser}>Create User</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information and role
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingUser && (
+            <div className="space-y-4">
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Full Name</Label>
+                <Input
+                  value={editingUser.full_name}
+                  onChange={(e) => setEditingUser({ ...editingUser, full_name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Role</Label>
+                <Select
+                  value={editingUser.role}
+                  onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="team_member">Team Member</SelectItem>
+                    {(isOwner || isPM) && (
+                      <SelectItem value="project_manager">Project Manager</SelectItem>
+                    )}
+                    {isOwner && (
+                      <SelectItem value="project_owner">Project Owner</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {isPM && !isOwner && editingUser.role === 'project_owner' && (
+                  <p className="text-sm text-destructive mt-1">
+                    Cannot change Project Owner role
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateUser}>Update User</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
