@@ -16,42 +16,165 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          client_code: string | null
           created_at: string
           id: string
           name: string
+          premium_tag: string | null
         }
         Insert: {
+          client_code?: string | null
           created_at?: string
           id?: string
           name: string
+          premium_tag?: string | null
         }
         Update: {
+          client_code?: string | null
           created_at?: string
           id?: string
           name?: string
+          premium_tag?: string | null
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          read_at: string | null
+          task_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          read_at?: string | null
+          task_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          read_at?: string | null
+          task_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "taskops_filtered_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           full_name: string
           id: string
           updated_at: string
+          user_code: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           full_name: string
           id: string
           updated_at?: string
+          user_code?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           full_name?: string
           id?: string
           updated_at?: string
+          user_code?: string | null
         }
         Relationships: []
+      }
+      system_settings: {
+        Row: {
+          created_at: string | null
+          id: number
+          setting_key: string
+          setting_value: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          setting_key: string
+          setting_value: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      task_appreciations: {
+        Row: {
+          created_at: string
+          given_by_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          given_by_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          given_by_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_appreciations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "taskops_filtered_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_appreciations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -65,6 +188,9 @@ export type Database = {
           deadline: string | null
           id: string
           notes: string | null
+          reference_link_1: string | null
+          reference_link_2: string | null
+          reference_link_3: string | null
           status: string
           task_name: string
           updated_at: string
@@ -81,6 +207,9 @@ export type Database = {
           deadline?: string | null
           id?: string
           notes?: string | null
+          reference_link_1?: string | null
+          reference_link_2?: string | null
+          reference_link_3?: string | null
           status?: string
           task_name: string
           updated_at?: string
@@ -97,6 +226,9 @@ export type Database = {
           deadline?: string | null
           id?: string
           notes?: string | null
+          reference_link_1?: string | null
+          reference_link_2?: string | null
+          reference_link_3?: string | null
           status?: string
           task_name?: string
           updated_at?: string
@@ -125,6 +257,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          dashboard_view: string | null
+          id: string
+          notifications_email: boolean | null
+          notifications_in_app: boolean | null
+          notifications_sound_enabled: boolean | null
+          notifications_sound_type: string | null
+          notifications_sound_volume: number | null
+          notifications_task_assigned: boolean | null
+          notifications_task_completed: boolean | null
+          notifications_task_updated: boolean | null
+          show_filters: boolean | null
+          show_metrics: boolean | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dashboard_view?: string | null
+          id?: string
+          notifications_email?: boolean | null
+          notifications_in_app?: boolean | null
+          notifications_sound_enabled?: boolean | null
+          notifications_sound_type?: string | null
+          notifications_sound_volume?: number | null
+          notifications_task_assigned?: boolean | null
+          notifications_task_completed?: boolean | null
+          notifications_task_updated?: boolean | null
+          show_filters?: boolean | null
+          show_metrics?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dashboard_view?: string | null
+          id?: string
+          notifications_email?: boolean | null
+          notifications_in_app?: boolean | null
+          notifications_sound_enabled?: boolean | null
+          notifications_sound_type?: string | null
+          notifications_sound_volume?: number | null
+          notifications_task_assigned?: boolean | null
+          notifications_task_completed?: boolean | null
+          notifications_task_updated?: boolean | null
+          show_filters?: boolean | null
+          show_metrics?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -157,9 +346,77 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      taskops_filtered_tasks: {
+        Row: {
+          actual_delivery: string | null
+          asset_link: string | null
+          assigned_by_id: string | null
+          assigned_by_name: string | null
+          assignee_id: string | null
+          assignee_name: string | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string | null
+          date: string | null
+          deadline: string | null
+          delay_days: number | null
+          id: string | null
+          month: number | null
+          notes: string | null
+          reference_link_1: string | null
+          reference_link_2: string | null
+          reference_link_3: string | null
+          status: string | null
+          task_name: string | null
+          updated_at: string | null
+          urgency: string | null
+          year: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_by_id_fkey"
+            columns: ["assigned_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taskops_productivity: {
+        Row: {
+          assignee_id: string | null
+          assignee_name: string | null
+          productivity_score: number | null
+          total_tasks: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      generate_client_code: { Args: never; Returns: string }
+      generate_user_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -167,9 +424,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_setting: {
+        Args: { key: string; value: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "team_member" | "project_manager" | "leadership"
+      app_role: "project_owner" | "project_manager" | "team_member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -297,7 +558,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["team_member", "project_manager", "leadership"],
+      app_role: ["project_owner", "project_manager", "team_member"],
     },
   },
 } as const
