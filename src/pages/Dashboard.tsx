@@ -8,8 +8,17 @@ import { TaskTable } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
-import { LogOut, Plus, Settings } from "lucide-react";
+import { LogOut, Plus, Settings, User as UserIcon, Sliders } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -98,18 +107,44 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {isOwner && (
-              <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
-                <Settings className="h-4 w-4 mr-2" />
-                Admin
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {user?.email?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden sm:inline">{user?.email}</span>
               </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {isOwner && (
+                <>
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin Panel
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem onClick={() => toast.info("Account settings coming soon")}>
+                <UserIcon className="h-4 w-4 mr-2" />
+                Account Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Preferences coming soon")}>
+                <Sliders className="h-4 w-4 mr-2" />
+                Preferences
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
