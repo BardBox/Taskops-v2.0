@@ -30,13 +30,13 @@ export const useTaskNotifications = (userId: string | undefined) => {
     // Fetch user preferences
     const fetchPreferences = async () => {
       const { data } = await supabase
-        .from("user_preferences")
+        .from("user_preferences" as any)
         .select("notifications_in_app, notifications_task_assigned, notifications_task_completed, notifications_task_updated")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       if (data) {
-        setPreferences(data);
+        setPreferences(data as any);
       } else {
         // Default to all enabled if no preferences set
         setPreferences({
@@ -81,7 +81,7 @@ export const useTaskNotifications = (userId: string | undefined) => {
             const assignorName = assignorProfile?.full_name || "Someone";
 
             // Store notification in database
-            await supabase.from("notifications").insert({
+            await supabase.from("notifications" as any).insert({
               user_id: userId,
               title: "New Task Assigned",
               message: `${assignorName} assigned you "${newTask.task_name}"`,
@@ -118,7 +118,7 @@ export const useTaskNotifications = (userId: string | undefined) => {
             preferences.notifications_task_completed
           ) {
             // Store notification in database
-            await supabase.from("notifications").insert({
+            await supabase.from("notifications" as any).insert({
               user_id: userId,
               title: "Task Completed",
               message: `"${newTask.task_name}" has been approved`,
@@ -146,7 +146,7 @@ export const useTaskNotifications = (userId: string | undefined) => {
             }
 
             // Store notification in database
-            await supabase.from("notifications").insert({
+            await supabase.from("notifications" as any).insert({
               user_id: userId,
               title: "Task Updated",
               message: description,

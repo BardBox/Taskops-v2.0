@@ -41,13 +41,13 @@ const AccountSettings = () => {
       .from("profiles")
       .select("full_name, avatar_url")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching profile:", error);
     } else if (data) {
-      setFullName(data.full_name || "");
-      setAvatarUrl(data.avatar_url || "");
+      setFullName((data as any).full_name || "");
+      setAvatarUrl((data as any).avatar_url || "");
     }
   };
 
@@ -97,7 +97,7 @@ const AccountSettings = () => {
       // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: publicUrl } as any)
         .eq("id", user.id);
 
       if (updateError) throw updateError;
