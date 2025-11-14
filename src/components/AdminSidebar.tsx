@@ -1,4 +1,4 @@
-import { Users, Building2, Palette, Settings, LayoutDashboard } from "lucide-react";
+import { Users, Building2, Palette, Settings, LayoutDashboard, Home } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
+  { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Clients", url: "/admin/clients", icon: Building2 },
