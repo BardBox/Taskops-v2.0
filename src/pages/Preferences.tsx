@@ -8,11 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, Monitor, Moon, Sun, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Loader2, Monitor, Moon, Sun, Volume2, VolumeX, MonitorCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/ThemeProvider";
 import { Slider } from "@/components/ui/slider";
 import { testSound } from "@/utils/notificationSounds";
+import { 
+  requestNotificationPermission, 
+  isNotificationSupported, 
+  getNotificationPermission 
+} from "@/utils/browserNotifications";
 
 interface UserPreferences {
   dashboard_view: string;
@@ -35,6 +40,9 @@ const Preferences = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [browserNotificationPermission, setBrowserNotificationPermission] = useState<NotificationPermission>(
+    getNotificationPermission()
+  );
   const [preferences, setPreferences] = useState<UserPreferences>({
     dashboard_view: "comfortable",
     show_metrics: true,
@@ -85,6 +93,17 @@ const Preferences = () => {
 
   const updatePreference = (key: keyof UserPreferences, value: any) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleRequestNotificationPermission = async () => {
+    const permission = await requestNotificationPermission();
+    setBrowserNotificationPermission(permission);
+    
+    if (permission === "granted") {
+      toast.success("Browser notifications enabled");
+    } else {
+      toast.error("Permission denied - Enable in browser settings");
+    }
   };
 
   const handleSavePreferences = async () => {
@@ -352,6 +371,45 @@ const Preferences = () => {
                     </div>
                   </div>
                 </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Browser Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MonitorCheck className="h-5 w-5" />
+              Browser Notifications
+            </CardTitle>
+            <CardDescription>
+              Enable desktop notifications that appear even when this tab is not active
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Browser Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  {!isNotificationSupported() && "Not supported in this browser"}
+                  {isNotificationSupported() && browserNotificationPermission === "granted" && "Enabled"}
+                  {isNotificationSupported() && browserNotificationPermission === "denied" && "Denied - Enable in browser settings"}
+                  {isNotificationSupported() && browserNotificationPermission === "default" && "Click to enable"}
+                </p>
+              </div>
+              {isNotificationSupported() && browserNotificationPermission !== "granted" && (
+                <Button 
+                  onClick={handleRequestNotificationPermission}
+                  variant="outline"
+                >
+                  Enable Notifications
+                </Button>
+              )}
+              {browserNotificationPermission === "granted" && (
+                <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  ✓ Enabled
+                </span>
               )}
             </div>
           </CardContent>
