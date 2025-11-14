@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -26,6 +27,9 @@ const Dashboard = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Enable real-time notifications
+  useTaskNotifications(user?.id);
   const [filters, setFilters] = useState<FilterState>({
     year: "all",
     month: "all",
