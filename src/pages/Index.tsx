@@ -39,11 +39,19 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 mt-8">
             <Button
               size="lg"
+              onClick={() => navigate("/dashboard")}
+              className="text-lg px-8"
+            >
+              Dashboard
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
               onClick={() => navigate("/auth")}
               className="text-lg px-8"
             >
               Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
 
