@@ -18,10 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TaskDialog } from "./TaskDialog";
 import { SubmitDialog } from "./SubmitDialog";
 import { NotesDialog } from "./NotesDialog";
-import { Edit2, ExternalLink, FileText, ArrowUpDown, Star } from "lucide-react";
+import { Edit2, ExternalLink, FileText, ArrowUpDown, Star, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -72,6 +73,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [sortField, setSortField] = useState<string>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchTasks();
@@ -366,6 +368,52 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     }
   };
 
+  const handleSelectTask = (taskId: string, checked: boolean) => {
+    const newSelectedTaskIds = new Set(selectedTaskIds);
+    if (checked) {
+      newSelectedTaskIds.add(taskId);
+    } else {
+      newSelectedTaskIds.delete(taskId);
+    }
+    setSelectedTaskIds(newSelectedTaskIds);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allTaskIds = new Set(filteredTasks.map(task => task.id));
+      setSelectedTaskIds(allTaskIds);
+    } else {
+      setSelectedTaskIds(new Set());
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedTaskIds.size === 0) {
+      toast.error("No tasks selected");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedTaskIds.size} task(s)?`
+    );
+
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from("tasks")
+      .delete()
+      .in("id", Array.from(selectedTaskIds));
+
+    if (error) {
+      toast.error("Failed to delete tasks");
+      console.error("Error deleting tasks:", error);
+    } else {
+      toast.success(`${selectedTaskIds.size} task(s) deleted successfully`);
+      setSelectedTaskIds(new Set());
+      fetchTasks();
+    }
+  };
+
   const filteredTasks = getFilteredAndSortedTasks();
   
   const isToday = (date: string | null) => {
@@ -407,6 +455,26 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
+              {userRole === "project_owner" && (
+                <TableHead className="w-[80px]">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    {selectedTaskIds.size > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleDeleteSelected}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                </TableHead>
+              )}
               <TableHead>Date</TableHead>
               <TableHead>Task</TableHead>
               <TableHead>Client</TableHead>
@@ -424,7 +492,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           <TableBody>
             {filteredTasks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={userRole === "project_owner" ? 13 : 12} className="text-center py-8 text-muted-foreground">
                   No tasks found matching the selected filters.
                 </TableCell>
               </TableRow>
@@ -437,6 +505,14 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     key={task.id}
                     className={shouldHighlight ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}
                   >
+                    {userRole === "project_owner" && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedTaskIds.has(task.id)}
+                          onCheckedChange={(checked) => handleSelectTask(task.id, checked as boolean)}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell className="whitespace-nowrap">
                       {format(new Date(task.date), "MMM dd")}
                     </TableCell>
