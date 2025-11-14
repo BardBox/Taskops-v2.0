@@ -63,9 +63,12 @@ export default function AdminUsers() {
 
   const fetchUsers = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Not authenticated");
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Session expired. Please sign in again.");
+        await supabase.auth.signOut();
+        window.location.href = "/auth";
         return;
       }
 
@@ -79,6 +82,12 @@ export default function AdminUsers() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Session expired. Please sign in again.");
+          await supabase.auth.signOut();
+          window.location.href = "/auth";
+          return;
+        }
         const error = await response.json();
         throw new Error(error.error || 'Failed to fetch users');
       }
@@ -95,9 +104,12 @@ export default function AdminUsers() {
 
   const handleCreateUser = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Not authenticated");
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Session expired. Please sign in again.");
+        await supabase.auth.signOut();
+        window.location.href = "/auth";
         return;
       }
 
@@ -117,6 +129,12 @@ export default function AdminUsers() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Session expired. Please sign in again.");
+          await supabase.auth.signOut();
+          window.location.href = "/auth";
+          return;
+        }
         const error = await response.json();
         throw new Error(error.error || 'Failed to create user');
       }
@@ -140,9 +158,12 @@ export default function AdminUsers() {
     if (!editingUser) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Not authenticated");
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Session expired. Please sign in again.");
+        await supabase.auth.signOut();
+        window.location.href = "/auth";
         return;
       }
 
@@ -162,6 +183,12 @@ export default function AdminUsers() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Session expired. Please sign in again.");
+          await supabase.auth.signOut();
+          window.location.href = "/auth";
+          return;
+        }
         const error = await response.json();
         throw new Error(error.error || 'Failed to update user');
       }
@@ -183,9 +210,12 @@ export default function AdminUsers() {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Not authenticated");
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Session expired. Please sign in again.");
+        await supabase.auth.signOut();
+        window.location.href = "/auth";
         return;
       }
 
@@ -202,6 +232,12 @@ export default function AdminUsers() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Session expired. Please sign in again.");
+          await supabase.auth.signOut();
+          window.location.href = "/auth";
+          return;
+        }
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete user');
       }
