@@ -8,6 +8,7 @@ import { TaskTable } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { LogOut, Plus, Settings, User as UserIcon, Sliders, ArrowRight, BarChart3, Home } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -21,8 +22,10 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { useLocation } from "react-router-dom";
 
 const Dashboard = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string>("");
@@ -128,13 +131,15 @@ const Dashboard = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => navigate("/dashboard")}
-                className="cursor-pointer"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                Homepage
-              </DropdownMenuItem>
+              {location.pathname !== "/dashboard" && (
+                <DropdownMenuItem 
+                  onClick={() => navigate("/dashboard")}
+                  className="cursor-pointer"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  Homepage
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem 
                 onClick={() => navigate("/analytics")}
                 className="cursor-pointer"
@@ -172,6 +177,7 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-6">
+        <Breadcrumbs />
         <DashboardMetrics filters={filters} />
 
         <GlobalFilters filters={filters} onFiltersChange={setFilters} />
