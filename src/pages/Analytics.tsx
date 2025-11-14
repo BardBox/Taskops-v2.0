@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { IndividualPerformance } from "@/components/IndividualPerformance";
 import { format } from "date-fns";
 import {
   ChartContainer,
@@ -163,7 +164,7 @@ const Analytics = () => {
 
     // Fetch quality stars (appreciations) for all users
     const { data: appreciations } = await supabase
-      .from("task_appreciations")
+      .from("task_appreciations" as any)
       .select("task_id");
 
     const appreciationMap = new Map<string, number>();
@@ -333,6 +334,26 @@ const Analytics = () => {
 
   const isOwner = userRole === "project_owner";
 
+  // Calculate team averages for comparison
+  const teamAverages = {
+    weightedScore: teamPerformance.length > 0 
+      ? teamPerformance.reduce((sum, m) => sum + m.weightedScore, 0) / teamPerformance.length 
+      : 0,
+    completionRate: teamPerformance.length > 0 
+      ? teamPerformance.reduce((sum, m) => sum + m.completionRate, 0) / teamPerformance.length 
+      : 0,
+    onTimeRate: teamPerformance.length > 0 
+      ? teamPerformance.reduce((sum, m) => sum + m.onTimeRate, 0) / teamPerformance.length 
+      : 0,
+    avgDelayDays: teamPerformance.length > 0 
+      ? teamPerformance.reduce((sum, m) => sum + m.avgDelayDays, 0) / teamPerformance.length 
+      : 0,
+  };
+
+  const selectedIndividual = selectedIndividualId 
+    ? teamPerformance.find(m => m.id === selectedIndividualId) 
+    : null;
+
   const getRankIcon = (index: number) => {
     if (index === 0) return <Trophy className="h-5 w-5 text-yellow-500" />;
     if (index === 1) return <Medal className="h-5 w-5 text-gray-400" />;
@@ -415,12 +436,24 @@ const Analytics = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold tracking-tight">Performance Analytics</h2>
-          <p className="text-muted-foreground">Track team performance, client metrics, and quality indicators</p>
-        </div>
+        <Breadcrumbs />
+        
+        {/* Show Individual Performance or Overview */}
+        {selectedIndividual ? (
+          <IndividualPerformance
+            individualId={selectedIndividual.id}
+            individualName={selectedIndividual.name}
+            onBack={() => setSelectedIndividualId(null)}
+            teamAverage={teamAverages}
+          />
+        ) : (
+          <>
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold tracking-tight">Performance Analytics</h2>
+              <p className="text-muted-foreground">Track team performance, client metrics, and quality indicators</p>
+            </div>
 
-        <Tabs defaultValue="team" className="space-y-6">
+            <Tabs defaultValue="team" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 lg:w-auto">
             <TabsTrigger value="team">Team Members</TabsTrigger>
             <TabsTrigger value="managers">Project Managers</TabsTrigger>
@@ -681,6 +714,8 @@ const Analytics = () => {
             </Card>
           </TabsContent>
         </Tabs>
+          </>
+        )}
       </main>
     </div>
   );
