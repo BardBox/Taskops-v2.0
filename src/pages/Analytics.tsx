@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LogOut, Settings, Sliders, Home, Award, TrendingUp, Trophy, Medal, BarChart3 } from "lucide-react";
+import { LogOut, Settings, Sliders, Home, Award, TrendingUp, Trophy, Medal, BarChart3, Star, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -19,6 +19,12 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import {
   ChartContainer,
   ChartTooltip,
@@ -35,8 +41,7 @@ interface TeamMemberPerformance {
   delayedTasks: number;
   avgDelayDays: number;
   weightedScore: number;
-  performanceGrade: string;
-  gradeColor: string;
+  qualityStars: number;
   completionRate: number;
   onTimeRate: number;
 }
@@ -61,12 +66,20 @@ interface ProjectManagerPerformance {
 
 const Analytics = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [teamPerformance, setTeamPerformance] = useState<TeamMemberPerformance[]>([]);
   const [clientPerformance, setClientPerformance] = useState<ClientPerformance[]>([]);
   const [pmPerformance, setPmPerformance] = useState<ProjectManagerPerformance[]>([]);
+  
+  // Filters
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [viewFilter, setViewFilter] = useState<string>("all");
+  const [selectedIndividualId, setSelectedIndividualId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -137,14 +150,8 @@ const Analytics = () => {
   };
 
   const getPerformanceGrade = (score: number, onTimeRate: number) => {
-    // Combine weighted score and on-time rate for final grade
-    const finalScore = (score * 0.7) + (onTimeRate * 0.3);
-    
-    if (finalScore >= 90) return { grade: "A", color: "text-green-600 bg-green-100 dark:bg-green-950" };
-    if (finalScore >= 80) return { grade: "B", color: "text-blue-600 bg-blue-100 dark:bg-blue-950" };
-    if (finalScore >= 70) return { grade: "C", color: "text-yellow-600 bg-yellow-100 dark:bg-yellow-950" };
-    if (finalScore >= 60) return { grade: "D", color: "text-orange-600 bg-orange-100 dark:bg-orange-950" };
-    return { grade: "F", color: "text-red-600 bg-red-100 dark:bg-red-950" };
+    // This function is deprecated - we now use star-based quality indicators
+    return { grade: "N/A", color: "" };
   };
 
   const fetchTeamMemberPerformance = async () => {
@@ -153,6 +160,17 @@ const Analytics = () => {
       .select("*");
 
     if (!tasks) return;
+
+    // Fetch quality stars (appreciations) for all users
+    const { data: appreciations } = await supabase
+      .from("task_appreciations")
+      .select("task_id");
+
+    const appreciationMap = new Map<string, number>();
+    appreciations?.forEach((app: any) => {
+      const count = appreciationMap.get(app.task_id) || 0;
+      appreciationMap.set(app.task_id, count + 1);
+    });
 
     const memberMap = new Map<string, any>();
 
@@ -165,9 +183,12 @@ const Analytics = () => {
           id: memberId,
           name: task.assignee_name || "Unknown",
           tasks: [],
+          totalStars: 0,
         });
       }
+      const stars = appreciationMap.get(task.id) || 0;
       memberMap.get(memberId).tasks.push(task);
+      memberMap.get(memberId).totalStars += stars;
     });
 
     const performance: TeamMemberPerformance[] = Array.from(memberMap.values()).map((member) => {
@@ -185,7 +206,6 @@ const Analytics = () => {
       const weightedScore = calculateWeightedScore(member.tasks);
       const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
       const onTimeRate = completedTasks > 0 ? (onTimeTasks / completedTasks) * 100 : 0;
-      const { grade, color } = getPerformanceGrade(weightedScore, onTimeRate);
 
       return {
         id: member.id,
@@ -196,8 +216,7 @@ const Analytics = () => {
         delayedTasks,
         avgDelayDays: Math.max(0, avgDelayDays),
         weightedScore,
-        performanceGrade: grade,
-        gradeColor: color,
+        qualityStars: member.totalStars,
         completionRate,
         onTimeRate,
       };
@@ -412,16 +431,21 @@ const Analytics = () => {
           <TabsContent value="team" className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {teamPerformance.slice(0, 3).map((member, index) => (
-                <Card key={member.id} className="relative overflow-hidden">
+                <Card 
+                  key={member.id} 
+                  className="relative overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => setSelectedIndividualId(member.id)}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg flex items-center gap-2">
                         {getRankIcon(index)}
                         {member.name}
                       </CardTitle>
-                      <Badge className={member.gradeColor}>
-                        Grade {member.performanceGrade}
-                      </Badge>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-bold">{member.qualityStars}</span>
+                      </div>
                     </div>
                     <CardDescription>Rank #{index + 1} • {member.totalTasks} tasks</CardDescription>
                   </CardHeader>
@@ -449,6 +473,17 @@ const Analytics = () => {
                       <div>
                         <p className="text-muted-foreground">Avg Delay</p>
                         <p className="text-lg font-bold">{member.avgDelayDays.toFixed(1)}d</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-muted-foreground">Quality Stars</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          {Array.from({ length: Math.min(5, member.qualityStars) }).map((_, i) => (
+                            <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          ))}
+                          {member.qualityStars > 5 && (
+                            <span className="text-sm font-semibold ml-1">+{member.qualityStars - 5}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -478,9 +513,12 @@ const Analytics = () => {
                           <p className="text-sm text-muted-foreground">{member.totalTasks} tasks • {member.completedTasks} completed</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge className={member.gradeColor}>{member.performanceGrade}</Badge>
-                        <p className="text-sm font-bold mt-1">{member.weightedScore.toFixed(1)}%</p>
+                      <div className="text-right flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-semibold">{member.qualityStars}</span>
+                        </div>
+                        <p className="text-sm font-bold">{member.weightedScore.toFixed(1)}%</p>
                       </div>
                     </div>
                   ))}

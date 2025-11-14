@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { TaskDialog } from "./TaskDialog";
 import { SubmitDialog } from "./SubmitDialog";
 import { NotesDialog } from "./NotesDialog";
-import { Edit2, ExternalLink, FileText, ArrowUpDown } from "lucide-react";
+import { Edit2, ExternalLink, FileText, ArrowUpDown, Star } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -71,9 +71,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<Task | null>(null);
   const [sortField, setSortField] = useState<string>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
 
   useEffect(() => {
     fetchTasks();
+    fetchAppreciations();
 
     const channel = supabase
       .channel("tasks-changes")
@@ -92,6 +94,51 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const fetchAppreciations = async () => {
+    const { data } = await supabase
+      .from("task_appreciations")
+      .select("task_id, given_by_id")
+      .eq("given_by_id", userId);
+      
+    const appreciationMap = new Map<string, boolean>();
+    data?.forEach((app: any) => {
+      appreciationMap.set(app.task_id, true);
+    });
+    setTaskAppreciations(appreciationMap);
+  };
+
+  const toggleAppreciation = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const hasAppreciation = taskAppreciations.get(taskId);
+    
+    if (hasAppreciation) {
+      const { error } = await supabase
+        .from("task_appreciations")
+        .delete()
+        .eq("task_id", taskId)
+        .eq("given_by_id", userId);
+        
+      if (!error) {
+        const newMap = new Map(taskAppreciations);
+        newMap.delete(taskId);
+        setTaskAppreciations(newMap);
+        toast.success("Appreciation removed");
+      }
+    } else {
+      const { error } = await supabase
+        .from("task_appreciations")
+        .insert({ task_id: taskId, given_by_id: userId });
+        
+      if (!error) {
+        const newMap = new Map(taskAppreciations);
+        newMap.set(taskId, true);
+        setTaskAppreciations(newMap);
+        toast.success("Star added!");
+      }
+    }
+  };
 
   const fetchTasks = async () => {
     const { data, error } = await supabase
@@ -393,8 +440,24 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     <TableCell className="whitespace-nowrap">
                       {format(new Date(task.date), "MMM dd")}
                     </TableCell>
-                    <TableCell className="font-medium max-w-xs truncate">
-                      {task.task_name}
+                    <TableCell className="font-medium max-w-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{task.task_name}</span>
+                        {(userRole === "project_owner" || userRole === "project_manager") && (
+                          <button
+                            onClick={(e) => toggleAppreciation(task.id, e)}
+                            className="flex-shrink-0 hover:scale-110 transition-transform"
+                          >
+                            <Star
+                              className={`h-4 w-4 ${
+                                taskAppreciations.get(task.id)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{task.clients?.name || "-"}</TableCell>
                     <TableCell>{task.assignee?.full_name || "-"}</TableCell>
