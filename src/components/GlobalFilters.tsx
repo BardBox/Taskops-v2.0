@@ -59,6 +59,52 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   useEffect(() => {
     fetchFilterOptions();
     loadSavedFilters();
+
+    // Set up real-time subscriptions
+    const profilesChannel = supabase
+      .channel("filters-profiles-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+        },
+        () => fetchFilterOptions()
+      )
+      .subscribe();
+
+    const rolesChannel = supabase
+      .channel("filters-roles-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_roles",
+        },
+        () => fetchFilterOptions()
+      )
+      .subscribe();
+
+    const clientsChannel = supabase
+      .channel("filters-clients-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "clients",
+        },
+        () => fetchFilterOptions()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(rolesChannel);
+      supabase.removeChannel(clientsChannel);
+    };
   }, []);
 
   useEffect(() => {

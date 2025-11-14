@@ -97,6 +97,39 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           notes: "",
         });
       }
+
+      // Set up real-time subscription for profiles
+      const profilesChannel = supabase
+        .channel("profiles-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "profiles",
+          },
+          () => fetchUsers()
+        )
+        .subscribe();
+
+      // Set up real-time subscription for user_roles
+      const rolesChannel = supabase
+        .channel("user-roles-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_roles",
+          },
+          () => fetchUsers()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(profilesChannel);
+        supabase.removeChannel(rolesChannel);
+      };
     }
   }, [open, task]);
 
@@ -113,7 +146,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("*").order("full_name");
+    const { data } = await supabase
+      .from("profiles")
+      .select("*, user_roles!inner(role)")
+      .order("full_name");
     setUsers(data || []);
   };
 
