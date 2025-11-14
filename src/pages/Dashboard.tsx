@@ -128,7 +128,10 @@ const Dashboard = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+              <DropdownMenuItem 
+                onClick={() => navigate("/dashboard")}
+                className="cursor-pointer"
+              >
                 <ArrowRight className="h-4 w-4 mr-2" />
                 Dashboard
               </DropdownMenuItem>
