@@ -8,7 +8,7 @@ import { TaskTable } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
-import { LogOut, Plus, Home, Settings } from "lucide-react";
+import { LogOut, Plus, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -90,14 +90,6 @@ const Dashboard = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              title="Home"
-            >
-              <Home className="h-5 w-5" />
-            </Button>
             <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-xl font-bold text-primary-foreground">B</span>
             </div>

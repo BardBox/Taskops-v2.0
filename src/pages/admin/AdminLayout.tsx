@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, Home } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminLayout() {
@@ -72,14 +72,6 @@ export default function AdminLayout() {
         <div className="flex-1 flex flex-col">
           <header className="h-14 border-b bg-background flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/")}
-                title="Home"
-              >
-                <Home className="h-5 w-5" />
-              </Button>
               <SidebarTrigger />
               <h1 className="text-lg font-semibold">BardBox TaskOPS™ Admin</h1>
             </div>
