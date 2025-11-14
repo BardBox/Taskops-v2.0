@@ -31,6 +31,7 @@ const Dashboard = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
@@ -54,6 +55,7 @@ const Dashboard = () => {
       } else {
         setUser(session.user);
         fetchUserRole(session.user.id);
+        fetchUserProfile(session.user.id);
       }
     });
 
@@ -67,7 +69,10 @@ const Dashboard = () => {
       return;
     }
     setUser(session.user);
-    await fetchUserRole(session.user.id);
+    await Promise.all([
+      fetchUserRole(session.user.id),
+      fetchUserProfile(session.user.id)
+    ]);
     setLoading(false);
   };
 
@@ -82,6 +87,20 @@ const Dashboard = () => {
       console.error("Error fetching role:", error);
     } else {
       setUserRole(data?.role || "");
+    }
+  };
+
+  const fetchUserProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching profile:", error);
+    } else {
+      setUserProfile(data);
     }
   };
 
@@ -111,11 +130,11 @@ const Dashboard = () => {
             <img 
               src="/bardbox-logo.png" 
               alt="BardBox" 
-              className="h-10 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
             <div>
-              <h1 className="text-lg font-semibold">
-                TaskOPS<sup className="text-xs">™</sup>
+              <h1 className="text-2xl font-bold">
+                TaskOPS<sup className="text-sm">™</sup>
               </h1>
               <p className="text-xs text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
             </div>
@@ -126,11 +145,19 @@ const Dashboard = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {user?.email?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
+                  {userProfile?.avatar_url ? (
+                    <img 
+                      src={userProfile.avatar_url} 
+                      alt={userProfile.full_name} 
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {userProfile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
-                <span className="hidden sm:inline">{user?.email}</span>
+                <span className="hidden sm:inline font-bold">{userProfile?.full_name || user?.email}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
