@@ -256,7 +256,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                 <SelectTrigger id="client_id">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
@@ -275,7 +275,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                 <SelectTrigger id="assignee_id">
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.full_name}
@@ -304,7 +304,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                 <SelectTrigger id="status">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   <SelectItem value="To Do">To Do</SelectItem>
                   <SelectItem value="Doing">Doing</SelectItem>
                   <SelectItem value="Done">Done</SelectItem>
@@ -326,7 +326,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                 <SelectTrigger id="urgency">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   <SelectItem value="Low">Low</SelectItem>
                   <SelectItem value="Medium">Medium</SelectItem>
                   <SelectItem value="High">High</SelectItem>

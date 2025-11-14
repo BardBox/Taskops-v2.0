@@ -172,7 +172,9 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5 text-accent" strokeWidth={2.5} />
+          <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-black">
+            <Bell className="h-6 w-6 text-yellow-500" strokeWidth={3} />
+          </div>
           {unreadCount > 0 && (
             <Badge
               variant="destructive"

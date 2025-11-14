@@ -142,12 +142,15 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
       .order("full_name");
 
     if (usersData) {
-      const tms = usersData.filter((u: any) => 
-        u.user_roles?.role === "team_member"
-      );
-      const pms = usersData.filter((u: any) => 
-        u.user_roles?.role === "project_manager" || u.user_roles?.role === "project_owner"
-      );
+      // Since user_roles is returned as an array from the join, we need to check the first element
+      const tms = usersData.filter((u: any) => {
+        const roles = Array.isArray(u.user_roles) ? u.user_roles : [u.user_roles];
+        return roles.some((r: any) => r?.role === "team_member");
+      });
+      const pms = usersData.filter((u: any) => {
+        const roles = Array.isArray(u.user_roles) ? u.user_roles : [u.user_roles];
+        return roles.some((r: any) => r?.role === "project_manager" || r?.role === "project_owner");
+      });
       setTeamMembers(tms);
       setProjectManagers(pms);
     }

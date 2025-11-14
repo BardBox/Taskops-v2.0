@@ -144,7 +144,7 @@ const Dashboard = () => {
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-12 w-12">
                   {userProfile?.avatar_url ? (
                     <img 
                       src={userProfile.avatar_url} 
@@ -152,7 +152,7 @@ const Dashboard = () => {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                       {userProfile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   )}
