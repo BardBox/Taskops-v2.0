@@ -101,6 +101,7 @@ const Dashboard = () => {
 
   const canCreateTasks = userRole === "project_manager" || userRole === "project_owner";
   const isOwner = userRole === "project_owner";
+  const hasAdminAccess = userRole === "project_manager" || userRole === "project_owner";
 
   return (
     <div className="min-h-screen bg-background">
@@ -148,7 +149,7 @@ const Dashboard = () => {
                 Analytics Dashboard
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {isOwner && (
+              {hasAdminAccess && (
                 <>
                   <DropdownMenuItem onClick={() => navigate("/admin")}>
                     <Settings className="h-4 w-4 mr-2" />

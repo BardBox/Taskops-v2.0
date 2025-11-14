@@ -345,6 +345,7 @@ const Analytics = () => {
   }
 
   const isOwner = userRole === "project_owner";
+  const hasAdminAccess = userRole === "project_manager" || userRole === "project_owner";
 
   // Calculate team averages for comparison
   const teamAverages = {
@@ -422,7 +423,7 @@ const Analytics = () => {
                   <BarChart3 className="mr-2 h-4 w-4" />
                   Analytics Dashboard
                 </DropdownMenuItem>
-                {isOwner && (
+                {hasAdminAccess && (
                   <DropdownMenuItem onClick={() => navigate("/admin")}>
                     <Settings className="mr-2 h-4 w-4" />
                     Admin Panel
