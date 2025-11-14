@@ -53,11 +53,11 @@ export default function AdminClients() {
     try {
       const { data, error } = await supabase
         .from("clients")
-        .select("*")
+        .select("id, name, client_code, premium_tag, created_at")
         .order("name");
 
       if (error) throw error;
-      setClients(data || []);
+      setClients((data as any) || []);
     } catch (error) {
       console.error("Error fetching clients:", error);
       toast.error("Failed to load clients");

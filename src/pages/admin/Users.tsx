@@ -60,33 +60,31 @@ export default function AdminUsers() {
 
   const fetchUsers = async () => {
     try {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, user_code");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
+        return;
+      }
 
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'list' }),
+      });
 
-      const { data: { users: authUsers } } = await (supabase.auth.admin as any).listUsers();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch users');
+      }
 
-      const usersData = profiles?.map((profile: any) => {
-        const authUser = authUsers?.find((u: any) => u.id === profile.id);
-        const userRole = roles?.find((r: any) => r.user_id === profile.id);
-
-        return {
-          id: profile.id,
-          email: authUser?.email || "",
-          full_name: profile.full_name,
-          user_code: profile.user_code || "",
-          role: userRole?.role || "team_member",
-        };
-      }) || [];
-
+      const { users: usersData } = await response.json();
       setUsers(usersData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching users:", error);
-      toast.error("Failed to load users");
+      toast.error(error.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -94,21 +92,31 @@ export default function AdminUsers() {
 
   const handleCreateUser = async () => {
     try {
-      // Validate PM can only create TMs
-      if (!isOwner && newUser.role !== "team_member") {
-        toast.error("Project Managers can only create Team Members");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
         return;
       }
 
-      // Create user in auth
-      const { data: authData, error: authError } = await (supabase.auth.admin as any).createUser({
-        email: newUser.email,
-        password: newUser.password,
-        email_confirm: true,
-        user_metadata: { full_name: newUser.full_name, role: newUser.role },
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'create',
+          email: newUser.email,
+          password: newUser.password,
+          full_name: newUser.full_name,
+          role: newUser.role,
+        }),
       });
 
-      if (authError) throw authError;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create user');
+      }
 
       toast.success("User created successfully");
       setCreateDialogOpen(false);
@@ -127,8 +135,28 @@ export default function AdminUsers() {
     }
 
     try {
-      const { error } = await (supabase.auth.admin as any).deleteUser(userId);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'delete',
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete user');
+      }
 
       toast.success("User deleted successfully");
       fetchUsers();
