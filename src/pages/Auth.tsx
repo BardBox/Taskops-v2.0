@@ -62,12 +62,15 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center mb-4 space-y-2">
             <img 
               src="/bardbox-logo.png" 
               alt="BardBox" 
               className="h-16 w-auto object-contain"
             />
+            <h1 className="text-2xl font-bold">
+              TaskOPS<sup className="text-sm">™</sup>
+            </h1>
           </div>
           <CardDescription>Sign in to manage your team's tasks</CardDescription>
         </CardHeader>
