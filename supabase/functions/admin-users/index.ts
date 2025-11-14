@@ -1,4 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
+
+const createUserSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(8).max(128),
+  full_name: z.string().trim().min(2).max(100),
+  role: z.enum(['team_member', 'project_manager', 'project_owner'])
+})
+
+const updateUserSchema = z.object({
+  userId: z.string().uuid(),
+  email: z.string().email().max(255).optional(),
+  full_name: z.string().trim().min(2).max(100).optional(),
+  role: z.enum(['team_member', 'project_manager', 'project_owner']).optional()
+})
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,7 +109,9 @@ Deno.serve(async (req) => {
       }
 
       case 'create': {
-        const { email, password, full_name, role } = payload
+        // Validate input data
+        const validated = createUserSchema.parse(payload)
+        const { email, password, full_name, role } = validated
 
         // Validate PM permissions for creating users
         if (isPM && !isOwner && !['team_member', 'project_manager'].includes(role)) {
@@ -120,7 +137,9 @@ Deno.serve(async (req) => {
       }
 
       case 'update': {
-        const { userId, full_name, email, role } = payload
+        // Validate input data
+        const validated = updateUserSchema.parse(payload)
+        const { userId, full_name, email, role } = validated
 
         // Get target user's current role
         const { data: targetUserRole } = await supabaseClient
