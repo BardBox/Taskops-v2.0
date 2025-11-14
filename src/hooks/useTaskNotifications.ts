@@ -76,10 +76,20 @@ export const useTaskNotifications = (userId: string | undefined) => {
               .from("profiles")
               .select("full_name")
               .eq("id", newTask.assigned_by_id)
-              .single();
+              .maybeSingle();
 
             const assignorName = assignorProfile?.full_name || "Someone";
 
+            // Store notification in database
+            await supabase.from("notifications").insert({
+              user_id: userId,
+              title: "New Task Assigned",
+              message: `${assignorName} assigned you "${newTask.task_name}"`,
+              type: "info",
+              task_id: newTask.id,
+            });
+
+            // Show toast notification
             toast.info(`New Task Assigned`, {
               description: `${assignorName} assigned you "${newTask.task_name}"`,
               duration: 5000,
@@ -107,6 +117,15 @@ export const useTaskNotifications = (userId: string | undefined) => {
             newTask.status === "Approved" &&
             preferences.notifications_task_completed
           ) {
+            // Store notification in database
+            await supabase.from("notifications").insert({
+              user_id: userId,
+              title: "Task Completed",
+              message: `"${newTask.task_name}" has been approved`,
+              type: "success",
+              task_id: newTask.id,
+            });
+
             toast.success(`Task Completed`, {
               description: `"${newTask.task_name}" has been approved`,
               duration: 5000,
@@ -125,6 +144,15 @@ export const useTaskNotifications = (userId: string | undefined) => {
             } else if (oldTask.urgency !== newTask.urgency) {
               description = `Urgency changed to "${newTask.urgency}"`;
             }
+
+            // Store notification in database
+            await supabase.from("notifications").insert({
+              user_id: userId,
+              title: "Task Updated",
+              message: description,
+              type: "info",
+              task_id: newTask.id,
+            });
 
             toast.info(`Task Updated`, {
               description,

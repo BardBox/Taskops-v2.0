@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -111,7 +112,9 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
             </div>
           </div>
-          <DropdownMenu>
+          <div className="flex items-center gap-2">
+            <NotificationCenter userId={user?.id || ""} />
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
                 <Avatar className="h-8 w-8">
@@ -149,6 +152,7 @@ const Dashboard = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </header>
 
