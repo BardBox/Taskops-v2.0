@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { playNotificationSound } from "@/utils/notificationSounds";
 
 interface Task {
   id: string;
@@ -18,6 +19,9 @@ interface UserPreferences {
   notifications_task_assigned: boolean;
   notifications_task_completed: boolean;
   notifications_task_updated: boolean;
+  notifications_sound_enabled: boolean;
+  notifications_sound_volume: number;
+  notifications_sound_type: string;
 }
 
 export const useTaskNotifications = (userId: string | undefined) => {
@@ -31,7 +35,7 @@ export const useTaskNotifications = (userId: string | undefined) => {
     const fetchPreferences = async () => {
       const { data } = await supabase
         .from("user_preferences" as any)
-        .select("notifications_in_app, notifications_task_assigned, notifications_task_completed, notifications_task_updated")
+        .select("notifications_in_app, notifications_task_assigned, notifications_task_completed, notifications_task_updated, notifications_sound_enabled, notifications_sound_volume, notifications_sound_type")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -44,6 +48,9 @@ export const useTaskNotifications = (userId: string | undefined) => {
           notifications_task_assigned: true,
           notifications_task_completed: true,
           notifications_task_updated: true,
+          notifications_sound_enabled: true,
+          notifications_sound_volume: 0.7,
+          notifications_sound_type: "default",
         });
       }
     };
@@ -94,6 +101,14 @@ export const useTaskNotifications = (userId: string | undefined) => {
               description: `${assignorName} assigned you "${newTask.task_name}"`,
               duration: 5000,
             });
+
+            // Play notification sound
+            if (preferences.notifications_sound_enabled) {
+              playNotificationSound(
+                preferences.notifications_sound_type as any,
+                preferences.notifications_sound_volume
+              );
+            }
           }
         }
       )
@@ -130,6 +145,14 @@ export const useTaskNotifications = (userId: string | undefined) => {
               description: `"${newTask.task_name}" has been approved`,
               duration: 5000,
             });
+
+            // Play notification sound
+            if (preferences.notifications_sound_enabled) {
+              playNotificationSound(
+                preferences.notifications_sound_type as any,
+                preferences.notifications_sound_volume
+              );
+            }
           }
           // Check for other updates
           else if (
@@ -158,6 +181,14 @@ export const useTaskNotifications = (userId: string | undefined) => {
               description,
               duration: 5000,
             });
+
+            // Play notification sound
+            if (preferences.notifications_sound_enabled) {
+              playNotificationSound(
+                preferences.notifications_sound_type as any,
+                preferences.notifications_sound_volume
+              );
+            }
           }
         }
       )
