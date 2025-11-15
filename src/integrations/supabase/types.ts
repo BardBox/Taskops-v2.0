@@ -19,6 +19,7 @@ export type Database = {
           client_code: string | null
           created_at: string
           id: string
+          is_archived: boolean
           name: string
           premium_tag: string | null
         }
@@ -26,6 +27,7 @@ export type Database = {
           client_code?: string | null
           created_at?: string
           id?: string
+          is_archived?: boolean
           name: string
           premium_tag?: string | null
         }
@@ -33,6 +35,7 @@ export type Database = {
           client_code?: string | null
           created_at?: string
           id?: string
+          is_archived?: boolean
           name?: string
           premium_tag?: string | null
         }
@@ -116,6 +119,44 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           created_at: string | null
@@ -176,6 +217,51 @@ export type Database = {
           },
         ]
       }
+      task_comments: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          message: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          message: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          message?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "taskops_filtered_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           actual_delivery: string | null
@@ -188,6 +274,7 @@ export type Database = {
           deadline: string | null
           id: string
           notes: string | null
+          project_id: string | null
           reference_link_1: string | null
           reference_link_2: string | null
           reference_link_3: string | null
@@ -207,6 +294,7 @@ export type Database = {
           deadline?: string | null
           id?: string
           notes?: string | null
+          project_id?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
@@ -226,6 +314,7 @@ export type Database = {
           deadline?: string | null
           id?: string
           notes?: string | null
+          project_id?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
@@ -254,6 +343,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

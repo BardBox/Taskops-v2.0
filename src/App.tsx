@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import AdminOverview from "./pages/admin/Overview";
 import AdminUsers from "./pages/admin/Users";
 import AdminClients from "./pages/admin/Clients";
+import AdminProjects from "./pages/admin/Projects";
 import StatusUrgency from "./pages/admin/StatusUrgency";
 import AdminSettings from "./pages/admin/Settings";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +68,7 @@ const App = () => {
             <Route index element={<AdminOverview />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="clients" element={<AdminClients />} />
+            <Route path="projects" element={<AdminProjects />} />
             <Route path="status-urgency" element={<StatusUrgency />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>

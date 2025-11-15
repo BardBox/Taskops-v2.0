@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { toast } from "sonner";
 
 interface Client {
@@ -31,6 +31,7 @@ interface Client {
   name: string;
   client_code: string;
   premium_tag: string | null;
+  is_archived: boolean;
   created_at: string;
 }
 
@@ -42,20 +43,27 @@ export default function AdminClients() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [clientName, setClientName] = useState("");
   const [premiumTag, setPremiumTag] = useState<string>("");
+  const [showArchived, setShowArchived] = useState(false);
 
   const isOwner = userRole === "project_owner";
 
   useEffect(() => {
     fetchClients();
     setPremiumTag("none"); // Initialize with "none"
-  }, []);
+  }, [showArchived]);
 
   const fetchClients = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("clients")
-        .select("id, name, client_code, premium_tag, created_at")
+        .select("id, name, client_code, premium_tag, is_archived, created_at")
         .order("name");
+
+      if (!showArchived) {
+        query = query.eq("is_archived", false);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setClients((data as any) || []);
@@ -127,6 +135,10 @@ export default function AdminClients() {
       return;
     }
 
+    if (!window.confirm("Are you sure you want to delete this client? This action cannot be undone.")) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("clients")
@@ -139,6 +151,22 @@ export default function AdminClients() {
     } catch (error: any) {
       console.error("Error deleting client:", error);
       toast.error(error.message || "Failed to delete client");
+    }
+  };
+
+  const handleArchiveClient = async (clientId: string, currentArchived: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("clients")
+        .update({ is_archived: !currentArchived })
+        .eq("id", clientId);
+
+      if (error) throw error;
+      toast.success(currentArchived ? "Client unarchived successfully" : "Client archived successfully");
+      fetchClients();
+    } catch (error: any) {
+      console.error("Error archiving client:", error);
+      toast.error(error.message || "Failed to archive client");
     }
   };
 
@@ -160,10 +188,15 @@ export default function AdminClients() {
           <h2 className="text-3xl font-bold tracking-tight">Client Management</h2>
           <p className="text-muted-foreground">Manage client organizations</p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Client
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+            {showArchived ? "Hide Archived" : "Show Archived"}
+          </Button>
+          <Button onClick={openCreateDialog}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Client
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -177,6 +210,7 @@ export default function AdminClients() {
                 <TableHead>Client ID</TableHead>
                 <TableHead>Client Name</TableHead>
                 <TableHead>Premium Tag</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -191,6 +225,11 @@ export default function AdminClients() {
                       <Badge variant="secondary">{client.premium_tag}</Badge>
                     )}
                   </TableCell>
+                  <TableCell>
+                    <Badge variant={client.is_archived ? "outline" : "default"}>
+                      {client.is_archived ? "Archived" : "Active"}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{new Date(client.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -200,6 +239,13 @@ export default function AdminClients() {
                         onClick={() => handleEditClient(client)}
                       >
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleArchiveClient(client.id, client.is_archived)}
+                      >
+                        {client.is_archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
                       </Button>
                       {isOwner && (
                         <Button
