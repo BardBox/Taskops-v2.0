@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -89,6 +90,8 @@ export function TaskDetailDialog({
   const [assignedByName, setAssignedByName] = useState("");
   const [editingAssetLink, setEditingAssetLink] = useState(false);
   const [assetLinkValue, setAssetLinkValue] = useState("");
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState("");
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [userProfiles, setUserProfiles] = useState<Map<string, string>>(new Map());
   const [isTaskDetailsCollapsed, setIsTaskDetailsCollapsed] = useState(false);
@@ -526,6 +529,24 @@ export function TaskDetailDialog({
     }
   };
 
+  const handleNotesSave = async () => {
+    if (!task) return;
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ notes: notesValue })
+        .eq("id", task.id);
+
+      if (error) throw error;
+      setTask({ ...task, notes: notesValue });
+      setEditingNotes(false);
+      toast.success("Description updated");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Failed to update description");
+    }
+  };
+
   const handleSaveAssetLink = async () => {
     if (!task) return;
     try {
@@ -643,7 +664,7 @@ export function TaskDetailDialog({
         <div className="flex-1 overflow-y-auto min-h-0">
           <div className={`border-b transition-all duration-300 ease-in-out ${isTaskDetailsCollapsed ? 'max-h-0 overflow-hidden' : 'max-h-[50vh]'}`}>
             <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assignee</Label>
                   <p className="text-sm font-medium mt-1">{assigneeName}</p>
@@ -653,62 +674,8 @@ export function TaskDetailDialog({
                   <p className="text-sm font-medium mt-1">{assignedByName}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Client</Label>
-                  <p className="text-sm font-medium mt-1">{clientName}</p>
-                </div>
-                <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date Assigned</Label>
                   <p className="text-sm font-medium mt-1">{format(new Date(task.date), 'PPP')}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="mt-1 h-6 px-2 text-xs font-normal">
-                        {task.status}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-2 bg-background" align="start">
-                      <div className="space-y-1">
-                        {["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"].map((status) => (
-                          <Button
-                            key={status}
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start text-xs"
-                            onClick={() => handleStatusChange(status)}
-                          >
-                            {status}
-                          </Button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className={`mt-1 h-6 px-2 text-xs font-normal ${getUrgencyColor(task.urgency)}`}>
-                        {task.urgency}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-32 p-2 bg-background" align="start">
-                      <div className="space-y-1">
-                        {["Low", "Normal", "High", "Urgent"].map((urgency) => (
-                          <Button
-                            key={urgency}
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start text-xs"
-                            onClick={() => handleUrgencyChange(urgency)}
-                          >
-                            {urgency}
-                          </Button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Deadline</Label>
@@ -722,14 +689,95 @@ export function TaskDetailDialog({
                     <p className="text-sm font-medium mt-1">{format(new Date(task.actual_delivery), 'PPP')}</p>
                   </div>
                 )}
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="mt-1 h-8 px-4 text-sm font-medium hover:bg-accent">
+                        {task.status}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-2 bg-background border shadow-lg" align="start">
+                      <div className="space-y-1">
+                        {["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"].map((status) => (
+                          <Button
+                            key={status}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm hover:bg-accent"
+                            onClick={() => handleStatusChange(status)}
+                          >
+                            {status}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={`mt-1 h-8 px-4 text-sm font-medium hover:bg-accent ${getUrgencyColor(task.urgency)}`}>
+                        {task.urgency}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-40 p-2 bg-background border shadow-lg" align="start">
+                      <div className="space-y-1">
+                        {["Low", "Normal", "High", "Urgent"].map((urgency) => (
+                          <Button
+                            key={urgency}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm hover:bg-accent"
+                            onClick={() => handleUrgencyChange(urgency)}
+                          >
+                            {urgency}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
 
-              {task.notes && (
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Notes</Label>
-                  <p className="text-sm mt-1 whitespace-pre-wrap">{task.notes}</p>
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Description</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => {
+                      setEditingNotes(!editingNotes);
+                      if (!editingNotes) setNotesValue(task.notes || "");
+                    }}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
                 </div>
-              )}
+                {editingNotes ? (
+                  <div className="mt-2 space-y-2">
+                    <Textarea
+                      value={notesValue}
+                      onChange={(e) => setNotesValue(e.target.value)}
+                      placeholder="Enter description..."
+                      className="text-sm min-h-[100px]"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleNotesSave}>Save</Button>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setEditingNotes(false);
+                        setNotesValue(task.notes || "");
+                      }}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                    {task.notes || "No description"}
+                  </p>
+                )}
+              </div>
 
               {(task.reference_link_1 || task.reference_link_2 || task.reference_link_3) && (
                 <div>
@@ -796,7 +844,7 @@ export function TaskDetailDialog({
             
             <div className="p-4 space-y-4">
             {comments.map((comment) => (
-              <div key={comment.id} className={`flex gap-3 ${comment.is_pinned ? 'bg-accent/50 p-3 rounded-lg border border-accent' : ''}`}>
+              <div key={comment.id} className="flex gap-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
                     {comment.profiles?.full_name?.[0] || "U"}
@@ -829,7 +877,7 @@ export function TaskDetailDialog({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-muted-foreground/80"
                           onClick={() => handleDeleteComment(comment.id)}
                         >
                           <Trash2 className="h-3 w-3" />
