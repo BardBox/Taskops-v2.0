@@ -628,6 +628,25 @@ export function TaskDetailDialog({
     };
   };
 
+  const getUserAvatarColor = (userId: string) => {
+    const colors = [
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-purple-500",
+      "bg-pink-500",
+      "bg-indigo-500",
+      "bg-orange-500",
+      "bg-teal-500",
+      "bg-cyan-500",
+      "bg-rose-500",
+      "bg-amber-500",
+    ];
+    
+    // Generate consistent color based on user ID
+    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
+
   if (!task) return null;
 
   const delayStatus = getDelayStatus();
@@ -854,9 +873,9 @@ export function TaskDetailDialog({
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-2">
               {comments.map((comment, index) => (
-              <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? '' : 'bg-muted/10'}`}>
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>
+              <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? 'bg-background' : 'bg-muted/5'}`}>
+                <Avatar className={`h-8 w-8 ${getUserAvatarColor(comment.user_id)}`}>
+                  <AvatarFallback className="text-white font-semibold">
                     {comment.profiles?.full_name?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
