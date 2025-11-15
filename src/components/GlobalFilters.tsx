@@ -239,6 +239,17 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           </SelectContent>
         </Select>
 
+        <Select value={filters.delay} onValueChange={(v) => updateFilter("delay", v)}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Delay" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            {DELAY_OPTIONS.map(option => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <div className="flex items-center gap-2">
           <Switch
             id="highlight-today-compact"
