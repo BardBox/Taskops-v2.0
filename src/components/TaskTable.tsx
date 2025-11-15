@@ -562,10 +562,14 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                 return (
                   <TableRow 
                     key={task.id}
-                    className={shouldHighlight ? "bg-secondary/10" : ""}
+                    className={`${shouldHighlight ? "bg-secondary/10" : ""} cursor-pointer hover:bg-muted/50 transition-colors`}
+                    onClick={() => {
+                      setSelectedTaskId(task.id);
+                      setDetailDialogOpen(true);
+                    }}
                   >
                     {userRole === "project_owner" && (
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedTaskIds.has(task.id)}
                           onCheckedChange={(checked) => handleSelectTask(task.id, checked as boolean)}
@@ -601,7 +605,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     <TableCell>
                       {task.deadline ? format(new Date(task.deadline), "MMM dd") : "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
                         <Select
                           value={task.status}
@@ -627,7 +631,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
                         <Select
                           value={task.urgency}
@@ -661,7 +665,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                         "-"
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="outline"
                         size="sm"
@@ -671,7 +675,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                         Submit
                       </Button>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         {canEdit(task) && (
                           <Button
