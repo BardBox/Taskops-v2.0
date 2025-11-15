@@ -14,6 +14,7 @@ export interface FilterState {
   teamMemberId: string;
   projectManagerId: string;
   highlightToday: boolean;
+  delay: string;
 }
 
 interface GlobalFiltersProps {
@@ -49,6 +50,13 @@ const STATUS_OPTIONS = [
 ];
 
 const URGENCY_OPTIONS = ["Low", "Medium", "High", "Immediate"];
+
+const DELAY_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "on-time", label: "On Time" },
+  { value: "early", label: "Early" },
+  { value: "delayed", label: "Delayed" }
+];
 
 export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: GlobalFiltersProps) => {
   const [years, setYears] = useState<number[]>([]);
@@ -161,7 +169,8 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
     if (saved) {
       try {
         const parsedFilters = JSON.parse(saved);
-        onFiltersChange(parsedFilters);
+        // Ensure delay property exists for backwards compatibility
+        onFiltersChange({ ...parsedFilters, delay: parsedFilters.delay || "all" });
       } catch (e) {
         console.error("Failed to load saved filters", e);
       }
@@ -219,7 +228,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
 
   return (
     <Card className="p-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
         <div className="space-y-2">
           <Label className="text-xs font-medium">Year</Label>
           <Select value={filters.year} onValueChange={(v) => updateFilter("year", v)}>
@@ -275,6 +284,20 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
               <SelectItem value="all">All</SelectItem>
               {URGENCY_OPTIONS.map(urgency => (
                 <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Delay</Label>
+          <Select value={filters.delay} onValueChange={(v) => updateFilter("delay", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {DELAY_OPTIONS.map(option => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
