@@ -621,9 +621,9 @@ export function TaskDetailDialog({
           </div>
         </div>
 
-        {!isTaskDetailsCollapsed && (
-          <div className="overflow-y-auto border-b flex-shrink-0" style={{ maxHeight: '30vh' }}>
-            <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {!isTaskDetailsCollapsed && (
+            <div className="p-6 space-y-6 border-b">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assignee</Label>
@@ -774,18 +774,14 @@ export function TaskDetailDialog({
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="flex-1 flex flex-col border-t bg-muted/30 min-h-0">
-          <div className="p-4 border-b bg-background flex-shrink-0">
-            <h3 className="font-semibold">Discussion</h3>
-          </div>
-          
-          <div 
-            ref={scrollRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
-          >
+          <div className="bg-muted/30">
+            <div className="p-4 border-b bg-background">
+              <h3 className="font-semibold">Discussion</h3>
+            </div>
+            
+            <div className="p-4 space-y-4">
             {comments.map((comment) => (
               <div key={comment.id} className={`flex gap-3 ${comment.is_pinned ? 'bg-accent/50 p-3 rounded-lg border border-accent' : ''}`}>
                 <Avatar className="h-8 w-8">
@@ -850,15 +846,17 @@ export function TaskDetailDialog({
               </div>
             ))}
 
-            {typingUserNames.length > 0 && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
-              </div>
-            )}
+              {typingUserNames.length > 0 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
+                </div>
+              )}
+            </div>
           </div>
+        </div>
 
-          <div className="p-4 border-t bg-background flex-shrink-0">
+        <div className="p-4 border-t bg-background flex-shrink-0">
             {selectedImage && (
               <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-lg">
                 <span className="text-sm truncate flex-1">{selectedImage.name}</span>
@@ -910,7 +908,6 @@ export function TaskDetailDialog({
               <Button onClick={handleSendComment} disabled={uploading || (!newComment.trim() && !selectedImage)}>
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
-            </div>
           </div>
         </div>
       </DialogContent>
