@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -97,11 +97,21 @@ export function TaskDetailDialog({
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [userProfiles, setUserProfiles] = useState<Map<string, string>>(new Map());
   const [isTaskDetailsCollapsed, setIsTaskDetailsCollapsed] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const typingChannelRef = useRef<any>(null);
+
+  const reactionEmojis = [
+    { type: 'thumbs_up', emoji: '👍', label: 'Like' },
+    { type: 'heart', emoji: '❤️', label: 'Love' },
+    { type: 'laugh', emoji: '😂', label: 'Laugh' },
+    { type: 'surprised', emoji: '😮', label: 'Surprised' },
+    { type: 'sad', emoji: '😢', label: 'Sad' },
+    { type: 'fire', emoji: '🔥', label: 'Fire' },
+  ];
 
   useEffect(() => {
     if (taskId && open) {
@@ -495,11 +505,11 @@ export function TaskDetailDialog({
     }
   };
 
-  const handleReaction = async (commentId: string) => {
+  const handleReaction = async (commentId: string, reactionType: string) => {
     try {
       const existingReaction = comments
         .find(c => c.id === commentId)
-        ?.reactions?.find(r => r.user_id === userId);
+        ?.reactions?.find(r => r.user_id === userId && r.reaction_type === reactionType);
 
       if (existingReaction) {
         await supabase
@@ -510,13 +520,27 @@ export function TaskDetailDialog({
         await supabase.from("comment_reactions").insert({
           comment_id: commentId,
           user_id: userId,
-          reaction_type: "thumbs_up",
+          reaction_type: reactionType,
         });
       }
+      
+      setShowReactionPicker(null);
     } catch (error: any) {
       console.error(error);
       toast.error("Failed to add reaction");
     }
+  };
+
+  const getReactionsByType = (reactions: Reaction[]) => {
+    const grouped = new Map<string, { count: number; userIds: string[] }>();
+    reactions.forEach(r => {
+      const existing = grouped.get(r.reaction_type) || { count: 0, userIds: [] };
+      grouped.set(r.reaction_type, {
+        count: existing.count + 1,
+        userIds: [...existing.userIds, r.user_id]
+      });
+    });
+    return grouped;
   };
 
   const togglePinComment = async (commentId: string, currentPinState: boolean) => {
@@ -980,20 +1004,66 @@ export function TaskDetailDialog({
                     />
                   )}
                   
-                  <div className="flex items-center gap-4 pt-2">
-                    <button
-                      onClick={() => handleReaction(comment.id)}
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ThumbsUp className={`h-3 w-3 ${
-                        comment.reactions?.some(r => r.user_id === userId) 
-                          ? "fill-current text-primary" 
-                          : ""
-                      }`} />
-                      {comment.reactions && comment.reactions.length > 0 && (
-                        <span>{comment.reactions.length}</span>
-                      )}
-                    </button>
+                  <div className="flex items-center gap-2 pt-2 flex-wrap">
+                    {comment.reactions && comment.reactions.length > 0 && (
+                      <>
+                        {Array.from(getReactionsByType(comment.reactions).entries()).map(([type, data]) => {
+                          const emojiData = reactionEmojis.find(e => e.type === type);
+                          const userReacted = data.userIds.includes(userId);
+                          
+                          return (
+                            <HoverCard key={type} openDelay={200}>
+                              <HoverCardTrigger asChild>
+                                <button
+                                  onClick={() => handleReaction(comment.id, type)}
+                                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors ${
+                                    userReacted 
+                                      ? 'bg-primary/10 border border-primary/20' 
+                                      : 'bg-muted hover:bg-muted/80 border border-transparent'
+                                  }`}
+                                >
+                                  <span className="text-base">{emojiData?.emoji || '👍'}</span>
+                                  <span className="font-medium">{data.count}</span>
+                                </button>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-auto p-2 bg-background border shadow-lg z-50" align="start">
+                                <div className="space-y-1">
+                                  {data.userIds.map(uid => (
+                                    <div key={uid} className="text-xs">
+                                      {userProfiles.get(uid) || "Unknown User"}
+                                    </div>
+                                  ))}
+                                </div>
+                              </HoverCardContent>
+                            </HoverCard>
+                          );
+                        })}
+                      </>
+                    )}
+                    
+                    <Popover open={showReactionPicker === comment.id} onOpenChange={(open) => setShowReactionPicker(open ? comment.id : null)}>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="flex items-center gap-1 px-2 py-1 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        >
+                          <Smile className="h-3.5 w-3.5" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-2" align="start">
+                        <div className="flex gap-1">
+                          {reactionEmojis.map(({ type, emoji, label }) => (
+                            <button
+                              key={type}
+                              onClick={() => handleReaction(comment.id, type)}
+                              className="text-2xl hover:scale-125 transition-transform p-1 rounded hover:bg-muted"
+                              title={label}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     
                     {comment.read_receipts && comment.read_receipts.length > 0 && (
                       <HoverCard openDelay={200}>
