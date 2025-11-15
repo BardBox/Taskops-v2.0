@@ -592,8 +592,8 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col overflow-hidden">
-        <div className="p-6 pb-4 border-b">
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden gap-0">
+        <div className="p-6 pb-4 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full`} />
             <div className="flex-1">
@@ -622,7 +622,7 @@ export function TaskDetailDialog({
         </div>
 
         {!isTaskDetailsCollapsed && (
-          <div className="overflow-y-auto border-b" style={{ maxHeight: '35vh' }}>
+          <div className="overflow-y-auto border-b flex-shrink-0" style={{ maxHeight: '30vh' }}>
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
