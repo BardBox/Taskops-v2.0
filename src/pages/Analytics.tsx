@@ -614,7 +614,11 @@ const Analytics = () => {
           <TabsContent value="managers" className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {pmPerformance.map((pm, index) => (
-                <Card key={pm.id}>
+                <Card 
+                  key={pm.id}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => window.location.href = `/analytics/pm?id=${pm.id}&name=${encodeURIComponent(pm.name)}`}
+                >
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{pm.name}</CardTitle>
@@ -677,7 +681,11 @@ const Analytics = () => {
           <TabsContent value="clients" className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               {clientPerformance.slice(0, 4).map((client) => (
-                <Card key={client.id}>
+                <Card 
+                  key={client.id}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => window.location.href = `/analytics/client?id=${client.id}&name=${encodeURIComponent(client.name)}`}
+                >
                   <CardHeader>
                     <CardTitle className="text-lg">{client.name}</CardTitle>
                     <CardDescription>{client.totalTasks} total tasks</CardDescription>

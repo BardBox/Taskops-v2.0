@@ -48,6 +48,8 @@ export default function AdminProjects() {
   const { userRole } = useOutletContext<{ userRole: string }>();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  
+  const isOwner = userRole === "project_owner";
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -121,6 +123,11 @@ export default function AdminProjects() {
   };
 
   const handleDeleteProject = async (id: string) => {
+    if (!isOwner) {
+      toast.error("Only owners can delete projects");
+      return;
+    }
+    
     if (!window.confirm("Are you sure you want to delete this project?")) return;
     
     try {

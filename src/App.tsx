@@ -21,6 +21,8 @@ import AdminClients from "./pages/admin/Clients";
 import AdminProjects from "./pages/admin/Projects";
 import StatusUrgency from "./pages/admin/StatusUrgency";
 import AdminSettings from "./pages/admin/Settings";
+import PMPerformance from "./pages/analytics/PMPerformance";
+import ClientPerformance from "./pages/analytics/ClientPerformance";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -60,6 +62,8 @@ const App = () => {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/analytics/pm" element={<PMPerformance />} />
+          <Route path="/analytics/client" element={<ClientPerformance />} />
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="/preferences" element={<Preferences />} />
           
