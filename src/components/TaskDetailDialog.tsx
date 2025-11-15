@@ -14,6 +14,7 @@ import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 interface Task {
   id: string;
@@ -622,161 +623,110 @@ export function TaskDetailDialog({
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-0">
-          {!isTaskDetailsCollapsed && (
-            <div className="p-6 space-y-6 border-b">
+          <div className={`border-b transition-all duration-300 ease-in-out ${isTaskDetailsCollapsed ? 'max-h-0 overflow-hidden' : 'max-h-[50vh]'}`}>
+            <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assignee</Label>
-                  <p className="font-medium mt-1">{assigneeName}</p>
+                  <p className="text-sm font-medium mt-1">{assigneeName}</p>
                 </div>
-
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assigned By</Label>
-                  <p className="font-medium mt-1">{assignedByName}</p>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project Manager</Label>
+                  <p className="text-sm font-medium mt-1">{assignedByName}</p>
                 </div>
-
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Client</Label>
+                  <p className="text-sm font-medium mt-1">{clientName}</p>
+                </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
-                  <Select value={task.status} onValueChange={handleStatusChange}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Not Started">Not Started</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Waiting for Approval">Waiting for Approval</SelectItem>
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="Revision">Revision</SelectItem>
-                      <SelectItem value="On Hold">On Hold</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Badge variant="outline" className="mt-1">{task.status}</Badge>
                 </div>
-
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
-                  <Select value={task.urgency} onValueChange={handleUrgencyChange}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Low">Low</SelectItem>
-                      <SelectItem value="Normal">Normal</SelectItem>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Badge variant="outline" className="mt-1">{task.urgency}</Badge>
                 </div>
-
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project</Label>
-                  <p className="font-medium mt-1">{projectName || "No Project"}</p>
-                </div>
-
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Deadline</Label>
-                  <p className="font-medium mt-1">
-                    {task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}
+                  <p className="text-sm font-medium mt-1">
+                    {task.deadline ? format(new Date(task.deadline), 'PPP') : 'No deadline'}
                   </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Link</Label>
-                {editingAssetLink ? (
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      value={assetLinkValue}
-                      onChange={(e) => setAssetLinkValue(e.target.value)}
-                      placeholder="Enter asset link..."
-                    />
-                    <Button onClick={handleSaveAssetLink} size="sm">
-                      Save
-                    </Button>
-                    <Button onClick={() => setEditingAssetLink(false)} variant="outline" size="sm">
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 mt-2">
-                    {task.asset_link ? (
-                      <>
-                        <a
-                          href={task.asset_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center gap-1"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          View Asset
-                        </a>
-                        <Button onClick={() => setEditingAssetLink(true)} size="sm" variant="ghost">
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button onClick={handleDeleteAssetLink} size="sm" variant="ghost">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <Button onClick={() => setEditingAssetLink(true)} variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Asset Link
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Links</Label>
-                <div className="mt-2 space-y-2">
-                  {task.reference_link_1 && (
-                    <a
-                      href={task.reference_link_1}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Reference Link 1
-                    </a>
-                  )}
-                  {task.reference_link_2 && (
-                    <a
-                      href={task.reference_link_2}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Reference Link 2
-                    </a>
-                  )}
-                  {task.reference_link_3 && (
-                    <a
-                      href={task.reference_link_3}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Reference Link 3
-                    </a>
-                  )}
                 </div>
               </div>
 
               {task.notes && (
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Notes</Label>
-                  <p className="mt-2 text-sm">{task.notes}</p>
+                  <p className="text-sm mt-1 whitespace-pre-wrap">{task.notes}</p>
+                </div>
+              )}
+
+              {(task.reference_link_1 || task.reference_link_2 || task.reference_link_3) && (
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Links</Label>
+                  <div className="space-y-1 mt-1">
+                    {task.reference_link_1 && (
+                      <a 
+                        href={task.reference_link_1} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {task.reference_link_1}
+                      </a>
+                    )}
+                    {task.reference_link_2 && (
+                      <a 
+                        href={task.reference_link_2} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {task.reference_link_2}
+                      </a>
+                    )}
+                    {task.reference_link_3 && (
+                      <a 
+                        href={task.reference_link_3} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {task.reference_link_3}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {task.asset_link && (
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Link</Label>
+                  <a 
+                    href={task.asset_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    {task.asset_link}
+                  </a>
+                </div>
+              )}
+
+              {task.actual_delivery && (
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Actual Delivery</Label>
+                  <p className="text-sm font-medium mt-1">{format(new Date(task.actual_delivery), 'PPP')}</p>
                 </div>
               )}
             </div>
-          )}
+          </div>
 
-          <div className="bg-muted/30">
+          <div className="bg-muted/30 flex-1 flex flex-col min-h-0">
             <div className="p-4 border-b bg-background">
               <h3 className="font-semibold">Discussion</h3>
             </div>
