@@ -874,8 +874,8 @@ export function TaskDetailDialog({
               <div className="p-4 space-y-2">
               {comments.map((comment, index) => (
               <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? 'bg-background' : 'bg-muted/5'}`}>
-                <Avatar className={`h-8 w-8 ${getUserAvatarColor(comment.user_id)}`}>
-                  <AvatarFallback className="text-white font-semibold">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className={`text-white font-semibold ${getUserAvatarColor(comment.user_id)}`}>
                     {comment.profiles?.full_name?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
