@@ -26,11 +26,13 @@ interface TaskDialogProps {
   onOpenChange: (open: boolean) => void;
   task?: any;
   onClose?: () => void;
+  userRole?: string;
 }
 
 const taskSchema = z.object({
   task_name: z.string().min(1, "Task name is required").max(200),
   client_id: z.string().optional(),
+  project_id: z.string().optional(),
   assignee_id: z.string().min(1, "Assignee is required"),
   deadline: z.string().optional(),
   status: z.string(),
@@ -41,14 +43,17 @@ const taskSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProps) => {
+export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: TaskDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [formData, setFormData] = useState({
     task_name: "",
     client_id: "",
+    project_id: "",
     assignee_id: "",
     deadline: "",
     status: "To Do",
@@ -64,11 +69,13 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
       fetchClients();
       fetchUsers();
       getCurrentUser();
+      setCurrentUserRole(userRole || "");
 
       if (task) {
         setFormData({
           task_name: task.task_name || "",
           client_id: task.client_id || "",
+          project_id: task.project_id || "",
           assignee_id: task.assignee_id || "",
           deadline: task.deadline || "",
           status: task.status || "To Do",
@@ -78,6 +85,9 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
           reference_link_3: task.reference_link_3 || "",
           notes: task.notes || "",
         });
+        if (task.client_id) {
+          fetchProjects(task.client_id);
+        }
       } else {
         // Auto-set deadline to tomorrow if creating new task
         const tomorrow = new Date();
@@ -87,6 +97,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
         setFormData({
           task_name: "",
           client_id: "",
+          project_id: "",
           assignee_id: "",
           deadline: tomorrowStr,
           status: "To Do",
@@ -141,8 +152,36 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
   };
 
   const fetchClients = async () => {
-    const { data } = await supabase.from("clients").select("*").order("name");
-    setClients(data || []);
+    try {
+      const { data, error} = await supabase
+        .from("clients")
+        .select("*")
+        .eq("is_archived", false)
+        .order("name");
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+    }
+  };
+
+  const fetchProjects = async (clientId: string) => {
+    if (!clientId) {
+      setProjects([]);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("client_id", clientId)
+        .eq("is_archived", false)
+        .order("name");
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
   };
 
   const fetchUsers = async () => {
@@ -167,6 +206,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
         status: validated.status,
         urgency: validated.urgency,
         client_id: validated.client_id || null,
+        project_id: validated.project_id || null,
         deadline: validated.deadline || null,
         reference_link_1: validated.reference_link_1 || null,
         reference_link_2: validated.reference_link_2 || null,
@@ -200,6 +240,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
         setFormData({
           task_name: "",
           client_id: "",
+          project_id: "",
           assignee_id: "",
           deadline: tomorrowStr,
           status: "To Do",
@@ -251,7 +292,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
               <Label htmlFor="client_id">Client</Label>
               <Select
                 value={formData.client_id}
-                onValueChange={(value) => setFormData({ ...formData, client_id: value })}
+                onValueChange={(value) => {
+                  setFormData({ ...formData, client_id: value, project_id: "" });
+                  fetchProjects(value);
+                }}
               >
                 <SelectTrigger id="client_id">
                   <SelectValue placeholder="Select client" />
@@ -260,6 +304,26 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="project_id">Project</Label>
+              <Select
+                value={formData.project_id}
+                onValueChange={(value) => setFormData({ ...formData, project_id: value })}
+                disabled={!formData.client_id}
+              >
+                <SelectTrigger id="project_id">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -305,14 +369,24 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose }: TaskDialogProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  <SelectItem value="To Do">To Do</SelectItem>
-                  <SelectItem value="Doing">Doing</SelectItem>
-                  <SelectItem value="Done">Done</SelectItem>
-                  <SelectItem value="Approved">Approved</SelectItem>
-                  <SelectItem value="On Hold">On Hold</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  <SelectItem value="Needs Review">Needs Review</SelectItem>
-                  <SelectItem value="Blocked">Blocked</SelectItem>
+                  {currentUserRole === "team_member" ? (
+                    <>
+                      <SelectItem value="To Do">To Do</SelectItem>
+                      <SelectItem value="Doing">Doing</SelectItem>
+                      <SelectItem value="Done">Done</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="To Do">To Do</SelectItem>
+                      <SelectItem value="Doing">Doing</SelectItem>
+                      <SelectItem value="Done">Done</SelectItem>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      <SelectItem value="Needs Review">Needs Review</SelectItem>
+                      <SelectItem value="Blocked">Blocked</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
