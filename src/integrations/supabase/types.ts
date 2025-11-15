@@ -283,7 +283,10 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          is_pinned: boolean | null
           message: string
+          pinned_at: string | null
+          pinned_by_id: string | null
           task_id: string
           updated_at: string
           user_id: string
@@ -292,7 +295,10 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_pinned?: boolean | null
           message: string
+          pinned_at?: string | null
+          pinned_by_id?: string | null
           task_id: string
           updated_at?: string
           user_id: string
@@ -301,12 +307,22 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_pinned?: boolean | null
           message?: string
+          pinned_at?: string | null
+          pinned_by_id?: string | null
           task_id?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "task_comments_pinned_by_id_fkey"
+            columns: ["pinned_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
