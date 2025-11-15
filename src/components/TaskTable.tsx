@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { FilterState } from "@/components/GlobalFilters";
 import {
   Table,
   TableBody,
@@ -51,17 +52,7 @@ interface Task {
 interface TaskTableProps {
   userRole: string;
   userId: string;
-  filters?: {
-    year: string;
-    month: string;
-    status: string;
-    urgency: string;
-    clientId: string;
-    teamMemberId: string;
-    projectManagerId: string;
-    highlightToday: boolean;
-    delay: string;
-  };
+  filters?: FilterState;
 }
 
 export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
@@ -252,6 +243,25 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       // Apply PM filter
       if (filters.projectManagerId !== "all") {
         filtered = filtered.filter(task => task.assigned_by_id === filters.projectManagerId);
+      }
+
+      // Apply delay filter
+      if (filters.delay !== "all") {
+        filtered = filtered.filter(task => {
+          const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
+          if (delayDays === null) return false;
+          
+          switch (filters.delay) {
+            case "on-time":
+              return delayDays === 0;
+            case "early":
+              return delayDays < 0;
+            case "delayed":
+              return delayDays > 0;
+            default:
+              return true;
+          }
+        });
       }
     }
 
