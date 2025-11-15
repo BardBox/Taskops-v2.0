@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -656,12 +657,58 @@ export function TaskDetailDialog({
                   <p className="text-sm font-medium mt-1">{clientName}</p>
                 </div>
                 <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date Assigned</Label>
+                  <p className="text-sm font-medium mt-1">{format(new Date(task.date), 'PPP')}</p>
+                </div>
+                <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
-                  <Badge variant="outline" className="mt-1">{task.status}</Badge>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="mt-1 h-6 px-2 text-xs font-normal">
+                        {task.status}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2 bg-background" align="start">
+                      <div className="space-y-1">
+                        {["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"].map((status) => (
+                          <Button
+                            key={status}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-xs"
+                            onClick={() => handleStatusChange(status)}
+                          >
+                            {status}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
-                  <Badge variant="outline" className="mt-1">{task.urgency}</Badge>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={`mt-1 h-6 px-2 text-xs font-normal ${getUrgencyColor(task.urgency)}`}>
+                        {task.urgency}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-32 p-2 bg-background" align="start">
+                      <div className="space-y-1">
+                        {["Low", "Normal", "High", "Urgent"].map((urgency) => (
+                          <Button
+                            key={urgency}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-xs"
+                            onClick={() => handleUrgencyChange(urgency)}
+                          >
+                            {urgency}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Deadline</Label>
@@ -669,6 +716,12 @@ export function TaskDetailDialog({
                     {task.deadline ? format(new Date(task.deadline), 'PPP') : 'No deadline'}
                   </p>
                 </div>
+                {task.actual_delivery && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Submission Date</Label>
+                    <p className="text-sm font-medium mt-1">{format(new Date(task.actual_delivery), 'PPP')}</p>
+                  </div>
+                )}
               </div>
 
               {task.notes && (
@@ -731,13 +784,6 @@ export function TaskDetailDialog({
                     <ExternalLink className="h-3 w-3" />
                     {task.asset_link}
                   </a>
-                </div>
-              )}
-
-              {task.actual_delivery && (
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Actual Delivery</Label>
-                  <p className="text-sm font-medium mt-1">{format(new Date(task.actual_delivery), 'PPP')}</p>
                 </div>
               )}
             </div>
