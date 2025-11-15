@@ -105,10 +105,18 @@ export function TaskDetailDialog({
     if (taskId && open) {
       fetchTaskDetails();
       fetchComments();
-      subscribeToComments();
-      subscribeToReactions();
-      subscribeToReadReceipts();
-      subscribeToTyping();
+      
+      const cleanupComments = subscribeToComments();
+      const cleanupReactions = subscribeToReactions();
+      const cleanupReceipts = subscribeToReadReceipts();
+      const cleanupTyping = subscribeToTyping();
+
+      return () => {
+        if (cleanupComments) cleanupComments();
+        if (cleanupReactions) cleanupReactions();
+        if (cleanupReceipts) cleanupReceipts();
+        if (cleanupTyping) cleanupTyping();
+      };
     }
   }, [taskId, open]);
 
