@@ -592,7 +592,7 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
+      <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col overflow-hidden">
         <div className="p-6 pb-4 border-b">
           <div className="flex items-center gap-3">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full`} />
@@ -622,7 +622,7 @@ export function TaskDetailDialog({
         </div>
 
         {!isTaskDetailsCollapsed && (
-          <ScrollArea className="max-h-[35vh] border-b">
+          <div className="overflow-y-auto border-b" style={{ maxHeight: '35vh' }}>
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -774,17 +774,17 @@ export function TaskDetailDialog({
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         )}
 
-        <div className="flex-1 flex flex-col border-t bg-muted/30">
-          <div className="p-4 border-b bg-background">
+        <div className="flex-1 flex flex-col border-t bg-muted/30 min-h-0">
+          <div className="p-4 border-b bg-background flex-shrink-0">
             <h3 className="font-semibold">Discussion</h3>
           </div>
           
           <div 
             ref={scrollRef}
-            className={isTaskDetailsCollapsed ? "flex-1 overflow-y-auto p-4 space-y-4" : "h-[280px] overflow-y-auto p-4 space-y-4"}
+            className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
           >
             {comments.map((comment) => (
               <div key={comment.id} className={`flex gap-3 ${comment.is_pinned ? 'bg-accent/50 p-3 rounded-lg border border-accent' : ''}`}>
@@ -858,7 +858,7 @@ export function TaskDetailDialog({
             )}
           </div>
 
-          <div className="p-4 border-t bg-background">
+          <div className="p-4 border-t bg-background flex-shrink-0">
             {selectedImage && (
               <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-lg">
                 <span className="text-sm truncate flex-1">{selectedImage.name}</span>
