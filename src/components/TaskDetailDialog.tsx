@@ -98,6 +98,7 @@ export function TaskDetailDialog({
   const [userProfiles, setUserProfiles] = useState<Map<string, string>>(new Map());
   const [isTaskDetailsCollapsed, setIsTaskDetailsCollapsed] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
+  const [showMessageEmojiPicker, setShowMessageEmojiPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -541,6 +542,11 @@ export function TaskDetailDialog({
       });
     });
     return grouped;
+  };
+
+  const insertEmojiIntoMessage = (emoji: string) => {
+    setNewComment(prev => prev + emoji);
+    setShowMessageEmojiPicker(false);
   };
 
   const togglePinComment = async (commentId: string, currentPinState: boolean) => {
@@ -1143,6 +1149,31 @@ export function TaskDetailDialog({
                 onChange={handleImageSelect}
                 className="hidden"
               />
+              <Popover open={showMessageEmojiPicker} onOpenChange={setShowMessageEmojiPicker}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={uploading}
+                  >
+                    <Smile className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2" align="end">
+                  <div className="grid grid-cols-6 gap-1">
+                    {reactionEmojis.map(({ emoji, label }) => (
+                      <button
+                        key={emoji}
+                        onClick={() => insertEmojiIntoMessage(emoji)}
+                        className="text-2xl hover:scale-125 transition-transform p-1 rounded hover:bg-muted"
+                        title={label}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
