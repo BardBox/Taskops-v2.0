@@ -549,6 +549,14 @@ export function TaskDetailDialog({
     setShowMessageEmojiPicker(false);
   };
 
+  const isOnlyEmojis = (text: string) => {
+    // Remove all whitespace and check if remaining characters are only emojis
+    const trimmed = text.trim();
+    // Regex to match emoji characters and common emoji patterns
+    const emojiRegex = /^[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier_Base}\p{Emoji_Modifier}\p{Emoji_Component}\s]+$/u;
+    return emojiRegex.test(trimmed) && trimmed.length > 0;
+  };
+
   const togglePinComment = async (commentId: string, currentPinState: boolean) => {
     try {
       const { error } = await supabase
@@ -1001,7 +1009,7 @@ export function TaskDetailDialog({
                       )}
                     </div>
                   </div>
-                  <p className="text-sm">{comment.message}</p>
+                  <p className={isOnlyEmojis(comment.message) ? "text-5xl leading-tight" : "text-sm"}>{comment.message}</p>
                   {comment.image_url && (
                     <img
                       src={comment.image_url}
