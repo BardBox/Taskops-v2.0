@@ -24,7 +24,7 @@ import { TaskDialog } from "./TaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { SubmitDialog } from "./SubmitDialog";
 import { NotesDialog } from "./NotesDialog";
-import { Edit2, ExternalLink, FileText, ArrowUpDown, Star, Trash2 } from "lucide-react";
+import { Edit2, ExternalLink, FileText, ArrowUp, ArrowDown, Star, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -226,7 +226,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       <div className="flex items-center gap-1">
         {label}
         {sortField === field && (
-          <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+          sortDirection === "asc" ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )
         )}
       </div>
     </TableHead>
@@ -307,8 +311,23 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       let compareValue = 0;
 
       switch (sortField) {
+        case "client":
+          const aClient = a.clients?.name || "";
+          const bClient = b.clients?.name || "";
+          compareValue = aClient.localeCompare(bClient);
+          break;
+        case "assignee":
+          const aAssignee = a.assignee?.full_name || "";
+          const bAssignee = b.assignee?.full_name || "";
+          compareValue = aAssignee.localeCompare(bAssignee);
+          break;
+        case "assigned_by":
+          const aAssignedBy = a.assigned_by?.full_name || "";
+          const bAssignedBy = b.assigned_by?.full_name || "";
+          compareValue = aAssignedBy.localeCompare(bAssignedBy);
+          break;
         case "urgency":
-          const urgencyOrder = { "Immediate": 4, "High": 3, "Mid": 2, "Low": 1 };
+          const urgencyOrder = { "Immediate": 4, "High": 3, "Medium": 2, "Low": 1 };
           compareValue = urgencyOrder[a.urgency as keyof typeof urgencyOrder] - urgencyOrder[b.urgency as keyof typeof urgencyOrder];
           break;
         case "status":
@@ -318,6 +337,16 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           const aDeadline = a.deadline ? new Date(a.deadline).getTime() : 0;
           const bDeadline = b.deadline ? new Date(b.deadline).getTime() : 0;
           compareValue = aDeadline - bDeadline;
+          break;
+        case "submission":
+          const aSubmission = a.actual_delivery ? new Date(a.actual_delivery).getTime() : 0;
+          const bSubmission = b.actual_delivery ? new Date(b.actual_delivery).getTime() : 0;
+          compareValue = aSubmission - bSubmission;
+          break;
+        case "delay":
+          const aDelay = calculateDelay(a.deadline, a.actual_delivery, a.status) || 0;
+          const bDelay = calculateDelay(b.deadline, b.actual_delivery, b.status) || 0;
+          compareValue = aDelay - bDelay;
           break;
         case "date":
           compareValue = new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -472,33 +501,6 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
 
   return (
     <>
-      <div className="mb-4 flex gap-4 flex-wrap items-center justify-between">
-        <div className="flex gap-4 flex-wrap items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Sort by:</span>
-            <Select value={sortField} onValueChange={setSortField}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="date">Date Created</SelectItem>
-                <SelectItem value="urgency">Urgency</SelectItem>
-                <SelectItem value="status">Status</SelectItem>
-                <SelectItem value="deadline">Deadline</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-            >
-              <ArrowUpDown className="h-4 w-4 mr-1" />
-              {sortDirection === "asc" ? "Asc" : "Desc"}
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
