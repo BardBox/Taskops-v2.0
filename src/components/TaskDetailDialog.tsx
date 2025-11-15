@@ -842,8 +842,9 @@ export function TaskDetailDialog({
               <h3 className="font-semibold">Discussion</h3>
             </div>
             
-            <div className="p-4 space-y-4">
-            {comments.map((comment) => (
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-4">
+              {comments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
@@ -925,7 +926,8 @@ export function TaskDetailDialog({
                   {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
                 </div>
               )}
-            </div>
+              </div>
+            </ScrollArea>
           </div>
         </div>
 
