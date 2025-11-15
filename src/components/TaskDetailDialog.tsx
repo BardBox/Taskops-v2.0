@@ -100,6 +100,7 @@ export function TaskDetailDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (taskId && open) {
@@ -130,6 +131,11 @@ export function TaskDetailDialog({
     if (comments.length > 0) {
       markCommentsAsRead();
     }
+  }, [comments]);
+
+  // Auto-scroll to bottom when new comments appear
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [comments]);
 
   const subscribeToTyping = () => {
@@ -411,13 +417,47 @@ export function TaskDetailDialog({
   const handleSendComment = async () => {
     if (!taskId || (!newComment.trim() && !selectedImage)) return;
 
+    const optimisticId = `optimistic-${Date.now()}`;
+    const messageText = newComment.trim() || "(Image)";
+    
+    // Create optimistic comment
+    const optimisticComment: Comment = {
+      id: optimisticId,
+      task_id: taskId,
+      user_id: userId,
+      message: messageText,
+      image_url: null,
+      created_at: new Date().toISOString(),
+      is_pinned: false,
+      profiles: { full_name: userProfiles.get(userId) || "You" },
+      reactions: [],
+      read_receipts: [],
+    };
+
+    // Add optimistic comment immediately
+    setComments(prev => [...prev, optimisticComment]);
+    
+    const tempComment = newComment;
+    const tempImage = selectedImage;
+    
+    // Clear input immediately
+    setNewComment("");
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
     try {
       setUploading(true);
 
       let imageUrl = null;
-      if (selectedImage) {
-        imageUrl = await uploadImage(selectedImage);
+      if (tempImage) {
+        imageUrl = await uploadImage(tempImage);
         if (!imageUrl) {
+          // Remove optimistic comment on upload failure
+          setComments(prev => prev.filter(c => c.id !== optimisticId));
+          setNewComment(tempComment);
+          setSelectedImage(tempImage);
           setUploading(false);
           return;
         }
@@ -427,19 +467,20 @@ export function TaskDetailDialog({
         {
           task_id: taskId,
           user_id: userId,
-          message: newComment.trim() || "(Image)",
+          message: messageText,
           image_url: imageUrl,
         },
       ]);
 
       if (error) throw error;
 
-      setNewComment("");
-      setSelectedImage(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      // Remove optimistic comment - real one will come via realtime
+      setComments(prev => prev.filter(c => c.id !== optimisticId));
     } catch (error: any) {
+      // Remove optimistic comment and restore input on error
+      setComments(prev => prev.filter(c => c.id !== optimisticId));
+      setNewComment(tempComment);
+      setSelectedImage(tempImage);
       toast.error("Failed to send comment");
     } finally {
       setUploading(false);
@@ -878,7 +919,7 @@ export function TaskDetailDialog({
               <h3 className="font-semibold">Discussion</h3>
             </div>
             
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1" ref={scrollRef}>
               <div className="p-4 space-y-2">
               {comments.map((comment, index) => (
               <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? 'bg-background' : 'bg-muted/5'}`}>
@@ -977,6 +1018,7 @@ export function TaskDetailDialog({
                   {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
                 </div>
               )}
+              <div ref={commentsEndRef} />
               </div>
             </ScrollArea>
           </div>
