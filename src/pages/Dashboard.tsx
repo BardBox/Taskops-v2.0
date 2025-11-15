@@ -59,8 +59,28 @@ const Dashboard = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    // Set up real-time subscription for profile updates
+    const profileSubscription = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user?.id}`,
+        },
+        (payload) => {
+          setUserProfile(payload.new as any);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      profileSubscription.unsubscribe();
+    };
+  }, [navigate, user?.id]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -147,7 +167,7 @@ const Dashboard = () => {
                 <Avatar className="h-12 w-12">
                   {userProfile?.avatar_url ? (
                     <img 
-                      src={userProfile.avatar_url} 
+                      src={`${userProfile.avatar_url}?t=${Date.now()}`}
                       alt={userProfile.full_name} 
                       className="h-full w-full object-cover"
                     />
