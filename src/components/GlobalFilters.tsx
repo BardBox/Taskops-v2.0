@@ -361,7 +361,6 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           <Select 
             value={filters.projectId} 
             onValueChange={(v) => updateFilter("projectId", v)}
-            disabled={filters.clientId === "all"}
           >
             <SelectTrigger>
               <SelectValue />
