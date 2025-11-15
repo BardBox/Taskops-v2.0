@@ -168,32 +168,32 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "To Do":
-        return "bg-gray-100 text-gray-800";
+        return "bg-status-todo text-status-todo-foreground";
       case "Doing":
-        return "bg-blue-100 text-blue-800";
+        return "bg-status-doing text-status-doing-foreground";
       case "Done":
-        return "bg-green-100 text-green-800";
+        return "bg-status-done text-status-done-foreground";
       case "Approved":
-        return "bg-secondary text-secondary-foreground";
+        return "bg-status-approved text-status-approved-foreground";
       case "On Hold":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-status-hold text-status-hold-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-status-todo text-status-todo-foreground";
     }
   };
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
       case "Immediate":
-        return "bg-red-100 text-red-800";
+        return "bg-urgency-immediate text-urgency-immediate-foreground";
       case "High":
-        return "bg-orange-100 text-orange-800";
+        return "bg-urgency-high text-urgency-high-foreground";
       case "Mid":
-        return "bg-blue-100 text-blue-800";
+        return "bg-urgency-medium text-urgency-medium-foreground";
       case "Low":
-        return "bg-gray-100 text-gray-800";
+        return "bg-urgency-low text-urgency-low-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-urgency-low text-urgency-low-foreground";
     }
   };
 
@@ -552,7 +552,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                 return (
                   <TableRow 
                     key={task.id}
-                    className={shouldHighlight ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}
+                    className={shouldHighlight ? "bg-secondary/10" : ""}
                   >
                     {userRole === "project_owner" && (
                       <TableCell>
@@ -576,8 +576,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                             <Star
                               className={`h-4 w-4 ${
                                 taskAppreciations.get(task.id)
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-gray-300"
+                                  ? "fill-star text-star"
+                                  : "text-muted-foreground/30"
                               }`}
                             />
                           </button>
@@ -643,7 +643,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </TableCell>
                     <TableCell>
                       {delay !== null ? (
-                        <span className={`font-medium ${delay < 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                        <span className={`font-medium ${delay < 0 ? 'text-notification-success' : 'text-destructive'}`}>
                           {delay}d
                         </span>
                       ) : (

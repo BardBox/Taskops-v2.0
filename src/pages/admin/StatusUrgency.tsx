@@ -3,21 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 const statuses = [
-  { value: "To Do", label: "To Do", color: "bg-gray-100 text-gray-800" },
-  { value: "Doing", label: "Doing", color: "bg-blue-100 text-blue-800" },
-  { value: "Done", label: "Done", color: "bg-green-100 text-green-800" },
-  { value: "Approved", label: "Approved", color: "bg-purple-100 text-purple-800" },
-  { value: "On Hold", label: "On Hold", color: "bg-yellow-100 text-yellow-800" },
-  { value: "Cancelled", label: "Cancelled", color: "bg-red-100 text-red-800" },
-  { value: "Needs Review", label: "Needs Review", color: "bg-orange-100 text-orange-800" },
-  { value: "Blocked", label: "Blocked", color: "bg-pink-100 text-pink-800" },
+  { value: "To Do", label: "To Do", color: "bg-status-todo text-status-todo-foreground" },
+  { value: "Doing", label: "Doing", color: "bg-status-doing text-status-doing-foreground" },
+  { value: "Done", label: "Done", color: "bg-status-done text-status-done-foreground" },
+  { value: "Approved", label: "Approved", color: "bg-status-approved text-status-approved-foreground" },
+  { value: "On Hold", label: "On Hold", color: "bg-status-hold text-status-hold-foreground" },
+  { value: "Cancelled", label: "Cancelled", color: "bg-status-cancelled text-status-cancelled-foreground" },
+  { value: "Needs Review", label: "Needs Review", color: "bg-status-hold text-status-hold-foreground" },
+  { value: "Blocked", label: "Blocked", color: "bg-status-cancelled text-status-cancelled-foreground" },
 ];
 
 const urgencies = [
-  { value: "Low", label: "Low", color: "bg-green-100 text-green-800" },
-  { value: "Medium", label: "Medium", color: "bg-yellow-100 text-yellow-800" },
-  { value: "High", label: "High", color: "bg-orange-100 text-orange-800" },
-  { value: "Immediate", label: "Immediate", color: "bg-red-100 text-red-800" },
+  { value: "Low", label: "Low", color: "bg-urgency-low text-urgency-low-foreground" },
+  { value: "Medium", label: "Medium", color: "bg-urgency-medium text-urgency-medium-foreground" },
+  { value: "High", label: "High", color: "bg-urgency-high text-urgency-high-foreground" },
+  { value: "Immediate", label: "Immediate", color: "bg-urgency-immediate text-urgency-immediate-foreground" },
 ];
 
 export default function StatusUrgency() {

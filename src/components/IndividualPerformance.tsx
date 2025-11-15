@@ -174,7 +174,7 @@ export const IndividualPerformance = ({
     
     return {
       icon: isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />,
-      color: isPositive ? "text-green-600" : "text-red-600",
+      color: isPositive ? "text-notification-success" : "text-notification-error",
       text: `${Math.abs(diff).toFixed(1)}${lowerIsBetter ? 'd' : '%'} ${isPositive ? 'better' : 'below'} team avg`,
     };
   };
@@ -219,7 +219,7 @@ export const IndividualPerformance = ({
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+            <Star className="h-5 w-5 fill-star text-star" />
             <span className="text-2xl font-bold">{qualityStars}</span>
             <span className="text-sm text-muted-foreground">Quality Stars</span>
           </div>
@@ -267,7 +267,7 @@ export const IndividualPerformance = ({
             <CardTitle className="text-sm font-medium">On-Time Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{performanceMetrics.onTimeRate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-notification-success">{performanceMetrics.onTimeRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
               {performanceMetrics.onTimeTasks} on-time deliveries
             </p>
@@ -283,7 +283,7 @@ export const IndividualPerformance = ({
             <CardTitle className="text-sm font-medium">Avg Delay</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{performanceMetrics.avgDelayDays.toFixed(1)}d</div>
+            <div className="text-2xl font-bold text-notification-error">{performanceMetrics.avgDelayDays.toFixed(1)}d</div>
             <p className="text-xs text-muted-foreground mt-1">
               {performanceMetrics.delayedTasks} delayed tasks
             </p>
@@ -377,9 +377,9 @@ export const IndividualPerformance = ({
                     </span>
                     <span>{task.client_name || "No client"}</span>
                     <Badge variant="outline" className={
-                      task.urgency === "High" ? "border-red-500 text-red-500" :
-                      task.urgency === "Mid" ? "border-yellow-500 text-yellow-500" :
-                      "border-green-500 text-green-500"
+                      task.urgency === "High" ? "border-urgency-high text-urgency-high" :
+                      task.urgency === "Mid" ? "border-urgency-medium text-urgency-medium" :
+                      "border-urgency-low text-urgency-low"
                     }>
                       {task.urgency}
                     </Badge>
@@ -387,9 +387,9 @@ export const IndividualPerformance = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge className={
-                    task.status === "Approved" ? "bg-green-100 text-green-800" :
-                    task.status === "Done" ? "bg-blue-100 text-blue-800" :
-                    "bg-gray-100 text-gray-800"
+                    task.status === "Approved" ? "bg-status-approved text-status-approved-foreground" :
+                    task.status === "Done" ? "bg-status-done text-status-done-foreground" :
+                    "bg-status-todo text-status-todo-foreground"
                   }>
                     {task.status}
                   </Badge>
@@ -399,7 +399,7 @@ export const IndividualPerformance = ({
                     </Badge>
                   )}
                   {task.delay_days <= 0 && (task.status === "Approved" || task.status === "Done") && (
-                    <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-status-approved text-status-approved-foreground">
                       <Award className="h-3 w-3 mr-1" />
                       On Time
                     </Badge>

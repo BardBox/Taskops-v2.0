@@ -259,11 +259,11 @@ export default function AdminUsers() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "project_owner":
-        return "bg-purple-100 text-purple-800";
+        return "bg-role-owner text-role-owner-foreground";
       case "project_manager":
-        return "bg-blue-100 text-blue-800";
+        return "bg-role-manager text-role-manager-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-role-member text-role-member-foreground";
     }
   };
 
