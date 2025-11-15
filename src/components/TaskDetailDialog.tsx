@@ -101,6 +101,7 @@ export function TaskDetailDialog({
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const typingChannelRef = useRef<any>(null);
 
   useEffect(() => {
     if (taskId && open) {
@@ -145,6 +146,8 @@ export function TaskDetailDialog({
       config: { presence: { key: userId } }
     });
 
+    typingChannelRef.current = channel;
+
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
@@ -163,6 +166,7 @@ export function TaskDetailDialog({
       .subscribe();
 
     return () => {
+      typingChannelRef.current = null;
       supabase.removeChannel(channel);
     };
   };
@@ -234,17 +238,18 @@ export function TaskDetailDialog({
   };
 
   const handleTyping = () => {
-    if (!taskId) return;
+    if (!taskId || !typingChannelRef.current) return;
 
-    const channel = supabase.channel(`typing-${taskId}`);
-    channel.track({ user_id: userId, typing: true });
+    typingChannelRef.current.track({ user_id: userId, typing: true });
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      channel.track({ user_id: userId, typing: false });
+      if (typingChannelRef.current) {
+        typingChannelRef.current.track({ user_id: userId, typing: false });
+      }
     }, 2000);
   };
 
