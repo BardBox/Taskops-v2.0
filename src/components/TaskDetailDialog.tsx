@@ -12,10 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { format } from "date-fns";
 
 interface Task {
@@ -62,6 +63,7 @@ interface ReadReceipt {
   id: string;
   user_id: string;
   read_at: string;
+  user_name?: string;
 }
 
 interface TaskDetailDialogProps {
@@ -344,7 +346,10 @@ export function TaskDetailDialog({
       const receiptsMap = new Map<string, ReadReceipt[]>();
       receiptsData?.forEach(r => {
         const existing = receiptsMap.get(r.comment_id) || [];
-        receiptsMap.set(r.comment_id, [...existing, r]);
+        receiptsMap.set(r.comment_id, [...existing, {
+          ...r,
+          user_name: profilesMap.get(r.user_id) || "Unknown User"
+        }]);
       });
 
       const enrichedComments = commentsData?.map(c => ({
@@ -847,9 +852,9 @@ export function TaskDetailDialog({
             </div>
             
             <ScrollArea className="flex-1">
-              <div className="p-4 space-y-4">
-              {comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3">
+              <div className="p-4 space-y-2">
+              {comments.map((comment, index) => (
+              <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? '' : 'bg-muted/20'}`}>
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
                     {comment.profiles?.full_name?.[0] || "U"}
@@ -915,9 +920,24 @@ export function TaskDetailDialog({
                     </button>
                     
                     {comment.read_receipts && comment.read_receipts.length > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        Read by {comment.read_receipts.length}
-                      </span>
+                      <HoverCard openDelay={200}>
+                        <HoverCardTrigger asChild>
+                          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                            <Eye className="h-3 w-3" />
+                            <span>{comment.read_receipts.length}</span>
+                          </button>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-auto p-3 bg-background border shadow-lg z-50" align="start">
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">Seen by:</p>
+                            {comment.read_receipts.map((receipt) => (
+                              <div key={receipt.id} className="text-sm">
+                                {receipt.user_name}
+                              </div>
+                            ))}
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
                     )}
                   </div>
                 </div>
