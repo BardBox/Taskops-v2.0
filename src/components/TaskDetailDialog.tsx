@@ -184,7 +184,11 @@ export function TaskDetailDialog({
           table: "task_comments",
           filter: `task_id=eq.${taskId}`,
         },
-        () => {
+        (payload) => {
+          // Remove any optimistic comments when real one arrives
+          if (payload.eventType === 'INSERT') {
+            setComments(prev => prev.filter(c => !c.id.startsWith('optimistic-')));
+          }
           fetchComments();
         }
       )
@@ -479,8 +483,7 @@ export function TaskDetailDialog({
 
       if (error) throw error;
 
-      // Remove optimistic comment - real one will come via realtime
-      setComments(prev => prev.filter(c => c.id !== optimisticId));
+      // Keep optimistic comment - it will be replaced when realtime update arrives
     } catch (error: any) {
       // Remove optimistic comment and restore input on error
       setComments(prev => prev.filter(c => c.id !== optimisticId));
