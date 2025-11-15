@@ -351,6 +351,14 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         case "date":
           compareValue = new Date(a.date).getTime() - new Date(b.date).getTime();
           break;
+        case "task":
+          compareValue = a.task_name.localeCompare(b.task_name);
+          break;
+        case "project":
+          const aProject = a.projects?.name || "";
+          const bProject = b.projects?.name || "";
+          compareValue = aProject.localeCompare(bProject);
+          break;
         default:
           compareValue = 0;
       }
@@ -525,10 +533,10 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                   </div>
                 </TableHead>
               )}
-              <TableHead>Date</TableHead>
-              <TableHead>Task</TableHead>
+              <SortableHeader field="date" label="Date" />
+              <SortableHeader field="task" label="Task" />
               <SortableHeader field="client" label="Client" />
-              <TableHead className="w-16">Project</TableHead>
+              <SortableHeader field="project" label="Project" />
               <SortableHeader field="assignee" label="Assignee" />
               <SortableHeader field="assigned_by" label="Assigned By" />
               <SortableHeader field="deadline" label="Deadline" />
