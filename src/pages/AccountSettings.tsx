@@ -16,9 +16,12 @@ const AccountSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     checkAuth();
@@ -55,13 +58,11 @@ const AccountSettings = () => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error("File size must be less than 2MB");
       return;
@@ -70,7 +71,6 @@ const AccountSettings = () => {
     setUploading(true);
 
     try {
-      // Delete old avatar if exists
       if (avatarUrl) {
         const oldPath = avatarUrl.split("/").pop();
         if (oldPath) {
@@ -78,7 +78,6 @@ const AccountSettings = () => {
         }
       }
 
-      // Upload new avatar
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
@@ -89,12 +88,10 @@ const AccountSettings = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath);
 
-      // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl } as any)
@@ -118,7 +115,6 @@ const AccountSettings = () => {
     setSaving(true);
 
     try {
-      // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ full_name: fullName })
@@ -126,7 +122,6 @@ const AccountSettings = () => {
 
       if (profileError) throw profileError;
 
-      // Update email if changed
       if (email !== user.email) {
         const { error: emailError } = await supabase.auth.updateUser({
           email: email,
@@ -145,65 +140,81 @@ const AccountSettings = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast.success("Password updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold">Account Settings</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Account Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your account settings and profile
+            </p>
+          </div>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
         <Card>
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>
-              Update your profile information and manage your account settings
+              Update your personal information
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Avatar Section */}
-            <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24">
-                {avatarUrl ? (
-                  <AvatarImage src={avatarUrl} alt={fullName} />
-                ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                    {fullName?.charAt(0)?.toUpperCase() || email?.charAt(0)?.toUpperCase() || "U"}
-                  </AvatarFallback>
-                )}
+            <div className="flex items-center gap-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={avatarUrl} alt={fullName} />
+                <AvatarFallback>{fullName.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <Label htmlFor="avatar" className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={uploading}
-                      asChild
-                    >
-                      <span>
-                        {uploading ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Upload className="h-4 w-4 mr-2" />
-                        )}
-                        {uploading ? "Uploading..." : "Upload Avatar"}
-                      </span>
-                    </Button>
+                  <div className="flex items-center gap-2 text-sm text-primary hover:text-primary/80">
+                    <Upload className="h-4 w-4" />
+                    {uploading ? "Uploading..." : "Change Avatar"}
                   </div>
                 </Label>
                 <Input
@@ -214,13 +225,12 @@ const AccountSettings = () => {
                   onChange={handleAvatarUpload}
                   disabled={uploading}
                 />
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-1">
                   JPG, PNG or GIF. Max 2MB.
                 </p>
               </div>
             </div>
 
-            {/* Full Name */}
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
@@ -231,7 +241,6 @@ const AccountSettings = () => {
               />
             </div>
 
-            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -241,27 +250,65 @@ const AccountSettings = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Changing your email will require verification
               </p>
             </div>
 
-            {/* Save Button */}
-            <div className="flex justify-end pt-4">
-              <Button onClick={handleSaveProfile} disabled={saving}>
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </div>
+            <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
           </CardContent>
         </Card>
-      </main>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Password</CardTitle>
+            <CardDescription>
+              Update your password to keep your account secure
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Enter new password (min. 6 characters)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleChangePassword} disabled={changingPassword} className="w-full">
+              {changingPassword ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Password"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
