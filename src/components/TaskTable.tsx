@@ -21,6 +21,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskDialog } from "./TaskDialog";
+import { TaskDetailDialog } from "./TaskDetailDialog";
 import { SubmitDialog } from "./SubmitDialog";
 import { NotesDialog } from "./NotesDialog";
 import { Edit2, ExternalLink, FileText, ArrowUpDown, Star, Trash2 } from "lucide-react";
@@ -33,6 +34,7 @@ interface Task {
   date: string;
   task_name: string;
   client_id: string | null;
+  project_id: string | null;
   assignee_id: string;
   assigned_by_id: string;
   deadline: string | null;
@@ -45,6 +47,7 @@ interface Task {
   reference_link_2: string | null;
   reference_link_3: string | null;
   clients: { name: string } | null;
+  projects: { name: string } | null;
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
 }
@@ -59,6 +62,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<Task | null>(null);
@@ -105,6 +110,12 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const toggleAppreciation = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
+    // PMs can't give appreciation
+    if (userRole === "project_manager") {
+      toast.error("Project Managers cannot give appreciation");
+      return;
+    }
+    
     const hasAppreciation = taskAppreciations.get(taskId);
     
     if (hasAppreciation) {
@@ -140,6 +151,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       .select(`
         *,
         clients(name),
+        projects(name),
         assignee:profiles!tasks_assignee_id_fkey(full_name),
         assigned_by:profiles!tasks_assigned_by_id_fkey(full_name)
       `)
@@ -198,6 +210,31 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     if (!actualDelivery && diffDays <= 0) return null;
 
     return diffDays;
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const SortableHeader = ({ field, label }: { field: string; label: string }) => (
+    <TableHead className="cursor-pointer select-none" onClick={() => handleSort(field)}>
+      <div className="flex items-center gap-1">
+        {label}
+        {sortField === field && (
+          <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+        )}
+      </div>
+    </TableHead>
+  );
+
+  const handleRowClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setDetailDialogOpen(true);
   };
 
   const getFilteredAndSortedTasks = () => {
@@ -488,14 +525,15 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
               )}
               <TableHead>Date</TableHead>
               <TableHead>Task</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Assignee</TableHead>
-              <TableHead>Assigned By</TableHead>
-              <TableHead>Deadline</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Urgency</TableHead>
-              <TableHead>Submission</TableHead>
-              <TableHead>Delay</TableHead>
+              <SortableHeader field="client" label="Client" />
+              <TableHead className="w-16">Project</TableHead>
+              <SortableHeader field="assignee" label="Assignee" />
+              <SortableHeader field="assigned_by" label="Assigned By" />
+              <SortableHeader field="deadline" label="Deadline" />
+              <SortableHeader field="status" label="Status" />
+              <SortableHeader field="urgency" label="Urgency" />
+              <SortableHeader field="submission" label="Submission" />
+              <SortableHeader field="delay" label="Delay" />
               <TableHead>Preview</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -665,10 +703,19 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         task={selectedTask}
+        userRole={userRole}
         onClose={() => {
           setSelectedTask(null);
-          setDialogOpen(false);
+          fetchTasks();
         }}
+      />
+
+      <TaskDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        taskId={selectedTaskId}
+        userRole={userRole}
+        userId={userId}
       />
       
       <SubmitDialog

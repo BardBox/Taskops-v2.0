@@ -41,6 +41,7 @@ const Dashboard = () => {
     status: "all",
     urgency: "all",
     clientId: "all",
+    projectId: "all",
     teamMemberId: "all",
     projectManagerId: "all",
     highlightToday: false,

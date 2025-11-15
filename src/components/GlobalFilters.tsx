@@ -11,6 +11,7 @@ export interface FilterState {
   status: string;
   urgency: string;
   clientId: string;
+  projectId: string;
   teamMemberId: string;
   projectManagerId: string;
   highlightToday: boolean;
@@ -61,10 +62,14 @@ const DELAY_OPTIONS = [
 export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: GlobalFiltersProps) => {
   const [years, setYears] = useState<number[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [projectManagers, setProjectManagers] = useState<any[]>([]);
+  const [userRole, setUserRole] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
 
   useEffect(() => {
+    getCurrentUser();
     fetchFilterOptions();
     loadSavedFilters();
 
@@ -119,6 +124,19 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
     saveFilters();
   }, [filters]);
 
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+      if (roleData) setUserRole(roleData.role);
+    }
+  };
+
   const fetchFilterOptions = async () => {
     // Fetch years from tasks
     const { data: tasks } = await supabase
@@ -137,8 +155,17 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
     const { data: clientsData } = await supabase
       .from("clients")
       .select("*")
+      .eq("is_archived", false)
       .order("name");
     setClients(clientsData || []);
+
+    // Fetch projects
+    const { data: projectsData } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("is_archived", false)
+      .order("name");
+    setProjects(projectsData || []);
 
     // Fetch all users with their roles
     const { data: usersData } = await supabase
@@ -314,6 +341,27 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
               {clients.map(client => (
                 <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Project</Label>
+          <Select 
+            value={filters.projectId} 
+            onValueChange={(v) => updateFilter("projectId", v)}
+            disabled={filters.clientId === "all"}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All</SelectItem>
+              {projects
+                .filter(p => filters.clientId === "all" || p.client_id === filters.clientId)
+                .map(project => (
+                  <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
