@@ -543,7 +543,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           <TableBody>
             {filteredTasks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={userRole === "project_owner" ? 13 : 12} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={userRole === "project_owner" ? 14 : 13} className="text-center py-8 text-muted-foreground">
                   No tasks found matching the selected filters.
                 </TableCell>
               </TableRow>
@@ -587,6 +587,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                       </div>
                     </TableCell>
                     <TableCell>{task.clients?.name || "-"}</TableCell>
+                    <TableCell>{task.projects?.name || "-"}</TableCell>
                     <TableCell>{task.assignee?.full_name || "-"}</TableCell>
                     <TableCell>{task.assigned_by?.full_name || "-"}</TableCell>
                     <TableCell>
