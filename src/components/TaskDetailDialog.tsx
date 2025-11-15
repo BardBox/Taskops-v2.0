@@ -536,8 +536,27 @@ export function TaskDetailDialog({
     return colors[urgency] || "bg-slate-100 text-slate-800 border-slate-300";
   };
 
+  const getDelayStatus = () => {
+    if (!task?.deadline) return null;
+    
+    const deadlineDate = new Date(task.deadline);
+    const compareDate = task.actual_delivery 
+      ? new Date(task.actual_delivery) 
+      : new Date();
+    
+    const isDelayed = compareDate > deadlineDate;
+    
+    return {
+      status: isDelayed ? "Delayed" : "On Track",
+      className: isDelayed 
+        ? "bg-red-100 text-red-800 border-red-300" 
+        : "bg-green-100 text-green-800 border-green-300"
+    };
+  };
+
   if (!task) return null;
 
+  const delayStatus = getDelayStatus();
   const typingUserNames = Array.from(typingUsers)
     .map(uid => userProfiles.get(uid))
     .filter(Boolean);
@@ -545,7 +564,7 @@ export function TaskDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
-        {/* Header with Client Name and Task Name */}
+        {/* Header */}
         <div className="p-6 pb-4 border-b">
           <div className="flex items-center gap-3">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full`} />
@@ -555,15 +574,20 @@ export function TaskDetailDialog({
                 <Badge variant="outline" className={getUrgencyColor(task.urgency)}>
                   {task.urgency}
                 </Badge>
+                {delayStatus && (
+                  <Badge variant="outline" className={delayStatus.className}>
+                    {delayStatus.status}
+                  </Badge>
+                )}
               </div>
               <p className="text-lg text-muted-foreground mt-1">{task.task_name}</p>
             </div>
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        {/* Task Details - Scrollable */}
+        <ScrollArea className="max-h-[35vh] border-b">
           <div className="p-6 space-y-6">
-            {/* Task Details Section */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assignee</Label>
@@ -608,9 +632,18 @@ export function TaskDetailDialog({
               </div>
 
               {task.deadline && (
-                <div>
+                <div className="col-span-2">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Deadline</Label>
-                  <p className="font-medium mt-1">{new Date(task.deadline).toLocaleDateString()}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="font-bold text-lg text-primary">
+                      {new Date(task.deadline).toLocaleDateString()}
+                    </p>
+                    {delayStatus && (
+                      <Badge variant="outline" className={delayStatus.className}>
+                        {delayStatus.status}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -629,7 +662,7 @@ export function TaskDetailDialog({
               )}
             </div>
 
-            {/* Asset Link Section */}
+            {/* Asset Link */}
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Link</Label>
               {editingAssetLink ? (
@@ -662,7 +695,10 @@ export function TaskDetailDialog({
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => setEditingAssetLink(true)}
+                        onClick={() => {
+                          setAssetLinkValue(task.asset_link || "");
+                          setEditingAssetLink(true);
+                        }}
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
@@ -730,151 +766,148 @@ export function TaskDetailDialog({
               </div>
             )}
 
-            {/* Notes/Description */}
+            {/* Description */}
             {task.notes && (
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wide">Description</Label>
                 <p className="whitespace-pre-wrap mt-1 text-sm">{task.notes}</p>
               </div>
             )}
-
-            <Separator className="my-6" />
-
-            {/* Discussion Section */}
-            <div>
-              <h3 className="font-semibold text-lg mb-4">Discussion</h3>
-              
-              <ScrollArea className="h-[300px] pr-4 mb-4" ref={scrollRef}>
-                <div className="space-y-4">
-                  {comments.map((comment) => {
-                    const userReacted = comment.reactions?.some(r => r.user_id === userId);
-                    const reactionCount = comment.reactions?.length || 0;
-                    const readCount = comment.read_receipts?.length || 0;
-
-                    return (
-                      <div key={comment.id} className="flex gap-3 group">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {comment.profiles?.full_name?.[0] || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="font-semibold text-sm">
-                              {comment.profiles?.full_name || "Unknown"}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(comment.created_at).toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-sm mt-1 bg-muted/50 rounded-lg p-3">{comment.message}</p>
-                          {comment.image_url && (
-                            <img
-                              src={comment.image_url}
-                              alt="Attachment"
-                              className="mt-2 max-w-xs rounded-lg border"
-                            />
-                          )}
-                          <div className="flex items-center gap-2 mt-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className={`h-7 px-2 ${userReacted ? 'bg-primary/10 text-primary' : ''}`}
-                              onClick={() => handleReaction(comment.id)}
-                            >
-                              <ThumbsUp className="h-3 w-3 mr-1" />
-                              {reactionCount > 0 && <span className="text-xs">{reactionCount}</span>}
-                            </Button>
-                            {readCount > 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                {readCount} read
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-
-              {/* Typing Indicator */}
-              {typingUserNames.length > 0 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2 animate-pulse">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
-                </div>
-              )}
-
-              <Separator className="mb-4" />
-
-              {/* Message Input */}
-              <div className="space-y-2">
-                {selectedImage && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-                    <Paperclip className="h-4 w-4" />
-                    <span>{selectedImage.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 ml-auto"
-                      onClick={() => {
-                        setSelectedImage(null);
-                        if (fileInputRef.current) fileInputRef.current.value = "";
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleImageSelect}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <Textarea
-                    placeholder="Type a message... (Use @ to mention someone)"
-                    value={newComment}
-                    onChange={(e) => {
-                      setNewComment(e.target.value);
-                      handleTyping();
-                    }}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendComment();
-                      }
-                    }}
-                    disabled={uploading}
-                    className="min-h-[80px] resize-none"
-                  />
-                  <Button 
-                    onClick={handleSendComment} 
-                    disabled={uploading || (!newComment.trim() && !selectedImage)}
-                    size="icon"
-                  >
-                    {uploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
           </div>
         </ScrollArea>
+
+        {/* Discussion Section - Fixed Height */}
+        <div className="flex flex-col h-[40vh] p-6">
+          <h3 className="font-semibold text-lg mb-4">Discussion</h3>
+          
+          {/* Messages - Scrollable */}
+          <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
+            <div className="space-y-4">
+              {comments.map((comment) => {
+                const userReacted = comment.reactions?.some(r => r.user_id === userId);
+                const reactionCount = comment.reactions?.length || 0;
+                const readCount = comment.read_receipts?.length || 0;
+
+                return (
+                  <div key={comment.id} className="flex gap-3 group">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {comment.profiles?.full_name?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-semibold text-sm">
+                          {comment.profiles?.full_name || "Unknown"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(comment.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm mt-1 bg-muted/50 rounded-lg p-3">{comment.message}</p>
+                      {comment.image_url && (
+                        <img
+                          src={comment.image_url}
+                          alt="Attachment"
+                          className="mt-2 max-w-xs rounded-lg border"
+                        />
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-7 px-2 ${userReacted ? 'bg-primary/10 text-primary' : ''}`}
+                          onClick={() => handleReaction(comment.id)}
+                        >
+                          <ThumbsUp className="h-3 w-3 mr-1" />
+                          {reactionCount > 0 && <span className="text-xs">{reactionCount}</span>}
+                        </Button>
+                        {readCount > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {readCount} read
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+
+          {/* Typing Indicator */}
+          {typingUserNames.length > 0 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2 animate-pulse">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
+            </div>
+          )}
+
+          {/* Message Input - Always Visible */}
+          <div className="space-y-2">
+            {selectedImage && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                <Paperclip className="h-4 w-4" />
+                <span>{selectedImage.name}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 ml-auto"
+                  onClick={() => {
+                    setSelectedImage(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleImageSelect}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Textarea
+                placeholder="Type a message..."
+                value={newComment}
+                onChange={(e) => {
+                  setNewComment(e.target.value);
+                  handleTyping();
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendComment();
+                  }
+                }}
+                disabled={uploading}
+                className="min-h-[60px] resize-none"
+              />
+              <Button 
+                onClick={handleSendComment} 
+                disabled={uploading || (!newComment.trim() && !selectedImage)}
+                size="icon"
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
