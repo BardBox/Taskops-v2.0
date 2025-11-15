@@ -184,7 +184,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
       });
       const pms = usersData.filter((u: any) => {
         const roles = Array.isArray(u.user_roles) ? u.user_roles : [u.user_roles];
-        return roles.some((r: any) => r?.role === "project_manager" || r?.role === "project_owner");
+        return roles.some((r: any) => r?.role === "project_manager");
       });
       setTeamMembers(tms);
       setProjectManagers(pms);
