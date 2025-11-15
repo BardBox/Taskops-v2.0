@@ -44,6 +44,7 @@ const Dashboard = () => {
     teamMemberId: "all",
     projectManagerId: "all",
     highlightToday: false,
+    delay: "all",
   });
 
   useEffect(() => {

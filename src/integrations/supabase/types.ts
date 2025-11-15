@@ -268,8 +268,10 @@ export type Database = {
           notifications_sound_enabled: boolean | null
           notifications_sound_type: string | null
           notifications_sound_volume: number | null
+          notifications_task_approved: boolean | null
           notifications_task_assigned: boolean | null
           notifications_task_completed: boolean | null
+          notifications_task_reopened: boolean | null
           notifications_task_updated: boolean | null
           show_filters: boolean | null
           show_metrics: boolean | null
@@ -286,8 +288,10 @@ export type Database = {
           notifications_sound_enabled?: boolean | null
           notifications_sound_type?: string | null
           notifications_sound_volume?: number | null
+          notifications_task_approved?: boolean | null
           notifications_task_assigned?: boolean | null
           notifications_task_completed?: boolean | null
+          notifications_task_reopened?: boolean | null
           notifications_task_updated?: boolean | null
           show_filters?: boolean | null
           show_metrics?: boolean | null
@@ -304,8 +308,10 @@ export type Database = {
           notifications_sound_enabled?: boolean | null
           notifications_sound_type?: string | null
           notifications_sound_volume?: number | null
+          notifications_task_approved?: boolean | null
           notifications_task_assigned?: boolean | null
           notifications_task_completed?: boolean | null
+          notifications_task_reopened?: boolean | null
           notifications_task_updated?: boolean | null
           show_filters?: boolean | null
           show_metrics?: boolean | null

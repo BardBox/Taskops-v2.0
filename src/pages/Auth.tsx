@@ -100,6 +100,16 @@ const Auth = () => {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+            <div className="text-center mt-4">
+              <Button
+                type="button"
+                variant="link"
+                className="text-sm"
+                onClick={() => navigate("/forgot-password")}
+              >
+                Forgot Password?
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

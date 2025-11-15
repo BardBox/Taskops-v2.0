@@ -1,6 +1,7 @@
 import { Users, Building2, Palette, Settings, LayoutDashboard, Home } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -11,10 +12,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Clients", url: "/admin/clients", icon: Building2 },
@@ -25,6 +26,7 @@ const items = [
 export function AdminSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
@@ -32,6 +34,17 @@ export function AdminSidebar() {
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-60"}>
+      <SidebarHeader className="border-b p-4">
+        <Button
+          variant="ghost"
+          size={collapsed ? "icon" : "default"}
+          onClick={() => navigate("/dashboard")}
+          className="w-full justify-start"
+        >
+          <Home className="h-4 w-4" />
+          {!collapsed && <span className="ml-2">Home</span>}
+        </Button>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>

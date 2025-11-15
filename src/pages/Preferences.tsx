@@ -28,6 +28,8 @@ interface UserPreferences {
   notifications_task_assigned: boolean;
   notifications_task_completed: boolean;
   notifications_task_updated: boolean;
+  notifications_task_approved: boolean;
+  notifications_task_reopened: boolean;
   notifications_sound_enabled: boolean;
   notifications_sound_volume: number;
   notifications_sound_type: string;
@@ -52,6 +54,8 @@ const Preferences = () => {
     notifications_task_assigned: true,
     notifications_task_completed: true,
     notifications_task_updated: true,
+    notifications_task_approved: true,
+    notifications_task_reopened: true,
     notifications_sound_enabled: true,
     notifications_sound_volume: 0.7,
     notifications_sound_type: "default",
@@ -277,6 +281,22 @@ const Preferences = () => {
                 <Switch
                   checked={preferences.notifications_task_updated}
                   onCheckedChange={(checked) => updatePreference("notifications_task_updated", checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between pl-4">
+                <Label className="font-normal">A task is approved</Label>
+                <Switch
+                  checked={preferences.notifications_task_approved}
+                  onCheckedChange={(checked) => updatePreference("notifications_task_approved", checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between pl-4">
+                <Label className="font-normal">A task is re-opened</Label>
+                <Switch
+                  checked={preferences.notifications_task_reopened}
+                  onCheckedChange={(checked) => updatePreference("notifications_task_reopened", checked)}
                 />
               </div>
             </div>

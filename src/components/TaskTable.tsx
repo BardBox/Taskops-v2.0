@@ -60,6 +60,7 @@ interface TaskTableProps {
     teamMemberId: string;
     projectManagerId: string;
     highlightToday: boolean;
+    delay: string;
   };
 }
 
