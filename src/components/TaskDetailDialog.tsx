@@ -380,16 +380,16 @@ export function TaskDetailDialog({
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `task-attachments/${fileName}`;
+      const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("task-attachments")
+        .from("task-chat-images")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from("task-attachments")
+        .from("task-chat-images")
         .getPublicUrl(filePath);
 
       return publicUrl;
