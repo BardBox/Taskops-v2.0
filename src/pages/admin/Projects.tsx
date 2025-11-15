@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Pencil, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Project {
   id: string;
@@ -53,7 +54,7 @@ export default function AdminProjects() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [formData, setFormData] = useState({ name: "", client_id: "" });
+  const [formData, setFormData] = useState({ name: "", client_id: "", is_default: false });
   const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
@@ -96,19 +97,34 @@ export default function AdminProjects() {
   const handleSaveProject = async () => {
     try {
       if (editingProject) {
+        // If setting this as default, unset other defaults first
+        if (formData.is_default) {
+          await supabase
+            .from("projects")
+            .update({ is_default: false })
+            .neq("id", editingProject.id);
+        }
+        
         const { error } = await supabase
           .from("projects")
-          .update({ name: formData.name, client_id: formData.client_id })
+          .update({ name: formData.name, client_id: formData.client_id, is_default: formData.is_default })
           .eq("id", editingProject.id);
         if (error) throw error;
         toast.success("Project updated successfully");
       } else {
+        // If setting this as default, unset other defaults first
+        if (formData.is_default) {
+          await supabase
+            .from("projects")
+            .update({ is_default: false });
+        }
+        
         const { error } = await supabase.from("projects").insert([formData]);
         if (error) throw error;
         toast.success("Project created successfully");
       }
       setDialogOpen(false);
-      setFormData({ name: "", client_id: "" });
+      setFormData({ name: "", client_id: "", is_default: false });
       setEditingProject(null);
       fetchProjects();
     } catch (error: any) {
@@ -118,7 +134,7 @@ export default function AdminProjects() {
 
   const handleEditProject = (project: Project) => {
     setEditingProject(project);
-    setFormData({ name: project.name, client_id: project.client_id });
+    setFormData({ name: project.name, client_id: project.client_id, is_default: project.is_default });
     setDialogOpen(true);
   };
 
@@ -156,7 +172,7 @@ export default function AdminProjects() {
 
   const openCreateDialog = () => {
     setEditingProject(null);
-    setFormData({ name: "", client_id: "" });
+    setFormData({ name: "", client_id: "", is_default: false });
     setDialogOpen(true);
   };
 
@@ -257,6 +273,16 @@ export default function AdminProjects() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter project name"
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_default"
+                checked={formData.is_default}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_default: checked as boolean })}
+              />
+              <Label htmlFor="is_default" className="cursor-pointer">
+                Set as default project
+              </Label>
             </div>
           </div>
           <DialogFooter>

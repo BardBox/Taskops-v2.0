@@ -89,23 +89,29 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           fetchProjects(task.client_id);
         }
       } else {
-        // Auto-set deadline to tomorrow if creating new task
+        // Auto-set deadline to tomorrow and default project to SMO
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
         
-        setFormData({
-          task_name: "",
-          client_id: "",
-          project_id: "",
-          assignee_id: "",
-          deadline: tomorrowStr,
-          status: "To Do",
-          urgency: "Medium",
-          reference_link_1: "",
-          reference_link_2: "",
-          reference_link_3: "",
-          notes: "",
+        // Fetch and set default project
+        fetchDefaultProject().then((defaultProject) => {
+          setFormData({
+            task_name: "",
+            client_id: defaultProject?.client_id || "",
+            project_id: defaultProject?.id || "",
+            assignee_id: "",
+            deadline: tomorrowStr,
+            status: "To Do",
+            urgency: "Medium",
+            reference_link_1: "",
+            reference_link_2: "",
+            reference_link_3: "",
+            notes: "",
+          });
+          if (defaultProject?.client_id) {
+            fetchProjects(defaultProject.client_id);
+          }
         });
       }
 
@@ -148,6 +154,22 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setCurrentUserId(user.id);
+    }
+  };
+
+  const fetchDefaultProject = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("is_default", true)
+        .eq("is_archived", false)
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error("Error fetching default project:", error);
+      return null;
     }
   };
 
