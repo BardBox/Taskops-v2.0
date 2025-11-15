@@ -58,6 +58,47 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Status Colors */
+    --status-todo: 220 13% 91%;
+    --status-todo-foreground: 210 17% 14%;
+    --status-doing: 217 91% 60%;
+    --status-doing-foreground: 0 0% 100%;
+    --status-done: 142 76% 36%;
+    --status-done-foreground: 0 0% 100%;
+    --status-approved: 142 76% 36%;
+    --status-approved-foreground: 0 0% 100%;
+    --status-hold: 43 96% 56%;
+    --status-hold-foreground: 210 17% 14%;
+    --status-cancelled: 0 72% 51%;
+    --status-cancelled-foreground: 0 0% 100%;
+
+    /* Urgency Colors */
+    --urgency-low: 142 76% 36%;
+    --urgency-low-foreground: 0 0% 100%;
+    --urgency-medium: 43 96% 56%;
+    --urgency-medium-foreground: 210 17% 14%;
+    --urgency-high: 25 95% 53%;
+    --urgency-high-foreground: 0 0% 100%;
+    --urgency-immediate: 0 72% 51%;
+    --urgency-immediate-foreground: 0 0% 100%;
+
+    /* Notification Colors */
+    --notification-info: 217 91% 60%;
+    --notification-success: 142 76% 36%;
+    --notification-warning: 43 96% 56%;
+    --notification-error: 0 72% 51%;
+
+    /* Star/Rating Color */
+    --star: 48 100% 50%;
+
+    /* Role Colors */
+    --role-owner: 262 83% 58%;
+    --role-owner-foreground: 0 0% 100%;
+    --role-manager: 217 91% 60%;
+    --role-manager-foreground: 0 0% 100%;
+    --role-member: 220 13% 91%;
+    --role-member-foreground: 210 17% 14%;
   }
 
   .dark {
@@ -97,6 +138,47 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Status Colors (Dark) */
+    --status-todo: 215 20% 25%;
+    --status-todo-foreground: 220 9% 65%;
+    --status-doing: 217 91% 60%;
+    --status-doing-foreground: 210 17% 14%;
+    --status-done: 142 76% 36%;
+    --status-done-foreground: 0 0% 100%;
+    --status-approved: 142 76% 36%;
+    --status-approved-foreground: 0 0% 100%;
+    --status-hold: 43 96% 56%;
+    --status-hold-foreground: 210 17% 14%;
+    --status-cancelled: 0 72% 51%;
+    --status-cancelled-foreground: 0 0% 100%;
+
+    /* Urgency Colors (Dark) */
+    --urgency-low: 142 76% 36%;
+    --urgency-low-foreground: 0 0% 100%;
+    --urgency-medium: 43 96% 56%;
+    --urgency-medium-foreground: 210 17% 14%;
+    --urgency-high: 25 95% 53%;
+    --urgency-high-foreground: 0 0% 100%;
+    --urgency-immediate: 0 72% 51%;
+    --urgency-immediate-foreground: 0 0% 100%;
+
+    /* Notification Colors (Dark) */
+    --notification-info: 217 91% 60%;
+    --notification-success: 142 76% 36%;
+    --notification-warning: 43 96% 56%;
+    --notification-error: 0 72% 51%;
+
+    /* Star/Rating Color (Dark) */
+    --star: 48 100% 50%;
+
+    /* Role Colors (Dark) */
+    --role-owner: 262 83% 58%;
+    --role-owner-foreground: 0 0% 100%;
+    --role-manager: 217 91% 60%;
+    --role-manager-foreground: 0 0% 100%;
+    --role-member: 215 20% 25%;
+    --role-member-foreground: 220 9% 65%;
   }
 }
 

@@ -427,7 +427,7 @@ const Preferences = () => {
                 </Button>
               )}
               {browserNotificationPermission === "granted" && (
-                <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                <span className="text-sm text-notification-success font-medium">
                   ✓ Enabled
                 </span>
               )}

@@ -63,31 +63,31 @@ export default function AdminOverview() {
       title: "Total Users",
       value: stats.totalUsers,
       icon: Users,
-      color: "text-blue-600",
+      color: "text-notification-info",
     },
     {
       title: "Total Clients",
       value: stats.totalClients,
       icon: Building2,
-      color: "text-green-600",
+      color: "text-notification-success",
     },
     {
       title: "Total Tasks",
       value: stats.totalTasks,
       icon: ListTodo,
-      color: "text-purple-600",
+      color: "text-primary",
     },
     {
       title: "Tasks Delayed",
       value: stats.delayedTasks,
       icon: AlertCircle,
-      color: "text-red-600",
+      color: "text-notification-error",
     },
     {
       title: "Tasks Due Today",
       value: stats.tasksDueToday,
       icon: Calendar,
-      color: "text-amber-600",
+      color: "text-notification-warning",
     },
   ];
 

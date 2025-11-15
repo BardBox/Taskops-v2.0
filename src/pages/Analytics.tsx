@@ -368,9 +368,9 @@ const Analytics = () => {
     : null;
 
   const getRankIcon = (index: number) => {
-    if (index === 0) return <Trophy className="h-5 w-5 text-yellow-500" />;
-    if (index === 1) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (index === 2) return <Medal className="h-5 w-5 text-amber-700" />;
+    if (index === 0) return <Trophy className="h-5 w-5 text-star" />;
+    if (index === 1) return <Medal className="h-5 w-5 text-muted-foreground" />;
+    if (index === 2) return <Medal className="h-5 w-5 text-muted-foreground/70" />;
     return <Award className="h-4 w-4 text-muted-foreground" />;
   };
 
@@ -498,7 +498,7 @@ const Analytics = () => {
                         {member.name}
                       </CardTitle>
                       <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <Star className="h-4 w-4 fill-star text-star" />
                         <span className="font-bold">{member.qualityStars}</span>
                       </div>
                     </div>
@@ -519,11 +519,11 @@ const Analytics = () => {
                       </div>
                       <div>
                         <p className="text-muted-foreground">On Time</p>
-                        <p className="text-lg font-bold text-green-600">{member.onTimeTasks}</p>
+                        <p className="text-lg font-bold text-notification-success">{member.onTimeTasks}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Delayed</p>
-                        <p className="text-lg font-bold text-red-600">{member.delayedTasks}</p>
+                        <p className="text-lg font-bold text-notification-error">{member.delayedTasks}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Avg Delay</p>
@@ -533,7 +533,7 @@ const Analytics = () => {
                         <p className="text-muted-foreground">Quality Stars</p>
                         <div className="flex items-center gap-1 mt-1">
                           {Array.from({ length: Math.min(5, member.qualityStars) }).map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <Star key={i} className="h-4 w-4 fill-star text-star" />
                           ))}
                           {member.qualityStars > 5 && (
                             <span className="text-sm font-semibold ml-1">+{member.qualityStars - 5}</span>
@@ -570,7 +570,7 @@ const Analytics = () => {
                       </div>
                       <div className="text-right flex items-center gap-2">
                         <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <Star className="h-4 w-4 fill-star text-star" />
                           <span className="font-semibold">{member.qualityStars}</span>
                         </div>
                         <p className="text-sm font-bold">{member.weightedScore.toFixed(1)}%</p>

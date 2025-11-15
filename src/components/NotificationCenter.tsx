@@ -158,13 +158,13 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "success":
-        return "text-green-500";
+        return "text-notification-success";
       case "warning":
-        return "text-yellow-500";
+        return "text-notification-warning";
       case "error":
-        return "text-red-500";
+        return "text-notification-error";
       default:
-        return "text-blue-500";
+        return "text-notification-info";
     }
   };
 
@@ -172,8 +172,8 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
-          <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-black">
-            <Bell className="h-6 w-6 text-yellow-500" strokeWidth={3} />
+          <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-primary">
+            <Bell className="h-6 w-6 text-secondary" strokeWidth={3} />
           </div>
           {unreadCount > 0 && (
             <Badge
