@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Overview", url: "/admin", icon: LayoutDashboard },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Clients", url: "/admin/clients", icon: Building2 },
   { title: "Projects", url: "/admin/projects", icon: FolderKanban },

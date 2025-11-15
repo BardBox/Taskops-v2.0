@@ -132,17 +132,6 @@ export default function AdminSettings() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Dark Mode Default</Label>
-              <p className="text-sm text-muted-foreground">Enable dark mode by default</p>
-            </div>
-            <Switch
-              checked={settings.dark_mode_default}
-              onCheckedChange={(checked) => setSettings({ ...settings, dark_mode_default: checked })}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
               <Label>Highlight Delayed Tasks</Label>
               <p className="text-sm text-muted-foreground">Automatically highlight overdue tasks</p>
             </div>

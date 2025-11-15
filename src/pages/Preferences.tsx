@@ -5,10 +5,11 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, Monitor, Moon, Sun, Volume2, VolumeX, MonitorCheck } from "lucide-react";
+import { ArrowLeft, Loader2, Monitor, Moon, Sun, Volume2, VolumeX, MonitorCheck, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/ThemeProvider";
 import { Slider } from "@/components/ui/slider";
@@ -60,6 +61,12 @@ const Preferences = () => {
     notifications_sound_volume: 0.7,
     notifications_sound_type: "default",
     theme: "system",
+  });
+  
+  const [customColors, setCustomColors] = useState({
+    primary: "#232c37",
+    secondary: "#ffdd00",
+    accent: "#d4b47e",
   });
 
   useEffect(() => {
@@ -443,9 +450,9 @@ const Preferences = () => {
               Customize the look and feel of the application
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>Theme</Label>
+              <Label>Theme Mode</Label>
               <RadioGroup
                 value={preferences.theme}
                 onValueChange={(value) => updatePreference("theme", value)}
@@ -472,6 +479,89 @@ const Preferences = () => {
                   </Label>
                 </div>
               </RadioGroup>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Custom Theme Colors</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCustomColors({
+                    primary: "#232c37",
+                    secondary: "#ffdd00",
+                    accent: "#d4b47e",
+                  })}
+                >
+                  <RotateCcw className="h-3 w-3 mr-2" />
+                  Reset to Default
+                </Button>
+              </div>
+              
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Primary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={customColors.primary}
+                      onChange={(e) => setCustomColors({ ...customColors, primary: e.target.value })}
+                      className="w-20 h-10 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={customColors.primary}
+                      onChange={(e) => setCustomColors({ ...customColors, primary: e.target.value })}
+                      placeholder="#232c37"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Secondary/Accent Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={customColors.secondary}
+                      onChange={(e) => setCustomColors({ ...customColors, secondary: e.target.value })}
+                      className="w-20 h-10 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={customColors.secondary}
+                      onChange={(e) => setCustomColors({ ...customColors, secondary: e.target.value })}
+                      placeholder="#ffdd00"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Muted/Background Accent</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={customColors.accent}
+                      onChange={(e) => setCustomColors({ ...customColors, accent: e.target.value })}
+                      className="w-20 h-10 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={customColors.accent}
+                      onChange={(e) => setCustomColors({ ...customColors, accent: e.target.value })}
+                      placeholder="#d4b47e"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Changes will apply immediately after saving
+              </p>
             </div>
           </CardContent>
         </Card>
