@@ -56,6 +56,8 @@ export default function AdminProjects() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({ name: "", client_id: "", is_default: false });
   const [showArchived, setShowArchived] = useState(false);
+  const [clientFilter, setClientFilter] = useState<string>("all");
+  const [nameFilter, setNameFilter] = useState<string>("");
 
   useEffect(() => {
     fetchProjects();
@@ -180,6 +182,12 @@ export default function AdminProjects() {
     return clients.find(c => c.id === clientId)?.name || "Unknown";
   };
 
+  const filteredProjects = projects.filter((project) => {
+    const matchesClient = clientFilter === "all" || project.client_id === clientFilter;
+    const matchesName = nameFilter === "" || project.name.toLowerCase().includes(nameFilter.toLowerCase());
+    return matchesClient && matchesName;
+  });
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -191,6 +199,31 @@ export default function AdminProjects() {
             {showArchived ? "Hide Archived" : "Show Archived"}
           </Button>
           <Button onClick={openCreateDialog}>Add Project</Button>
+        </div>
+      </div>
+
+      <div className="flex gap-4 mb-6">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by project name..."
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+          />
+        </div>
+        <div className="w-64">
+          <Select value={clientFilter} onValueChange={setClientFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by client" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Clients</SelectItem>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -206,7 +239,7 @@ export default function AdminProjects() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <TableRow key={project.id}>
               <TableCell>{project.name}</TableCell>
               <TableCell>{getClientName(project.client_id)}</TableCell>
