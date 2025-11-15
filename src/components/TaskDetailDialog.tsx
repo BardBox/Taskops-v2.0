@@ -854,7 +854,7 @@ export function TaskDetailDialog({
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-2">
               {comments.map((comment, index) => (
-              <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? '' : 'bg-muted/20'}`}>
+              <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? '' : 'bg-muted/10'}`}>
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
                     {comment.profiles?.full_name?.[0] || "U"}
