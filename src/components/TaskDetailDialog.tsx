@@ -474,6 +474,23 @@ export function TaskDetailDialog({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("task_comments")
+        .delete()
+        .eq("id", commentId);
+
+      if (error) throw error;
+
+      toast.success("Comment deleted");
+      fetchComments();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("Failed to delete comment");
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!task) return;
     try {
@@ -753,14 +770,26 @@ export function TaskDetailDialog({
                         Pinned
                       </Badge>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 ml-auto"
-                      onClick={() => togglePinComment(comment.id, comment.is_pinned || false)}
-                    >
-                      <Pin className={`h-3 w-3 ${comment.is_pinned ? 'fill-current' : ''}`} />
-                    </Button>
+                    <div className="flex items-center gap-1 ml-auto">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => togglePinComment(comment.id, comment.is_pinned || false)}
+                      >
+                        <Pin className={`h-3 w-3 ${comment.is_pinned ? 'fill-current' : ''}`} />
+                      </Button>
+                      {userRole === 'project_owner' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteComment(comment.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm">{comment.message}</p>
                   {comment.image_url && (
