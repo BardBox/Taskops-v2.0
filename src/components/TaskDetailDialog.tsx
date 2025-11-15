@@ -6,12 +6,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2 } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +41,9 @@ interface Comment {
   message: string;
   image_url: string | null;
   created_at: string;
+  is_pinned?: boolean;
+  pinned_at?: string | null;
+  pinned_by_id?: string | null;
   profiles?: { full_name: string };
   reactions?: Reaction[];
   read_receipts?: ReadReceipt[];
@@ -87,6 +89,7 @@ export function TaskDetailDialog({
   const [assetLinkValue, setAssetLinkValue] = useState("");
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [userProfiles, setUserProfiles] = useState<Map<string, string>>(new Map());
+  const [isTaskDetailsCollapsed, setIsTaskDetailsCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -108,7 +111,6 @@ export function TaskDetailDialog({
     }
   }, [comments]);
 
-  // Mark comments as read when they come into view
   useEffect(() => {
     if (comments.length > 0) {
       markCommentsAsRead();
@@ -125,18 +127,17 @@ export function TaskDetailDialog({
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        const typingUserIds = new Set<string>();
+        const typing = new Set<string>();
         
-        Object.keys(state).forEach(key => {
-          const presences = state[key] as any[];
-          presences.forEach(presence => {
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((presence: any) => {
             if (presence.typing && presence.user_id !== userId) {
-              typingUserIds.add(presence.user_id);
+              typing.add(presence.user_id);
             }
           });
         });
         
-        setTypingUsers(typingUserIds);
+        setTypingUsers(typing);
       })
       .subscribe();
 
@@ -145,11 +146,33 @@ export function TaskDetailDialog({
     };
   };
 
-  const subscribeToReactions = () => {
+  const subscribeToComments = () => {
     if (!taskId) return;
 
     const channel = supabase
-      .channel(`comment-reactions-${taskId}`)
+      .channel(`comments-${taskId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "task_comments",
+          filter: `task_id=eq.${taskId}`,
+        },
+        () => {
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const subscribeToReactions = () => {
+    const channel = supabase
+      .channel("comment_reactions")
       .on(
         "postgres_changes",
         {
@@ -169,10 +192,8 @@ export function TaskDetailDialog({
   };
 
   const subscribeToReadReceipts = () => {
-    if (!taskId) return;
-
     const channel = supabase
-      .channel(`comment-receipts-${taskId}`)
+      .channel("comment_read_receipts")
       .on(
         "postgres_changes",
         {
@@ -239,7 +260,6 @@ export function TaskDetailDialog({
       setTask(taskData);
       setAssetLinkValue(taskData.asset_link || "");
 
-      // Fetch related data
       if (taskData.client_id) {
         const { data: clientData } = await supabase
           .from("clients")
@@ -284,11 +304,11 @@ export function TaskDetailDialog({
         .from("task_comments")
         .select("*")
         .eq("task_id", taskId)
+        .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: true });
 
       if (error) throw error;
 
-      // Fetch profile names
       const userIds = [...new Set(commentsData?.map(c => c.user_id) || [])];
       const { data: profilesData } = await supabase
         .from("profiles")
@@ -298,7 +318,6 @@ export function TaskDetailDialog({
       const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
       setUserProfiles(profilesMap);
 
-      // Fetch reactions and read receipts for each comment
       const commentIds = commentsData?.map(c => c.id) || [];
       
       const { data: reactionsData } = await supabase
@@ -323,75 +342,67 @@ export function TaskDetailDialog({
         receiptsMap.set(r.comment_id, [...existing, r]);
       });
 
-      const enrichedComments = commentsData?.map(comment => ({
-        ...comment,
-        profiles: { full_name: profilesMap.get(comment.user_id) || "Unknown" },
-        reactions: reactionsMap.get(comment.id) || [],
-        read_receipts: receiptsMap.get(comment.id) || [],
+      const enrichedComments = commentsData?.map(c => ({
+        ...c,
+        profiles: { full_name: profilesMap.get(c.user_id) || "Unknown" },
+        reactions: reactionsMap.get(c.id) || [],
+        read_receipts: receiptsMap.get(c.id) || [],
       })) || [];
 
       setComments(enrichedComments);
     } catch (error: any) {
-      toast.error("Failed to fetch comments");
+      console.error("Error fetching comments:", error);
     }
-  };
-
-  const subscribeToComments = () => {
-    if (!taskId) return;
-
-    const channel = supabase
-      .channel(`task-comments-${taskId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "task_comments",
-          filter: `task_id=eq.${taskId}`,
-        },
-        () => {
-          fetchComments();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size must be less than 2MB");
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
         return;
       }
       setSelectedImage(file);
     }
   };
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `task-attachments/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("task-attachments")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("task-attachments")
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+      return null;
+    }
+  };
+
   const handleSendComment = async () => {
     if (!taskId || (!newComment.trim() && !selectedImage)) return;
 
-    setUploading(true);
     try {
+      setUploading(true);
+
       let imageUrl = null;
-
       if (selectedImage) {
-        const fileExt = selectedImage.name.split(".").pop();
-        const fileName = `${userId}/${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("task-chat-images")
-          .upload(fileName, selectedImage);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("task-chat-images")
-          .getPublicUrl(fileName);
-
-        imageUrl = publicUrl;
+        imageUrl = await uploadImage(selectedImage);
+        if (!imageUrl) {
+          setUploading(false);
+          return;
+        }
       }
 
       const { error } = await supabase.from("task_comments").insert([
@@ -419,19 +430,16 @@ export function TaskDetailDialog({
 
   const handleReaction = async (commentId: string) => {
     try {
-      // Check if user already reacted
       const existingReaction = comments
         .find(c => c.id === commentId)
         ?.reactions?.find(r => r.user_id === userId);
 
       if (existingReaction) {
-        // Remove reaction
         await supabase
           .from("comment_reactions")
           .delete()
           .eq("id", existingReaction.id);
       } else {
-        // Add reaction
         await supabase.from("comment_reactions").insert({
           comment_id: commentId,
           user_id: userId,
@@ -441,6 +449,27 @@ export function TaskDetailDialog({
     } catch (error: any) {
       console.error(error);
       toast.error("Failed to add reaction");
+    }
+  };
+
+  const togglePinComment = async (commentId: string, currentPinState: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("task_comments")
+        .update({
+          is_pinned: !currentPinState,
+          pinned_at: !currentPinState ? new Date().toISOString() : null,
+          pinned_by_id: !currentPinState ? userId : null,
+        })
+        .eq("id", commentId);
+
+      if (error) throw error;
+
+      toast.success(currentPinState ? "Message unpinned" : "Message pinned");
+      fetchComments();
+    } catch (error) {
+      console.error("Error toggling pin:", error);
+      toast.error("Failed to update pin status");
     }
   };
 
@@ -564,7 +593,6 @@ export function TaskDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
-        {/* Header */}
         <div className="p-6 pb-4 border-b">
           <div className="flex items-center gap-3">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full`} />
@@ -579,165 +607,139 @@ export function TaskDetailDialog({
                     {delayStatus.status}
                   </Badge>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsTaskDetailsCollapsed(!isTaskDetailsCollapsed)}
+                  className="ml-auto"
+                >
+                  {isTaskDetailsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                </Button>
               </div>
               <p className="text-lg text-muted-foreground mt-1">{task.task_name}</p>
             </div>
           </div>
         </div>
 
-        {/* Task Details - Scrollable */}
-        <ScrollArea className="max-h-[35vh] border-b">
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assignee</Label>
-                <p className="font-medium mt-1">{assigneeName}</p>
-              </div>
+        {!isTaskDetailsCollapsed && (
+          <ScrollArea className="max-h-[35vh] border-b">
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assignee</Label>
+                  <p className="font-medium mt-1">{assigneeName}</p>
+                </div>
 
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assigned By</Label>
-                <p className="font-medium mt-1">{assignedByName}</p>
-              </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assigned By</Label>
+                  <p className="font-medium mt-1">{assignedByName}</p>
+                </div>
 
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
-                <Select value={task.status} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Not Started">Not Started</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Waiting for Approval">Waiting for Approval</SelectItem>
-                    <SelectItem value="Approved">Approved</SelectItem>
-                    <SelectItem value="Revision">Revision</SelectItem>
-                    <SelectItem value="On Hold">On Hold</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
+                  <Select value={task.status} onValueChange={handleStatusChange}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Not Started">Not Started</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Waiting for Approval">Waiting for Approval</SelectItem>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Revision">Revision</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
-                <Select value={task.urgency} onValueChange={handleUrgencyChange}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Normal">Normal</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
+                  <Select value={task.urgency} onValueChange={handleUrgencyChange}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Normal">Normal</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {task.deadline && (
-                <div className="col-span-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project</Label>
+                  <p className="font-medium mt-1">{projectName || "No Project"}</p>
+                </div>
+
+                <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Deadline</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="font-bold text-lg text-primary">
-                      {new Date(task.deadline).toLocaleDateString()}
-                    </p>
-                    {delayStatus && (
-                      <Badge variant="outline" className={delayStatus.className}>
-                        {delayStatus.status}
-                      </Badge>
+                  <p className="font-medium mt-1">
+                    {task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Link</Label>
+                {editingAssetLink ? (
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={assetLinkValue}
+                      onChange={(e) => setAssetLinkValue(e.target.value)}
+                      placeholder="Enter asset link..."
+                    />
+                    <Button onClick={handleSaveAssetLink} size="sm">
+                      Save
+                    </Button>
+                    <Button onClick={() => setEditingAssetLink(false)} variant="outline" size="sm">
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mt-2">
+                    {task.asset_link ? (
+                      <>
+                        <a
+                          href={task.asset_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          View Asset
+                        </a>
+                        <Button onClick={() => setEditingAssetLink(true)} size="sm" variant="ghost">
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button onClick={handleDeleteAssetLink} size="sm" variant="ghost">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button onClick={() => setEditingAssetLink(true)} variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Asset Link
+                      </Button>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {task.actual_delivery && (
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Actual Delivery</Label>
-                  <p className="font-medium mt-1">{new Date(task.actual_delivery).toLocaleDateString()}</p>
-                </div>
-              )}
-
-              {projectName && (
-                <div className="col-span-2">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project</Label>
-                  <p className="font-medium mt-1">{projectName}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Asset Link */}
-            <div>
-              <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Link</Label>
-              {editingAssetLink ? (
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    value={assetLinkValue}
-                    onChange={(e) => setAssetLinkValue(e.target.value)}
-                    placeholder="Enter asset link URL"
-                  />
-                  <Button size="icon" variant="outline" onClick={handleSaveAssetLink}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="outline" onClick={() => setEditingAssetLink(false)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 mt-1">
-                  {task.asset_link ? (
-                    <>
-                      <a
-                        href={task.asset_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-primary hover:underline"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        View Asset
-                      </a>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          setAssetLinkValue(task.asset_link || "");
-                          setEditingAssetLink(true);
-                        }}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={handleDeleteAssetLink}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingAssetLink(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Asset Link
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Reference Links */}
-            {(task.reference_link_1 || task.reference_link_2 || task.reference_link_3) && (
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Links</Label>
-                <div className="space-y-2 mt-1">
+                <div className="mt-2 space-y-2">
                   {task.reference_link_1 && (
                     <a
                       href={task.reference_link_1}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      className="text-primary hover:underline flex items-center gap-1"
                     >
-                      <ExternalLink className="h-3 w-3" />
-                      Reference 1
+                      <ExternalLink className="h-4 w-4" />
+                      Reference Link 1
                     </a>
                   )}
                   {task.reference_link_2 && (
@@ -745,10 +747,10 @@ export function TaskDetailDialog({
                       href={task.reference_link_2}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      className="text-primary hover:underline flex items-center gap-1"
                     >
-                      <ExternalLink className="h-3 w-3" />
-                      Reference 2
+                      <ExternalLink className="h-4 w-4" />
+                      Reference Link 2
                     </a>
                   )}
                   {task.reference_link_3 && (
@@ -756,130 +758,126 @@ export function TaskDetailDialog({
                       href={task.reference_link_3}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      className="text-primary hover:underline flex items-center gap-1"
                     >
-                      <ExternalLink className="h-3 w-3" />
-                      Reference 3
+                      <ExternalLink className="h-4 w-4" />
+                      Reference Link 3
                     </a>
                   )}
                 </div>
               </div>
-            )}
 
-            {/* Description */}
-            {task.notes && (
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Description</Label>
-                <p className="whitespace-pre-wrap mt-1 text-sm">{task.notes}</p>
+              {task.notes && (
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Notes</Label>
+                  <p className="mt-2 text-sm">{task.notes}</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        )}
+
+        <div className="flex-1 flex flex-col border-t bg-muted/30">
+          <div className="p-4 border-b bg-background">
+            <h3 className="font-semibold">Discussion</h3>
+          </div>
+          
+          <div 
+            ref={scrollRef}
+            className={isTaskDetailsCollapsed ? "flex-1 overflow-y-auto p-4 space-y-4" : "h-[280px] overflow-y-auto p-4 space-y-4"}
+          >
+            {comments.map((comment) => (
+              <div key={comment.id} className={`flex gap-3 ${comment.is_pinned ? 'bg-accent/50 p-3 rounded-lg border border-accent' : ''}`}>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>
+                    {comment.profiles?.full_name?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">
+                      {comment.profiles?.full_name || "Unknown User"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(comment.created_at).toLocaleString()}
+                    </span>
+                    {comment.is_pinned && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Pin className="h-3 w-3 mr-1" />
+                        Pinned
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 ml-auto"
+                      onClick={() => togglePinComment(comment.id, comment.is_pinned || false)}
+                    >
+                      <Pin className={`h-3 w-3 ${comment.is_pinned ? 'fill-current' : ''}`} />
+                    </Button>
+                  </div>
+                  <p className="text-sm">{comment.message}</p>
+                  {comment.image_url && (
+                    <img
+                      src={comment.image_url}
+                      alt="Attachment"
+                      className="max-w-xs rounded-lg mt-2"
+                    />
+                  )}
+                  
+                  <div className="flex items-center gap-4 pt-2">
+                    <button
+                      onClick={() => handleReaction(comment.id)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ThumbsUp className={`h-3 w-3 ${
+                        comment.reactions?.some(r => r.user_id === userId) 
+                          ? "fill-current text-primary" 
+                          : ""
+                      }`} />
+                      {comment.reactions && comment.reactions.length > 0 && (
+                        <span>{comment.reactions.length}</span>
+                      )}
+                    </button>
+                    
+                    {comment.read_receipts && comment.read_receipts.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        Read by {comment.read_receipts.length}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {typingUserNames.length > 0 && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
               </div>
             )}
           </div>
-        </ScrollArea>
 
-        {/* Discussion Section - Fixed Height */}
-        <div className="flex flex-col h-[40vh] p-6">
-          <h3 className="font-semibold text-lg mb-4">Discussion</h3>
-          
-          {/* Messages - Scrollable */}
-          <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
-            <div className="space-y-4">
-              {comments.map((comment) => {
-                const userReacted = comment.reactions?.some(r => r.user_id === userId);
-                const reactionCount = comment.reactions?.length || 0;
-                const readCount = comment.read_receipts?.length || 0;
-
-                return (
-                  <div key={comment.id} className="flex gap-3 group">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {comment.profiles?.full_name?.[0] || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-semibold text-sm">
-                          {comment.profiles?.full_name || "Unknown"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(comment.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm mt-1 bg-muted/50 rounded-lg p-3">{comment.message}</p>
-                      {comment.image_url && (
-                        <img
-                          src={comment.image_url}
-                          alt="Attachment"
-                          className="mt-2 max-w-xs rounded-lg border"
-                        />
-                      )}
-                      <div className="flex items-center gap-2 mt-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={`h-7 px-2 ${userReacted ? 'bg-primary/10 text-primary' : ''}`}
-                          onClick={() => handleReaction(comment.id)}
-                        >
-                          <ThumbsUp className="h-3 w-3 mr-1" />
-                          {reactionCount > 0 && <span className="text-xs">{reactionCount}</span>}
-                        </Button>
-                        {readCount > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {readCount} read
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-
-          {/* Typing Indicator */}
-          {typingUserNames.length > 0 && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2 animate-pulse">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
-            </div>
-          )}
-
-          {/* Message Input - Always Visible */}
-          <div className="space-y-2">
+          <div className="p-4 border-t bg-background">
             {selectedImage && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-                <Paperclip className="h-4 w-4" />
-                <span>{selectedImage.name}</span>
+              <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-lg">
+                <span className="text-sm truncate flex-1">{selectedImage.name}</span>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 ml-auto"
                   onClick={() => {
                     setSelectedImage(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
                   }}
+                  variant="ghost"
+                  size="sm"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             )}
             <div className="flex gap-2">
               <Input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleImageSelect}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <Textarea
-                placeholder="Type a message..."
                 value={newComment}
                 onChange={(e) => {
                   setNewComment(e.target.value);
@@ -891,19 +889,26 @@ export function TaskDetailDialog({
                     handleSendComment();
                   }
                 }}
+                placeholder="Type a message..."
                 disabled={uploading}
-                className="min-h-[60px] resize-none"
               />
-              <Button 
-                onClick={handleSendComment} 
-                disabled={uploading || (!newComment.trim() && !selectedImage)}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
                 size="icon"
+                disabled={uploading}
               >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleSendComment} disabled={uploading || (!newComment.trim() && !selectedImage)}>
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </div>
