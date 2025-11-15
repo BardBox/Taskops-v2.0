@@ -47,6 +47,7 @@ export default function AdminClients() {
 
   useEffect(() => {
     fetchClients();
+    setPremiumTag("none"); // Initialize with "none"
   }, []);
 
   const fetchClients = async () => {
@@ -79,7 +80,7 @@ export default function AdminClients() {
           .from("clients")
           .update({ 
             name: clientName,
-            premium_tag: premiumTag || null
+            premium_tag: premiumTag === "none" ? null : premiumTag
           })
           .eq("id", editingClient.id);
 
@@ -95,7 +96,7 @@ export default function AdminClients() {
           .insert([{ 
             name: clientName,
             client_code: nextCode,
-            premium_tag: premiumTag || null
+            premium_tag: premiumTag === "none" ? null : premiumTag
           }]);
 
         if (error) throw error;
@@ -104,7 +105,7 @@ export default function AdminClients() {
 
       setDialogOpen(false);
       setClientName("");
-      setPremiumTag("");
+      setPremiumTag("none");
       setEditingClient(null);
       fetchClients();
     } catch (error: any) {
@@ -116,7 +117,7 @@ export default function AdminClients() {
   const handleEditClient = (client: Client) => {
     setEditingClient(client);
     setClientName(client.name);
-    setPremiumTag(client.premium_tag || "");
+    setPremiumTag(client.premium_tag || "none");
     setDialogOpen(true);
   };
 
@@ -144,7 +145,7 @@ export default function AdminClients() {
   const openCreateDialog = () => {
     setEditingClient(null);
     setClientName("");
-    setPremiumTag("");
+    setPremiumTag("none");
     setDialogOpen(true);
   };
 
@@ -245,7 +246,7 @@ export default function AdminClients() {
                   <SelectValue placeholder="Select premium tag" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="A">A</SelectItem>
                   <SelectItem value="B">B</SelectItem>
                   <SelectItem value="C">C</SelectItem>
