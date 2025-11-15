@@ -689,15 +689,18 @@ export function TaskDetailDialog({
                     <p className="text-sm font-medium mt-1">{format(new Date(task.actual_delivery), 'PPP')}</p>
                   </div>
                 )}
-                <div>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="mt-1 h-8 px-4 text-sm font-medium hover:bg-accent">
+                      <Button variant="outline" size="sm" className="h-8 px-4 text-sm font-medium hover:bg-accent">
                         {task.status}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-56 p-2 bg-background border shadow-lg" align="start">
+                    <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
                       <div className="space-y-1">
                         {["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"].map((status) => (
                           <Button
@@ -714,15 +717,16 @@ export function TaskDetailDialog({
                     </PopoverContent>
                   </Popover>
                 </div>
-                <div>
+                
+                <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className={`mt-1 h-8 px-4 text-sm font-medium hover:bg-accent ${getUrgencyColor(task.urgency)}`}>
+                      <Button variant="outline" size="sm" className={`h-8 px-4 text-sm font-medium hover:bg-accent ${getUrgencyColor(task.urgency)}`}>
                         {task.urgency}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-40 p-2 bg-background border shadow-lg" align="start">
+                    <PopoverContent className="w-40 p-2 bg-background border shadow-lg z-50" align="start">
                       <div className="space-y-1">
                         {["Low", "Normal", "High", "Urgent"].map((urgency) => (
                           <Button
