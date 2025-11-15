@@ -26,8 +26,8 @@ All colors MUST be HSL.
     --secondary: 48 100% 50%;
     --secondary-foreground: 210 17% 14%;
 
-    /* Muted Yellow for backgrounds */
-    --muted: 43 69% 68%;
+    /* Muted areas - neutral gray */
+    --muted: 220 13% 91%;
     --muted-foreground: 210 17% 14%;
 
     /* Light accent areas */
