@@ -329,7 +329,11 @@ export const KanbanBoard = ({
     }
 
     const taskId = active.id as string;
-    const newStatus = over.id as string;
+    
+    // Check if we dropped on a task or a column
+    // If over.id matches a task ID, use that task's status as the new status
+    const overTask = tasks.find(t => t.id === over.id);
+    const newStatus = overTask ? overTask.status : (over.id as string);
     
     const task = tasks.find(t => t.id === taskId);
     if (task && task.status !== newStatus && canEdit(task)) {
