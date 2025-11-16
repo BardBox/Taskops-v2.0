@@ -13,13 +13,102 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { ColorPicker } from "@/components/ColorPicker";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
 
 interface StatusUrgencyItem {
   value: string;
   label: string;
   color: string;
+}
+
+interface SortableItemProps {
+  item: StatusUrgencyItem;
+  isOwner: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.value });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center justify-between p-2 rounded-lg hover:bg-muted/50",
+        isDragging && "opacity-50"
+      )}
+    >
+      <div className="flex items-center gap-2">
+        {isOwner && (
+          <button
+            className="cursor-grab active:cursor-grabbing touch-none"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+        <span className="font-medium">{item.label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Badge className={item.color}>{item.value}</Badge>
+        {isOwner && (
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={onEdit}
+            >
+              <Pencil className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const initialStatuses: StatusUrgencyItem[] = [
@@ -50,6 +139,28 @@ export default function StatusUrgency() {
   const [editingType, setEditingType] = useState<"status" | "urgency">("status");
   const [editingItem, setEditingItem] = useState<StatusUrgencyItem | null>(null);
   const [formData, setFormData] = useState({ value: "", label: "", color: "" });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent, type: "status" | "urgency") => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const items = type === "status" ? statuses : urgencies;
+      const setItems = type === "status" ? setStatuses : setUrgencies;
+      
+      const oldIndex = items.findIndex((item) => item.value === active.id);
+      const newIndex = items.findIndex((item) => item.value === over.id);
+
+      setItems(arrayMove(items, oldIndex, newIndex));
+      toast.success(`${type === "status" ? "Status" : "Urgency"} order updated`);
+    }
+  };
 
   const handleEdit = (type: "status" | "urgency", item: StatusUrgencyItem) => {
     setEditingType(type);
@@ -133,36 +244,28 @@ export default function StatusUrgency() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {statuses.map((status) => (
-                <div key={status.value} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                  <span className="font-medium">{status.label}</span>
-                  <div className="flex items-center gap-2">
-                    <Badge className={status.color}>{status.value}</Badge>
-                    {isOwner && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleEdit("status", status)}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleDelete("status", status.value)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(event) => handleDragEnd(event, "status")}
+            >
+              <SortableContext
+                items={statuses.map((s) => s.value)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {statuses.map((status) => (
+                    <SortableItem
+                      key={status.value}
+                      item={status}
+                      isOwner={isOwner}
+                      onEdit={() => handleEdit("status", status)}
+                      onDelete={() => handleDelete("status", status.value)}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </CardContent>
         </Card>
 
@@ -182,36 +285,28 @@ export default function StatusUrgency() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {urgencies.map((urgency) => (
-                <div key={urgency.value} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                  <span className="font-medium">{urgency.label}</span>
-                  <div className="flex items-center gap-2">
-                    <Badge className={urgency.color}>{urgency.value}</Badge>
-                    {isOwner && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleEdit("urgency", urgency)}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleDelete("urgency", urgency.value)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(event) => handleDragEnd(event, "urgency")}
+            >
+              <SortableContext
+                items={urgencies.map((u) => u.value)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {urgencies.map((urgency) => (
+                    <SortableItem
+                      key={urgency.value}
+                      item={urgency}
+                      isOwner={isOwner}
+                      onEdit={() => handleEdit("urgency", urgency)}
+                      onDelete={() => handleDelete("urgency", urgency.value)}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </CardContent>
         </Card>
       </div>
@@ -253,17 +348,10 @@ export default function StatusUrgency() {
                 placeholder="e.g., In Progress"
               />
             </div>
-            <div>
-              <Label>Color Class</Label>
-              <Input
-                value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                placeholder="e.g., bg-blue-100 text-blue-800"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Use semantic tokens like bg-status-doing text-status-doing-foreground
-              </p>
-            </div>
+            <ColorPicker
+              value={formData.color}
+              onChange={(color) => setFormData({ ...formData, color })}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
