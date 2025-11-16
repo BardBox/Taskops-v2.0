@@ -59,28 +59,79 @@ All colors MUST be HSL.
 
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Status Colors */
-    --status-todo: 220 13% 91%;
-    --status-todo-foreground: 210 17% 14%;
-    --status-doing: 217 91% 60%;
-    --status-doing-foreground: 0 0% 100%;
-    --status-done: 142 76% 36%;
-    --status-done-foreground: 0 0% 100%;
-    --status-approved: 142 76% 36%;
-    --status-approved-foreground: 0 0% 100%;
-    --status-hold: 43 96% 56%;
-    --status-hold-foreground: 210 17% 14%;
-    --status-cancelled: 0 72% 51%;
-    --status-cancelled-foreground: 0 0% 100%;
+    /* Status Pastel Colors - 20 Beautiful Soft Pastels */
+    /* Soft Blues */
+    --status-powder-blue: 210 100% 94%;
+    --status-powder-blue-foreground: 210 50% 25%;
+    --status-sky-blue: 200 80% 85%;
+    --status-sky-blue-foreground: 200 60% 20%;
+    --status-periwinkle: 220 70% 88%;
+    --status-periwinkle-foreground: 220 50% 25%;
+    --status-ice-blue: 190 60% 90%;
+    --status-ice-blue-foreground: 190 50% 20%;
+    
+    /* Soft Greens */
+    --status-mint: 150 60% 88%;
+    --status-mint-foreground: 150 50% 20%;
+    --status-sage: 130 40% 85%;
+    --status-sage-foreground: 130 50% 20%;
+    --status-seafoam: 165 55% 87%;
+    --status-seafoam-foreground: 165 50% 20%;
+    --status-pistachio: 140 50% 88%;
+    --status-pistachio-foreground: 140 50% 20%;
+    
+    /* Soft Yellows/Oranges */
+    --status-cream: 45 80% 92%;
+    --status-cream-foreground: 45 50% 20%;
+    --status-peach: 30 90% 88%;
+    --status-peach-foreground: 30 60% 20%;
+    --status-apricot: 25 85% 87%;
+    --status-apricot-foreground: 25 60% 20%;
+    --status-buttercup: 50 75% 88%;
+    --status-buttercup-foreground: 50 50% 20%;
+    
+    /* Soft Pinks/Roses */
+    --status-blush: 340 80% 90%;
+    --status-blush-foreground: 340 50% 25%;
+    --status-rose: 350 70% 88%;
+    --status-rose-foreground: 350 60% 25%;
+    --status-coral: 10 75% 87%;
+    --status-coral-foreground: 10 60% 25%;
+    --status-mauve: 320 50% 88%;
+    --status-mauve-foreground: 320 50% 25%;
+    
+    /* Soft Purples */
+    --status-lavender: 270 60% 90%;
+    --status-lavender-foreground: 270 50% 25%;
+    --status-lilac: 280 55% 88%;
+    --status-lilac-foreground: 280 50% 25%;
+    --status-periwinkle-purple: 260 50% 88%;
+    --status-periwinkle-purple-foreground: 260 50% 25%;
+    
+    /* Soft Grays */
+    --status-pearl: 220 15% 90%;
+    --status-pearl-foreground: 220 20% 20%;
 
-    /* Urgency Colors */
-    --urgency-low: 142 76% 36%;
+    /* Urgency Extended Colors - 10 Color Spectrum (Green → Red) */
+    --urgency-very-low: 142 76% 45%;
+    --urgency-very-low-foreground: 0 0% 100%;
+    --urgency-low: 130 70% 50%;
     --urgency-low-foreground: 0 0% 100%;
-    --urgency-medium: 43 96% 56%;
-    --urgency-medium-foreground: 210 17% 14%;
-    --urgency-high: 25 95% 53%;
+    --urgency-low-medium: 100 65% 55%;
+    --urgency-low-medium-foreground: 100 60% 15%;
+    --urgency-medium: 60 80% 60%;
+    --urgency-medium-foreground: 60 60% 15%;
+    --urgency-medium-high: 45 90% 58%;
+    --urgency-medium-high-foreground: 45 60% 15%;
+    --urgency-high: 35 95% 56%;
     --urgency-high-foreground: 0 0% 100%;
-    --urgency-immediate: 0 72% 51%;
+    --urgency-very-high: 25 95% 53%;
+    --urgency-very-high-foreground: 0 0% 100%;
+    --urgency-urgent: 15 90% 50%;
+    --urgency-urgent-foreground: 0 0% 100%;
+    --urgency-critical: 5 85% 52%;
+    --urgency-critical-foreground: 0 0% 100%;
+    --urgency-immediate: 0 85% 55%;
     --urgency-immediate-foreground: 0 0% 100%;
 
     /* Notification Colors */
@@ -139,28 +190,79 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Status Colors (Dark) */
-    --status-todo: 215 20% 25%;
-    --status-todo-foreground: 220 9% 65%;
-    --status-doing: 217 91% 60%;
-    --status-doing-foreground: 210 17% 14%;
-    --status-done: 142 76% 36%;
-    --status-done-foreground: 0 0% 100%;
-    --status-approved: 142 76% 36%;
-    --status-approved-foreground: 0 0% 100%;
-    --status-hold: 43 96% 56%;
-    --status-hold-foreground: 210 17% 14%;
-    --status-cancelled: 0 72% 51%;
-    --status-cancelled-foreground: 0 0% 100%;
+    /* Status Pastel Colors - Dark Mode (slightly adjusted for dark background) */
+    /* Soft Blues */
+    --status-powder-blue: 210 80% 75%;
+    --status-powder-blue-foreground: 210 90% 15%;
+    --status-sky-blue: 200 70% 70%;
+    --status-sky-blue-foreground: 200 80% 15%;
+    --status-periwinkle: 220 60% 75%;
+    --status-periwinkle-foreground: 220 80% 15%;
+    --status-ice-blue: 190 50% 75%;
+    --status-ice-blue-foreground: 190 70% 15%;
+    
+    /* Soft Greens */
+    --status-mint: 150 50% 70%;
+    --status-mint-foreground: 150 70% 15%;
+    --status-sage: 130 40% 70%;
+    --status-sage-foreground: 130 60% 15%;
+    --status-seafoam: 165 45% 70%;
+    --status-seafoam-foreground: 165 65% 15%;
+    --status-pistachio: 140 45% 72%;
+    --status-pistachio-foreground: 140 65% 15%;
+    
+    /* Soft Yellows/Oranges */
+    --status-cream: 45 70% 75%;
+    --status-cream-foreground: 45 70% 15%;
+    --status-peach: 30 80% 72%;
+    --status-peach-foreground: 30 80% 15%;
+    --status-apricot: 25 75% 70%;
+    --status-apricot-foreground: 25 80% 15%;
+    --status-buttercup: 50 65% 72%;
+    --status-buttercup-foreground: 50 70% 15%;
+    
+    /* Soft Pinks/Roses */
+    --status-blush: 340 70% 75%;
+    --status-blush-foreground: 340 75% 15%;
+    --status-rose: 350 60% 72%;
+    --status-rose-foreground: 350 75% 15%;
+    --status-coral: 10 65% 70%;
+    --status-coral-foreground: 10 75% 15%;
+    --status-mauve: 320 45% 72%;
+    --status-mauve-foreground: 320 65% 15%;
+    
+    /* Soft Purples */
+    --status-lavender: 270 55% 75%;
+    --status-lavender-foreground: 270 70% 15%;
+    --status-lilac: 280 50% 72%;
+    --status-lilac-foreground: 280 70% 15%;
+    --status-periwinkle-purple: 260 45% 72%;
+    --status-periwinkle-purple-foreground: 260 70% 15%;
+    
+    /* Soft Grays */
+    --status-pearl: 220 15% 70%;
+    --status-pearl-foreground: 220 30% 15%;
 
-    /* Urgency Colors (Dark) */
-    --urgency-low: 142 76% 36%;
+    /* Urgency Extended Colors - Dark Mode */
+    --urgency-very-low: 142 76% 50%;
+    --urgency-very-low-foreground: 0 0% 100%;
+    --urgency-low: 130 70% 55%;
     --urgency-low-foreground: 0 0% 100%;
-    --urgency-medium: 43 96% 56%;
-    --urgency-medium-foreground: 210 17% 14%;
-    --urgency-high: 25 95% 53%;
+    --urgency-low-medium: 100 65% 60%;
+    --urgency-low-medium-foreground: 100 60% 15%;
+    --urgency-medium: 60 80% 65%;
+    --urgency-medium-foreground: 60 60% 15%;
+    --urgency-medium-high: 45 90% 63%;
+    --urgency-medium-high-foreground: 45 60% 15%;
+    --urgency-high: 35 95% 60%;
     --urgency-high-foreground: 0 0% 100%;
-    --urgency-immediate: 0 72% 51%;
+    --urgency-very-high: 25 95% 58%;
+    --urgency-very-high-foreground: 0 0% 100%;
+    --urgency-urgent: 15 90% 55%;
+    --urgency-urgent-foreground: 0 0% 100%;
+    --urgency-critical: 5 85% 57%;
+    --urgency-critical-foreground: 0 0% 100%;
+    --urgency-immediate: 0 85% 60%;
     --urgency-immediate-foreground: 0 0% 100%;
 
     /* Notification Colors (Dark) */

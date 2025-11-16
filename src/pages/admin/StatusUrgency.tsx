@@ -112,17 +112,20 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
 }
 
 const defaultStatuses: StatusUrgencyItem[] = [
-  { label: "Not Started", color: "bg-status-todo text-status-todo-foreground" },
-  { label: "In Progress", color: "bg-status-doing text-status-doing-foreground" },
-  { label: "In Approval", color: "bg-status-hold text-status-hold-foreground" },
-  { label: "Approved", color: "bg-status-approved text-status-approved-foreground" },
-  { label: "Revision", color: "bg-status-cancelled text-status-cancelled-foreground" },
-  { label: "On Hold", color: "bg-status-done text-status-done-foreground" },
+  { label: "Not Started", color: "bg-status-pearl text-status-pearl-foreground" },
+  { label: "In Progress", color: "bg-status-sky-blue text-status-sky-blue-foreground" },
+  { label: "In Approval", color: "bg-status-buttercup text-status-buttercup-foreground" },
+  { label: "Approved", color: "bg-status-mint text-status-mint-foreground" },
+  { label: "Revision", color: "bg-status-peach text-status-peach-foreground" },
+  { label: "On Hold", color: "bg-status-lavender text-status-lavender-foreground" },
+  { label: "Cancelled", color: "bg-status-coral text-status-coral-foreground" },
+  { label: "Rejected", color: "bg-status-rose text-status-rose-foreground" },
 ];
 
 const initialStatuses: StatusUrgencyItem[] = defaultStatuses;
 
 const defaultUrgencies: StatusUrgencyItem[] = [
+  { label: "Very Low", color: "bg-urgency-very-low text-urgency-very-low-foreground" },
   { label: "Low", color: "bg-urgency-low text-urgency-low-foreground" },
   { label: "Medium", color: "bg-urgency-medium text-urgency-medium-foreground" },
   { label: "High", color: "bg-urgency-high text-urgency-high-foreground" },
@@ -459,6 +462,7 @@ export default function StatusUrgency() {
             <ColorPicker
               value={formData.color}
               onChange={(color) => setFormData({ ...formData, color })}
+              type={editingType}
             />
           </div>
           <DialogFooter>
