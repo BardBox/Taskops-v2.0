@@ -82,7 +82,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [filters]);
 
 
   const fetchAppreciations = async () => {
