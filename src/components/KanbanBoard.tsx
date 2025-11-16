@@ -90,36 +90,42 @@ const SortableTaskCard = ({
 
   const getStickyNoteColor = (urgency: string) => {
     const urgencyItem = urgencies.find((u: any) => u.label === urgency);
-    if (!urgencyItem) return 'bg-[hsl(50,80%,88%)] border-[hsl(50,80%,78%)]'; // default soft yellow
+    if (!urgencyItem) return 'bg-yellow-200 border-yellow-300'; // default yellow
     
     // Extract urgency level number from color class (e.g., "bg-urgency-15" -> 15)
     const colorMatch = urgencyItem.color.match(/urgency-(\d+)/);
-    if (!colorMatch) return 'bg-[hsl(50,80%,88%)] border-[hsl(50,80%,78%)]';
+    if (!colorMatch) return 'bg-yellow-200 border-yellow-300';
     
     const level = parseInt(colorMatch[1]);
     
-    // Map urgency levels to soft, desaturated sticky note colors
-    // Lower levels (1-7): Cool blues/cyans - soft and light
-    // Mid levels (8-13): Warm yellows/oranges - soft pastels
-    // High levels (14-20): Warm oranges/reds - soft but noticeable
-    const hueMap: { [key: number]: string } = {
-      1: 'hsl(200, 50%, 85%)', 2: 'hsl(195, 48%, 83%)', 3: 'hsl(190, 45%, 82%)', 4: 'hsl(185, 43%, 80%)',
-      5: 'hsl(180, 40%, 78%)', 6: 'hsl(175, 38%, 77%)', 7: 'hsl(170, 35%, 76%)',
-      8: 'hsl(60, 60%, 85%)', 9: 'hsl(55, 62%, 84%)', 10: 'hsl(50, 65%, 83%)', 11: 'hsl(45, 67%, 82%)',
-      12: 'hsl(40, 70%, 81%)', 13: 'hsl(35, 72%, 80%)', 14: 'hsl(30, 75%, 79%)',
-      15: 'hsl(25, 77%, 78%)', 16: 'hsl(20, 80%, 77%)', 17: 'hsl(15, 82%, 76%)', 18: 'hsl(10, 85%, 75%)',
-      19: 'hsl(5, 87%, 74%)', 20: 'hsl(0, 90%, 73%)'
+    // Map urgency levels to solid, vibrant sticky note colors
+    // Lower levels (1-7): Cool blues/cyans - solid colors
+    // Mid levels (8-13): Warm yellows/oranges - solid colors
+    // High levels (14-20): Warm oranges/reds - solid colors
+    const colorMap: { [key: number]: string } = {
+      1: 'bg-[hsl(200,70%,75%)] border-[hsl(200,70%,65%)]',
+      2: 'bg-[hsl(195,68%,73%)] border-[hsl(195,68%,63%)]',
+      3: 'bg-[hsl(190,65%,72%)] border-[hsl(190,65%,62%)]',
+      4: 'bg-[hsl(185,63%,70%)] border-[hsl(185,63%,60%)]',
+      5: 'bg-[hsl(180,60%,68%)] border-[hsl(180,60%,58%)]',
+      6: 'bg-[hsl(175,58%,67%)] border-[hsl(175,58%,57%)]',
+      7: 'bg-[hsl(170,55%,66%)] border-[hsl(170,55%,56%)]',
+      8: 'bg-[hsl(60,80%,75%)] border-[hsl(60,80%,65%)]',
+      9: 'bg-[hsl(55,82%,74%)] border-[hsl(55,82%,64%)]',
+      10: 'bg-[hsl(50,85%,73%)] border-[hsl(50,85%,63%)]',
+      11: 'bg-[hsl(45,87%,72%)] border-[hsl(45,87%,62%)]',
+      12: 'bg-[hsl(40,90%,71%)] border-[hsl(40,90%,61%)]',
+      13: 'bg-[hsl(35,92%,70%)] border-[hsl(35,92%,60%)]',
+      14: 'bg-[hsl(30,95%,69%)] border-[hsl(30,95%,59%)]',
+      15: 'bg-[hsl(25,97%,68%)] border-[hsl(25,97%,58%)]',
+      16: 'bg-[hsl(20,100%,67%)] border-[hsl(20,100%,57%)]',
+      17: 'bg-[hsl(15,100%,66%)] border-[hsl(15,100%,56%)]',
+      18: 'bg-[hsl(10,100%,65%)] border-[hsl(10,100%,55%)]',
+      19: 'bg-[hsl(5,100%,64%)] border-[hsl(5,100%,54%)]',
+      20: 'bg-[hsl(0,100%,63%)] border-[hsl(0,100%,53%)]'
     };
     
-    const bgColor = hueMap[level] || 'hsl(50, 80%, 88%)';
-    
-    // Create slightly darker border by reducing lightness by 8-10%
-    const borderColor = bgColor.replace(/(\d+)%\)$/, (match, lightness) => {
-      const newLightness = Math.max(0, parseInt(lightness) - 10);
-      return `${newLightness}%)`;
-    });
-    
-    return `bg-[${bgColor}] border-[${borderColor}]`;
+    return colorMap[level] || 'bg-yellow-200 border-yellow-300';
   };
 
   // Check if task is overdue
@@ -369,15 +375,7 @@ export const KanbanBoard = ({
         className={`flex-shrink-0 w-80 transition-all ${isOver ? 'ring-2 ring-primary scale-105' : ''}`}
       >
         <div 
-          className="rounded-lg border-[6px] border-gray-400 dark:border-gray-600 p-4 h-full bg-gray-100 dark:bg-gray-900"
-          style={{
-            boxShadow: `
-              0 2px 4px rgba(0,0,0,0.1),
-              0 8px 16px rgba(0,0,0,0.12),
-              inset 0 2px 4px rgba(255,255,255,0.15),
-              inset 0 -2px 4px rgba(0,0,0,0.08)
-            `,
-          }}
+          className="rounded-lg p-4 h-full bg-muted/30"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground">
