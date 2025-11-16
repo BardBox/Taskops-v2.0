@@ -86,18 +86,21 @@ const SortableTaskCard = ({
   const getStickyNoteColor = (urgency: string) => {
     const urgencyLower = urgency.toLowerCase();
     if (urgencyLower.includes('high') || urgencyLower.includes('urgent') || urgencyLower.includes('critical')) {
-      return 'from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/30 border-red-300 dark:border-red-700';
+      // Bright orange/coral sticky note for urgent
+      return 'from-[#ffb380] to-[#ffa366] dark:from-[#cc8f66] dark:to-[#b37a52] border-[#ff9966]';
     }
     if (urgencyLower.includes('medium') || urgencyLower.includes('moderate')) {
-      return 'from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-300 dark:border-orange-700';
+      // Soft blue sticky note for medium
+      return 'from-[#a8e6ff] to-[#8dd9ff] dark:from-[#6ba3bf] dark:to-[#5a8fa6] border-[#7dcdff]';
     }
-    return 'from-yellow-100 to-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-300 dark:border-yellow-700';
+    // Vibrant yellow sticky note for low (default)
+    return 'from-[#ffff88] to-[#ffff66] dark:from-[#cccc66] dark:to-[#b3b359] border-[#ffff44]';
   };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card 
-        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} hover:rotate-0 hover:scale-105 shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2)] bg-gradient-to-br ${getStickyNoteColor(task.urgency)}`}
+        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} hover:rotate-0 hover:scale-105 bg-gradient-to-br ${getStickyNoteColor(task.urgency)} border-2`}
         style={{
           backgroundImage: `repeating-linear-gradient(
             0deg,
@@ -105,7 +108,8 @@ const SortableTaskCard = ({
             transparent 24px,
             rgba(0,0,0,0.02) 24px,
             rgba(0,0,0,0.02) 25px
-          )`
+          )`,
+          boxShadow: '0 4px 6px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
         }}
         onClick={() => onClick(task.id)}
       >
