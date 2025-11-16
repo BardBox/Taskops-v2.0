@@ -8,7 +8,9 @@ import { TaskDetailDialog } from "./TaskDetailDialog";
 import { SubmitDialog } from "./SubmitDialog";
 import { NotesDialog } from "./NotesDialog";
 import { TaskCard } from "./TaskCard";
-import { Trash2 } from "lucide-react";
+import { BadgeDropdown } from "./BadgeDropdown";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 
@@ -54,6 +56,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   
   const { statuses, urgencies } = useStatusUrgency();
 
@@ -443,65 +446,272 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
 
   return (
     <>
-      {/* Bulk Actions Bar */}
-      {selectedTaskIds.size > 0 && userRole === "project_owner" && (
-        <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-3">
-            <Checkbox
-              checked={selectedTaskIds.size === filteredTasks.length}
-              onCheckedChange={handleSelectAll}
-            />
+      {/* View Toggle and Bulk Actions Bar */}
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+          <Button
+            variant={viewMode === "table" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("table")}
+            className="gap-2"
+          >
+            <List className="h-4 w-4" />
+            Table
+          </Button>
+          <Button
+            variant={viewMode === "cards" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("cards")}
+            className="gap-2"
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Cards
+          </Button>
+        </div>
+
+        {selectedTaskIds.size > 0 && userRole === "project_owner" && (
+          <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-2 animate-fade-in">
             <span className="text-sm font-medium">
               {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
             </span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteSelected}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Selected
+            </Button>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDeleteSelected}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Selected
-          </Button>
+        )}
+      </div>
+
+      {/* Table View */}
+      {viewMode === "table" && (
+        <div className="rounded-lg border bg-card overflow-hidden animate-fade-in">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {userRole === "project_owner" && (
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                )}
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
+                  <div className="flex items-center gap-2">
+                    Date {sortField === "date" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
+                  <div className="flex items-center gap-2">
+                    Task {sortField === "task" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
+                  <div className="flex items-center gap-2">
+                    Client {sortField === "client" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
+                  <div className="flex items-center gap-2">
+                    Project {sortField === "project" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
+                  <div className="flex items-center gap-2">
+                    Assignee {sortField === "assignee" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
+                  <div className="flex items-center gap-2">
+                    PM {sortField === "assigned_by" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
+                  <div className="flex items-center gap-2">
+                    Deadline {sortField === "deadline" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("submission")}>
+                  <div className="flex items-center gap-2">
+                    Submission {sortField === "submission" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
+                  <div className="flex items-center gap-2">
+                    Delay {sortField === "delay" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
+                  <div className="flex items-center gap-2">
+                    Status {sortField === "status" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
+                  <div className="flex items-center gap-2">
+                    Urgency {sortField === "urgency" && <ArrowUpDown className="h-4 w-4" />}
+                  </div>
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.map((task) => {
+                const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
+                return (
+                  <TableRow 
+                    key={task.id} 
+                    className="cursor-pointer transition-all group"
+                    onClick={() => handleTaskClick(task.id)}
+                  >
+                    {userRole === "project_owner" && (
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedTaskIds.has(task.id)}
+                          onCheckedChange={(checked) => handleSelectTask(task.id, checked as boolean)}
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell>
+                      <div className="relative">
+                        <div className="status-indicator" style={{ backgroundColor: getStatusColor(task.status).split(' ')[0].replace('bg-[', '').replace(']', '') }} />
+                        {new Date(task.date).toLocaleDateString()}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{task.task_name}</TableCell>
+                    <TableCell>{task.clients?.name || "-"}</TableCell>
+                    <TableCell>{task.projects?.name || "-"}</TableCell>
+                    <TableCell>{task.assignee?.full_name || "-"}</TableCell>
+                    <TableCell>{task.assigned_by?.full_name || "-"}</TableCell>
+                    <TableCell>
+                      {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {task.actual_delivery ? new Date(task.actual_delivery).toLocaleDateString() : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {delayDays !== null ? (
+                        <span className={delayDays > 0 ? "text-destructive font-medium" : delayDays < 0 ? "text-green-600 font-medium" : ""}>
+                          {delayDays > 0 ? `+${delayDays}d` : delayDays < 0 ? `${delayDays}d` : "On time"}
+                        </span>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <BadgeDropdown
+                        value={task.status}
+                        options={statuses}
+                        onChange={(value) => handleStatusChange(task.id, value)}
+                        disabled={!canEdit(task)}
+                      />
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <BadgeDropdown
+                        value={task.urgency}
+                        options={urgencies}
+                        onChange={(value) => handleUrgencyChange(task.id, value)}
+                        disabled={!canEdit(task)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity slide-in-actions">
+                        {userRole !== "project_manager" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => toggleAppreciation(task.id, e)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Star className={`h-4 w-4 ${taskAppreciations.get(task.id) ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                          </Button>
+                        )}
+                        {canEdit(task) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditTask(task);
+                            }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenNotesDialog(task);
+                          }}
+                          className="h-8 w-8 p-0"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        {task.assignee_id === userId && task.status !== "Approved" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenSubmitDialog(task);
+                            }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-        {filteredTasks.map((task, index) => (
-          <div 
-            key={task.id}
-            style={{ 
-              animationDelay: `${index * 50}ms`,
-              animationFillMode: 'both'
-            }}
-            className="animate-fade-in-up"
-          >
-            <TaskCard
-              task={task}
-              userRole={userRole}
-              isSelected={selectedTaskIds.has(task.id)}
-              isAppreciated={taskAppreciations.get(task.id)}
-              statuses={statuses}
-              urgencies={urgencies}
-              onSelect={(checked) => handleSelectTask(task.id, checked)}
-              onEdit={() => handleEditTask(task)}
-              onClick={() => handleTaskClick(task.id)}
-              onStatusChange={(newStatus) => handleStatusChange(task.id, newStatus)}
-              onUrgencyChange={(newUrgency) => handleUrgencyChange(task.id, newUrgency)}
-              onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
-              onSubmit={() => {
-                setSelectedTaskForSubmit(task);
-                setSubmitDialogOpen(true);
+      {/* Cards View */}
+      {viewMode === "cards" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+          {filteredTasks.map((task, index) => (
+            <div 
+              key={task.id}
+              style={{ 
+                animationDelay: `${index * 50}ms`,
+                animationFillMode: 'both'
               }}
-              onNotesClick={() => {
-                setSelectedTask(task);
-                setNotesDialogOpen(true);
-              }}
-            />
-          </div>
-        ))}
-      </div>
+              className="animate-fade-in-up"
+            >
+              <TaskCard
+                task={task}
+                userRole={userRole}
+                isSelected={selectedTaskIds.has(task.id)}
+                isAppreciated={taskAppreciations.get(task.id)}
+                statuses={statuses}
+                urgencies={urgencies}
+                onSelect={(checked) => handleSelectTask(task.id, checked)}
+                onEdit={() => handleEditTask(task)}
+                onClick={() => handleTaskClick(task.id)}
+                onStatusChange={(newStatus) => handleStatusChange(task.id, newStatus)}
+                onUrgencyChange={(newUrgency) => handleUrgencyChange(task.id, newUrgency)}
+                onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
+                onSubmit={() => {
+                  setSelectedTaskForSubmit(task);
+                  setSubmitDialogOpen(true);
+                }}
+                onNotesClick={() => {
+                  setSelectedTask(task);
+                  setNotesDialogOpen(true);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {filteredTasks.length === 0 && (
         <div className="text-center py-16 px-4">
