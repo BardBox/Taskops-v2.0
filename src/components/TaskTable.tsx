@@ -8,9 +8,11 @@ import { TaskDetailDialog } from "./TaskDetailDialog";
 import { SubmitDialog } from "./SubmitDialog";
 import { NotesDialog } from "./NotesDialog";
 import { TaskCard } from "./TaskCard";
+import { KanbanBoard } from "./KanbanBoard";
+import { GanttChart } from "./GanttChart";
 import { BadgeDropdown } from "./BadgeDropdown";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload } from "lucide-react";
+import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 
@@ -56,7 +58,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">("table");
   
   const { statuses, urgencies } = useStatusUrgency();
 
@@ -447,8 +449,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   return (
     <>
       {/* View Toggle and Bulk Actions Bar */}
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+      <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg flex-wrap">
           <Button
             variant={viewMode === "table" ? "default" : "ghost"}
             size="sm"
@@ -466,6 +468,24 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           >
             <LayoutGrid className="h-4 w-4" />
             Cards
+          </Button>
+          <Button
+            variant={viewMode === "kanban" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("kanban")}
+            className="gap-2"
+          >
+            <Columns className="h-4 w-4" />
+            Kanban
+          </Button>
+          <Button
+            variant={viewMode === "gantt" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("gantt")}
+            className="gap-2"
+          >
+            <GanttChartSquare className="h-4 w-4" />
+            Gantt
           </Button>
         </div>
 
@@ -711,6 +731,42 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Kanban View */}
+      {viewMode === "kanban" && (
+        <KanbanBoard
+          tasks={filteredTasks}
+          userRole={userRole}
+          userId={userId}
+          statuses={statuses}
+          urgencies={urgencies}
+          selectedTaskIds={selectedTaskIds}
+          taskAppreciations={taskAppreciations}
+          onTaskClick={handleTaskClick}
+          onSelectTask={handleSelectTask}
+          onEditTask={handleEditTask}
+          onStatusChange={handleStatusChange}
+          onUrgencyChange={handleUrgencyChange}
+          onAppreciationToggle={toggleAppreciation}
+          onSubmit={(task) => {
+            setSelectedTaskForSubmit(task);
+            setSubmitDialogOpen(true);
+          }}
+          onNotesClick={(task) => {
+            setSelectedTask(task);
+            setNotesDialogOpen(true);
+          }}
+        />
+      )}
+
+      {/* Gantt View */}
+      {viewMode === "gantt" && (
+        <GanttChart
+          tasks={filteredTasks}
+          statuses={statuses}
+          onTaskClick={handleTaskClick}
+        />
       )}
 
       {filteredTasks.length === 0 && (
