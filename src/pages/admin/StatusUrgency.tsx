@@ -139,7 +139,7 @@ export default function StatusUrgency() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<"status" | "urgency">("status");
   const [editingItem, setEditingItem] = useState<StatusUrgencyItem | null>(null);
-  const [formData, setFormData] = useState({ value: "", label: "", color: "" });
+  const [formData, setFormData] = useState({ label: "", color: "" });
 
   useEffect(() => {
     loadSettings();
@@ -215,8 +215,8 @@ export default function StatusUrgency() {
     if (over && active.id !== over.id) {
       const items = type === "status" ? statuses : urgencies;
       
-      const oldIndex = items.findIndex((item) => item.value === active.id);
-      const newIndex = items.findIndex((item) => item.value === over.id);
+      const oldIndex = items.findIndex((item) => item.label === active.id);
+      const newIndex = items.findIndex((item) => item.label === over.id);
 
       const newItems = arrayMove(items, oldIndex, newIndex);
       
@@ -235,19 +235,19 @@ export default function StatusUrgency() {
   const handleEdit = (type: "status" | "urgency", item: StatusUrgencyItem) => {
     setEditingType(type);
     setEditingItem(item);
-    setFormData({ value: item.value, label: item.label, color: item.color });
+    setFormData({ label: item.label, color: item.color });
     setEditDialogOpen(true);
   };
 
   const handleAdd = (type: "status" | "urgency") => {
     setEditingType(type);
     setEditingItem(null);
-    setFormData({ value: "", label: "", color: "" });
+    setFormData({ label: "", color: "" });
     setEditDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!formData.label || !formData.value) {
+    if (!formData.label) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -256,13 +256,13 @@ export default function StatusUrgency() {
       // Update existing
       if (editingType === "status") {
         const newStatuses = statuses.map(s => 
-          s.value === editingItem.value ? { ...formData } : s
+          s.label === editingItem.label ? { ...formData } : s
         );
         setStatuses(newStatuses);
         await saveStatuses(newStatuses);
       } else {
         const newUrgencies = urgencies.map(u => 
-          u.value === editingItem.value ? { ...formData } : u
+          u.label === editingItem.label ? { ...formData } : u
         );
         setUrgencies(newUrgencies);
         await saveUrgencies(newUrgencies);
@@ -285,15 +285,15 @@ export default function StatusUrgency() {
     setEditDialogOpen(false);
   };
 
-  const handleDelete = async (type: "status" | "urgency", value: string) => {
+  const handleDelete = async (type: "status" | "urgency", label: string) => {
     if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
 
     if (type === "status") {
-      const newStatuses = statuses.filter(s => s.value !== value);
+      const newStatuses = statuses.filter(s => s.label !== label);
       setStatuses(newStatuses);
       await saveStatuses(newStatuses);
     } else {
-      const newUrgencies = urgencies.filter(u => u.value !== value);
+      const newUrgencies = urgencies.filter(u => u.label !== label);
       setUrgencies(newUrgencies);
       await saveUrgencies(newUrgencies);
     }
@@ -350,17 +350,17 @@ export default function StatusUrgency() {
               onDragEnd={(event) => handleDragEnd(event, "status")}
             >
               <SortableContext
-                items={statuses.map((s) => s.value)}
+                items={statuses.map((s) => s.label)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-3">
                   {statuses.map((status) => (
                     <SortableItem
-                      key={status.value}
+                      key={status.label}
                       item={status}
                       isOwner={isOwner}
                       onEdit={() => handleEdit("status", status)}
-                      onDelete={() => handleDelete("status", status.value)}
+                      onDelete={() => handleDelete("status", status.label)}
                     />
                   ))}
                 </div>
@@ -396,17 +396,17 @@ export default function StatusUrgency() {
               onDragEnd={(event) => handleDragEnd(event, "urgency")}
             >
               <SortableContext
-                items={urgencies.map((u) => u.value)}
+                items={urgencies.map((u) => u.label)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-3">
                   {urgencies.map((urgency) => (
                     <SortableItem
-                      key={urgency.value}
+                      key={urgency.label}
                       item={urgency}
                       isOwner={isOwner}
                       onEdit={() => handleEdit("urgency", urgency)}
-                      onDelete={() => handleDelete("urgency", urgency.value)}
+                      onDelete={() => handleDelete("urgency", urgency.label)}
                     />
                   ))}
                 </div>
@@ -437,14 +437,6 @@ export default function StatusUrgency() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Value</Label>
-              <Input
-                value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                placeholder="e.g., In Progress"
-              />
-            </div>
             <div>
               <Label>Label</Label>
               <Input
