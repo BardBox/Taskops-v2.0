@@ -89,17 +89,37 @@ const SortableTaskCard = ({
   };
 
   const getStickyNoteColor = (urgency: string) => {
-    const urgencyLower = urgency.toLowerCase();
-    if (urgencyLower.includes('high') || urgencyLower.includes('urgent') || urgencyLower.includes('critical')) {
-      // Solid vibrant orange sticky note for urgent
-      return 'bg-[#ffb366] border-[#ff9944]';
-    }
-    if (urgencyLower.includes('medium') || urgencyLower.includes('moderate')) {
-      // Solid vibrant blue sticky note for medium
-      return 'bg-[#a8d8ff] border-[#88c8ff]';
-    }
-    // Solid vibrant yellow sticky note for low (default)
-    return 'bg-[#ffff88] border-[#ffff55]';
+    const urgencyItem = urgencies.find((u: any) => u.label === urgency);
+    if (!urgencyItem) return 'bg-[hsl(50,80%,88%)] border-[hsl(50,80%,78%)]'; // default soft yellow
+    
+    // Extract urgency level number from color class (e.g., "bg-urgency-15" -> 15)
+    const colorMatch = urgencyItem.color.match(/urgency-(\d+)/);
+    if (!colorMatch) return 'bg-[hsl(50,80%,88%)] border-[hsl(50,80%,78%)]';
+    
+    const level = parseInt(colorMatch[1]);
+    
+    // Map urgency levels to soft, desaturated sticky note colors
+    // Lower levels (1-7): Cool blues/cyans - soft and light
+    // Mid levels (8-13): Warm yellows/oranges - soft pastels
+    // High levels (14-20): Warm oranges/reds - soft but noticeable
+    const hueMap: { [key: number]: string } = {
+      1: 'hsl(200, 50%, 85%)', 2: 'hsl(195, 48%, 83%)', 3: 'hsl(190, 45%, 82%)', 4: 'hsl(185, 43%, 80%)',
+      5: 'hsl(180, 40%, 78%)', 6: 'hsl(175, 38%, 77%)', 7: 'hsl(170, 35%, 76%)',
+      8: 'hsl(60, 60%, 85%)', 9: 'hsl(55, 62%, 84%)', 10: 'hsl(50, 65%, 83%)', 11: 'hsl(45, 67%, 82%)',
+      12: 'hsl(40, 70%, 81%)', 13: 'hsl(35, 72%, 80%)', 14: 'hsl(30, 75%, 79%)',
+      15: 'hsl(25, 77%, 78%)', 16: 'hsl(20, 80%, 77%)', 17: 'hsl(15, 82%, 76%)', 18: 'hsl(10, 85%, 75%)',
+      19: 'hsl(5, 87%, 74%)', 20: 'hsl(0, 90%, 73%)'
+    };
+    
+    const bgColor = hueMap[level] || 'hsl(50, 80%, 88%)';
+    
+    // Create slightly darker border by reducing lightness by 8-10%
+    const borderColor = bgColor.replace(/(\d+)%\)$/, (match, lightness) => {
+      const newLightness = Math.max(0, parseInt(lightness) - 10);
+      return `${newLightness}%)`;
+    });
+    
+    return `bg-[${bgColor}] border-[${borderColor}]`;
   };
 
   // Check if task is overdue
@@ -125,7 +145,7 @@ const SortableTaskCard = ({
       whileTap={{ scale: 0.98 }}
     >
       <Card 
-        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} ${getStickyNoteColor(task.urgency)} border-2 overflow-hidden shadow-lg hover:shadow-2xl ${isOverdue ? 'ring-2 ring-red-500/50 animate-pulse' : ''} ${isFresh ? 'ring-2 ring-yellow-400/50' : ''}`}
+        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} ${getStickyNoteColor(task.urgency)} border-2 overflow-hidden shadow-lg hover:shadow-2xl ${isOverdue ? 'ring-2 ring-red-500/50' : ''} ${isFresh ? 'ring-2 ring-yellow-400/50' : ''}`}
         style={{
           backgroundImage: `repeating-linear-gradient(
             0deg,
@@ -138,13 +158,14 @@ const SortableTaskCard = ({
         }}
         onClick={() => onClick(task.id)}
       >
-        {/* Page curl effect on hover - bottom right corner only */}
+        {/* Page curl effect on bottom-right corner - realistic with shadow */}
         <div 
-          className="absolute bottom-0 right-0 w-0 h-0 transition-all duration-300 group-hover:w-8 group-hover:h-8 opacity-0 group-hover:opacity-100" 
+          className="absolute bottom-0 right-0 w-0 h-0 group-hover:w-14 group-hover:h-14 pointer-events-none transition-all duration-300 ease-out"
           style={{
-            borderLeft: '32px solid transparent',
-            borderBottom: '32px solid rgba(0,0,0,0.15)',
-            filter: 'drop-shadow(-1px -1px 2px rgba(0,0,0,0.2))',
+            background: 'linear-gradient(135deg, transparent 45%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.15) 55%, rgba(255,255,255,0.1) 100%)',
+            borderRadius: '0 0 4px 0',
+            boxShadow: '-2px -2px 5px rgba(0,0,0,0.2), -1px -1px 3px rgba(0,0,0,0.15), inset 1px 1px 2px rgba(255,255,255,0.4)',
+            clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
           }}
         />
         
@@ -177,6 +198,7 @@ const SortableTaskCard = ({
                 options={urgencies}
                 onChange={(value) => onUrgencyChange(task.id, value)}
                 disabled={!canEdit}
+                variant="text"
               />
             </div>
           </div>
@@ -343,7 +365,15 @@ export const KanbanBoard = ({
         className={`flex-shrink-0 w-80 transition-all ${isOver ? 'ring-2 ring-primary scale-105' : ''}`}
       >
         <div 
-          className="rounded-lg p-4 h-full bg-gray-100 dark:bg-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-700"
+          className="rounded-lg border-[6px] border-gray-400 dark:border-gray-600 p-4 h-full bg-gray-100 dark:bg-gray-900"
+          style={{
+            boxShadow: `
+              0 2px 4px rgba(0,0,0,0.1),
+              0 8px 16px rgba(0,0,0,0.12),
+              inset 0 2px 4px rgba(255,255,255,0.15),
+              inset 0 -2px 4px rgba(0,0,0,0.08)
+            `,
+          }}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground">
