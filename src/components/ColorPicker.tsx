@@ -93,7 +93,7 @@ export function ColorPicker({ value, onChange, type }: ColorPickerProps) {
         {type === "status" 
           ? "Choose a soft pastel color for your status" 
           : type === "urgency" 
-          ? "Choose a color intensity matching the urgency level"
+          ? "Blue → Red spectrum (20 colors, no green)"
           : "Choose a color that clearly represents the status or urgency level"}
       </p>
       
@@ -137,54 +137,50 @@ export function ColorPicker({ value, onChange, type }: ColorPickerProps) {
               </div>
             </div>
             
-          {type === "urgency" && (
-            <>
-              <div className="mb-4">
-                <Label className="text-sm font-semibold mb-2 block">Urgency Colors</Label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Blue → Red spectrum (20 colors, no green)
-                </p>
-                <div className="grid grid-cols-5 gap-3">
-                  {urgencyColorPresets.map((color) => (
-                    <TooltipProvider key={color.name} delayDuration={100}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={() => onChange(color.value)}
-                            className={cn(
-                              "w-full aspect-square transition-all duration-200 relative flex items-center justify-center",
-                              "hover:scale-110 hover:shadow-lg",
-                              value === color.value 
-                                ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-lg" 
-                                : "hover:ring-2 hover:ring-primary/50"
-                            )}
+            <div>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Urgency Colors (20 Intensity Levels)
+              </h4>
+              <div className="grid grid-cols-5 gap-3">
+                {urgencyColorPresets.map((color) => (
+                  <TooltipProvider key={color.name} delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => onChange(color.value)}
+                          className={cn(
+                            "w-full aspect-square transition-all duration-200 relative flex items-center justify-center",
+                            "hover:scale-110 hover:shadow-lg",
+                            value === color.value 
+                              ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-lg" 
+                              : "hover:ring-2 hover:ring-primary/50"
+                          )}
+                          style={{
+                            clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"
+                          }}
+                          title={color.name}
+                        >
+                          <div 
+                            className={cn("w-full h-full", color.preview)}
                             style={{
                               clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"
                             }}
-                            title={color.name}
-                          >
-                            <div 
-                              className={cn("w-full h-full", color.preview)}
-                              style={{
-                                clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"
-                              }}
-                            />
-                            {value === color.value && (
-                              <Check className="absolute w-5 h-5 text-white drop-shadow-md z-10" />
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-xs font-medium">{color.name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
-                </div>
+                          />
+                          {value === color.value && (
+                            <Check className="absolute w-5 h-5 text-white drop-shadow-md z-10" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs font-medium">{color.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
               </div>
-            </>
-          )}
+            </div>
+          </>
         ) : (
           // Show filtered view based on type
           <div className="grid grid-cols-5 gap-3">
