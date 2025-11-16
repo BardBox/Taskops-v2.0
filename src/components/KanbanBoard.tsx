@@ -3,7 +3,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, 
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -419,29 +419,27 @@ export const KanbanBoard = ({
                 items={tasksByStatus[status.label]?.map(t => t.id) || []}
                 strategy={verticalListSortingStrategy}
               >
-                <AnimatePresence>
-                  <div className="space-y-2 min-h-[200px]">
-                    {tasksByStatus[status.label]?.map((task) => (
-                      <SortableTaskCard
-                        key={task.id}
-                        task={task}
-                        userRole={userRole}
-                        userId={userId}
-                        isSelected={selectedTaskIds.has(task.id)}
-                        isAppreciated={taskAppreciations.get(task.id)}
-                        urgencies={urgencies}
-                        onSelect={onSelectTask}
-                        onEdit={onEditTask}
-                        onClick={onTaskClick}
-                        onUrgencyChange={onUrgencyChange}
-                        onAppreciationToggle={onAppreciationToggle}
-                        onSubmit={onSubmit}
-                        onNotesClick={onNotesClick}
-                        canEdit={canEdit(task)}
-                      />
-                    ))}
-                  </div>
-                </AnimatePresence>
+                <div className="space-y-2 min-h-[200px]">
+                  {tasksByStatus[status.label]?.map((task) => (
+                    <SortableTaskCard
+                      key={task.id}
+                      task={task}
+                      userRole={userRole}
+                      userId={userId}
+                      isSelected={selectedTaskIds.has(task.id)}
+                      isAppreciated={taskAppreciations.get(task.id)}
+                      urgencies={urgencies}
+                      onSelect={onSelectTask}
+                      onEdit={onEditTask}
+                      onClick={onTaskClick}
+                      onUrgencyChange={onUrgencyChange}
+                      onAppreciationToggle={onAppreciationToggle}
+                      onSubmit={onSubmit}
+                      onNotesClick={onNotesClick}
+                      canEdit={canEdit(task)}
+                    />
+                  ))}
+                </div>
               </SortableContext>
             </DroppableColumn>
           ))}
