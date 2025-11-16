@@ -69,6 +69,9 @@ const SortableTaskCard = ({
 }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
 
+  const rotations = ['rotate-[-1deg]', 'rotate-[0.5deg]', 'rotate-[-0.5deg]', 'rotate-[1deg]'];
+  const randomRotation = rotations[Math.floor(Math.random() * rotations.length)];
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -83,10 +86,13 @@ const SortableTaskCard = ({
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card 
-        className="p-4 mb-3 cursor-pointer hover-lift transition-all group"
+        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} hover:rotate-0 hover:scale-105 shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2)] bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-700`}
         onClick={() => onClick(task.id)}
       >
-        <div className="space-y-3">
+        {/* Decorative pin at top */}
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-red-500 rounded-full shadow-md border-2 border-red-600 z-10" />
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-3 bg-red-400" />
+        <div className="space-y-3 pt-2">
           {/* Header */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-start gap-2 flex-1">
