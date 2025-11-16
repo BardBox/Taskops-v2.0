@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 
 export interface FilterState {
   year: string;
@@ -56,8 +57,10 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   const [projectManagers, setProjectManagers] = useState<any[]>([]);
   const [userRole, setUserRole] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
-  const [statusOptions, setStatusOptions] = useState<string[]>([]);
-  const [urgencyOptions, setUrgencyOptions] = useState<string[]>([]);
+  
+  const { statuses, urgencies } = useStatusUrgency();
+  const statusOptions = statuses.map(s => s.label);
+  const urgencyOptions = urgencies.map(u => u.label);
 
   useEffect(() => {
     getCurrentUser();
@@ -193,35 +196,6 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
       });
       setTeamMembers(tms);
       setProjectManagers(pms);
-    }
-
-    // Fetch status and urgency options from system_settings
-    const { data: settingsData } = await supabase
-      .from("system_settings")
-      .select("setting_key, setting_value")
-      .in("setting_key", ["task_statuses", "task_urgencies"]);
-
-    if (settingsData) {
-      const statusSetting = settingsData.find(s => s.setting_key === "task_statuses");
-      const urgencySetting = settingsData.find(s => s.setting_key === "task_urgencies");
-
-      if (statusSetting) {
-        try {
-          const statuses = JSON.parse(statusSetting.setting_value);
-          setStatusOptions(statuses.map((s: any) => s.label));
-        } catch (e) {
-          console.error("Failed to parse status options", e);
-        }
-      }
-
-      if (urgencySetting) {
-        try {
-          const urgencies = JSON.parse(urgencySetting.setting_value);
-          setUrgencyOptions(urgencies.map((u: any) => u.label));
-        } catch (e) {
-          console.error("Failed to parse urgency options", e);
-        }
-      }
     }
   };
 

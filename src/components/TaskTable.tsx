@@ -29,6 +29,7 @@ import { Edit2, ExternalLink, FileText, ArrowUp, ArrowDown, Star, Trash2 } from 
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 
 interface Task {
   id: string;
@@ -72,6 +73,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  
+  const { statuses, urgencies } = useStatusUrgency();
 
   useEffect(() => {
     fetchTasks();
@@ -168,44 +171,13 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Not Started":
-        return "bg-status-todo text-status-todo-foreground";
-      case "In Progress":
-        return "bg-status-doing text-status-doing-foreground";
-      case "In Approval":
-        return "bg-status-hold text-status-hold-foreground";
-      case "Approved":
-        return "bg-status-approved text-status-approved-foreground";
-      case "Revision":
-        return "bg-status-cancelled text-status-cancelled-foreground";
-      case "On Hold":
-        return "bg-status-done text-status-done-foreground";
-      // Legacy status mappings for backward compatibility
-      case "To Do":
-        return "bg-status-todo text-status-todo-foreground";
-      case "Doing":
-        return "bg-status-doing text-status-doing-foreground";
-      case "Done":
-        return "bg-status-done text-status-done-foreground";
-      default:
-        return "bg-status-todo text-status-todo-foreground";
-    }
+    const statusItem = statuses.find(s => s.label === status);
+    return statusItem?.color || "bg-muted text-muted-foreground";
   };
 
   const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case "Immediate":
-        return "bg-urgency-immediate text-urgency-immediate-foreground";
-      case "High":
-        return "bg-urgency-high text-urgency-high-foreground";
-      case "Mid":
-        return "bg-urgency-medium text-urgency-medium-foreground";
-      case "Low":
-        return "bg-urgency-low text-urgency-low-foreground";
-      default:
-        return "bg-urgency-low text-urgency-low-foreground";
-    }
+    const urgencyItem = urgencies.find(u => u.label === urgency);
+    return urgencyItem?.color || "bg-muted text-muted-foreground";
   };
 
   const calculateDelay = (deadline: string | null, actualDelivery: string | null, status: string) => {
@@ -623,12 +595,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-background z-50">
-                            <SelectItem value="Not Started">Not Started</SelectItem>
-                            <SelectItem value="In Progress">In Progress</SelectItem>
-                            <SelectItem value="In Approval">In Approval</SelectItem>
-                            <SelectItem value="Approved">Approved</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
-                            <SelectItem value="Canceled">Canceled</SelectItem>
+                            {statuses.map((status) => (
+                              <SelectItem key={status.label} value={status.label}>
+                                {status.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       ) : (
@@ -642,10 +613,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-background z-50">
-                            <SelectItem value="Low">Low</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Immediate">Immediate</SelectItem>
+                            {urgencies.map((urgency) => (
+                              <SelectItem key={urgency.label} value={urgency.label}>
+                                {urgency.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       ) : (
