@@ -30,7 +30,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
-import { InlineBadgeSelector } from "@/components/InlineBadgeSelector";
+import { BadgeDropdown } from "@/components/BadgeDropdown";
 import { cn } from "@/lib/utils";
 
 interface Task {
@@ -592,11 +592,10 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
-                        <InlineBadgeSelector
+                        <BadgeDropdown
                           options={statuses}
                           value={task.status}
                           onChange={(value) => handleStatusChange(task.id, value)}
-                          className="max-w-[280px]"
                         />
                       ) : (
                         <Badge className={cn("rounded-full px-2.5 py-1 text-xs", getStatusColor(task.status))}>
@@ -606,11 +605,10 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
-                        <InlineBadgeSelector
+                        <BadgeDropdown
                           options={urgencies}
                           value={task.urgency}
                           onChange={(value) => handleUrgencyChange(task.id, value)}
-                          className="max-w-[240px]"
                         />
                       ) : (
                         <Badge className={cn("rounded-full px-2.5 py-1 text-xs", getUrgencyColor(task.urgency))}>

@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
+import { BadgeDropdown } from "@/components/BadgeDropdown";
 
 interface TaskDialogProps {
   open: boolean;
@@ -388,48 +389,30 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
             <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
-              <Select 
-                value={formData.status} 
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
+              <BadgeDropdown
+                options={statuses.filter((status) => {
+                  // Filter based on user role
+                  if (currentUserRole === 'team_member' && !['Not Started', 'In Progress', 'In Approval'].includes(status.label)) {
+                    return false;
+                  }
+                  return true;
+                })}
+                value={formData.status}
+                onChange={(value) => setFormData({ ...formData, status: value })}
                 disabled={isLoadingSettings}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {statuses.map((status) => {
-                    // Filter based on user role
-                    if (currentUserRole === 'team_member' && !['Not Started', 'In Progress', 'In Approval'].includes(status.label)) {
-                      return null;
-                    }
-                    return (
-                      <SelectItem key={status.label} value={status.label}>
-                        {status.label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+                placeholder="Select status"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="urgency">Urgency *</Label>
-              <Select 
-                value={formData.urgency} 
-                onValueChange={(value) => setFormData({ ...formData, urgency: value })}
+              <BadgeDropdown
+                options={urgencies}
+                value={formData.urgency}
+                onChange={(value) => setFormData({ ...formData, urgency: value })}
                 disabled={isLoadingSettings}
-              >
-                <SelectTrigger id="urgency">
-                  <SelectValue placeholder="Select urgency" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {urgencies.map((urgency) => (
-                    <SelectItem key={urgency.label} value={urgency.label}>
-                      {urgency.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select urgency"
+              />
             </div>
 
             <div className="space-y-2 sm:col-span-2">
