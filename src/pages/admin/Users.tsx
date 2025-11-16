@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { Plus, Trash2, Edit, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -58,6 +58,8 @@ export default function AdminUsers() {
     name: "",
     role: "",
   });
+  const [sortField, setSortField] = useState<"user_code" | "full_name" | "email" | "role" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const isOwner = userRole === "project_owner";
   const isPM = userRole === "project_manager";
@@ -272,18 +274,54 @@ export default function AdminUsers() {
     }
   };
 
-  const filteredUsers = users.filter((user) => {
-    if (filters.userId && !user.user_code.toLowerCase().includes(filters.userId.toLowerCase())) {
-      return false;
+  const handleSort = (field: "user_code" | "full_name" | "email" | "role") => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else {
+        setSortField(null);
+        setSortDirection("asc");
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
     }
-    if (filters.name && !user.full_name.toLowerCase().includes(filters.name.toLowerCase())) {
-      return false;
+  };
+
+  const getSortIcon = (field: "user_code" | "full_name" | "email" | "role") => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
     }
-    if (filters.role && user.role !== filters.role) {
-      return false;
-    }
-    return true;
-  });
+    return sortDirection === "asc" ? (
+      <ArrowUp className="h-4 w-4 ml-1" />
+    ) : (
+      <ArrowDown className="h-4 w-4 ml-1" />
+    );
+  };
+
+  const filteredAndSortedUsers = users
+    .filter((user) => {
+      if (filters.userId && !user.user_code.toLowerCase().includes(filters.userId.toLowerCase())) {
+        return false;
+      }
+      if (filters.name && !user.full_name.toLowerCase().includes(filters.name.toLowerCase())) {
+        return false;
+      }
+      if (filters.role && user.role !== filters.role) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (!sortField) return 0;
+      
+      const aValue = a[sortField]?.toLowerCase() || "";
+      const bValue = b[sortField]?.toLowerCase() || "";
+      
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
 
   const clearFilters = () => {
     setFilters({ userId: "", name: "", role: "" });
@@ -370,15 +408,55 @@ export default function AdminUsers() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("user_code")}
+                  >
+                    User ID
+                    {getSortIcon("user_code")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("full_name")}
+                  >
+                    Name
+                    {getSortIcon("full_name")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("email")}
+                  >
+                    Email
+                    {getSortIcon("email")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("role")}
+                  >
+                    Role
+                    {getSortIcon("role")}
+                  </Button>
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
+              {filteredAndSortedUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-mono text-sm">{user.user_code}</TableCell>
                   <TableCell className="font-medium">{user.full_name}</TableCell>
