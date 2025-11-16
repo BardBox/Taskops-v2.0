@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronDown } from "lucide-react";
@@ -23,13 +24,15 @@ export const BadgeDropdown = ({
   disabled = false,
   placeholder = "Select...",
 }: BadgeDropdownProps) => {
+  const [open, setOpen] = useState(false);
   const selectedOption = options.find((opt) => opt.label === value);
   const displayColor = selectedOption?.color || "bg-muted text-muted-foreground";
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild disabled={disabled}>
         <Badge
+          onClick={(e) => e.stopPropagation()}
           className={cn(
             "cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium",
             "transition-all duration-200 ease-out",
@@ -51,8 +54,10 @@ export const BadgeDropdown = ({
           {options.map((option) => (
             <Badge
               key={option.label}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 onChange(option.label);
+                setOpen(false);
               }}
               className={cn(
                 "cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium",
