@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Edit, Trash2, Archive, ArchiveRestore, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface Client {
@@ -44,6 +44,8 @@ export default function AdminClients() {
   const [clientName, setClientName] = useState("");
   const [premiumTag, setPremiumTag] = useState<string>("");
   const [showArchived, setShowArchived] = useState(false);
+  const [sortField, setSortField] = useState<"client_code" | "name" | "premium_tag" | "is_archived" | "created_at" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const isOwner = userRole === "project_owner";
 
@@ -177,6 +179,74 @@ export default function AdminClients() {
     setDialogOpen(true);
   };
 
+  const handleSort = (field: "client_code" | "name" | "premium_tag" | "is_archived" | "created_at") => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else {
+        setSortField(null);
+        setSortDirection("asc");
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortIcon = (field: "client_code" | "name" | "premium_tag" | "is_archived" | "created_at") => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="h-4 w-4 ml-1" />
+    ) : (
+      <ArrowDown className="h-4 w-4 ml-1" />
+    );
+  };
+
+  const getPremiumBadgeColor = (tag: string | null) => {
+    if (!tag) return "bg-muted text-muted-foreground";
+    
+    switch (tag) {
+      case "A":
+        return "bg-gradient-to-r from-yellow-400 to-yellow-600 text-white";
+      case "B":
+        return "bg-gradient-to-r from-gray-300 to-gray-500 text-white";
+      case "C":
+        return "bg-gradient-to-r from-orange-400 to-orange-600 text-white";
+      case "D":
+        return "bg-gradient-to-r from-blue-400 to-blue-600 text-white";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const sortedClients = [...clients].sort((a, b) => {
+    if (!sortField) return 0;
+    
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+    
+    // Handle null values for premium_tag
+    if (sortField === "premium_tag") {
+      aValue = aValue || "";
+      bValue = bValue || "";
+    }
+    
+    // Handle date strings
+    if (sortField === "created_at") {
+      aValue = new Date(aValue).getTime();
+      bValue = new Date(bValue).getTime();
+    } else if (typeof aValue === "string") {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+    
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -207,16 +277,66 @@ export default function AdminClients() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client ID</TableHead>
-                <TableHead>Client Name</TableHead>
-                <TableHead>Premium Tag</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("client_code")}
+                  >
+                    Client ID
+                    {getSortIcon("client_code")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("name")}
+                  >
+                    Client Name
+                    {getSortIcon("name")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("premium_tag")}
+                  >
+                    Premium Tag
+                    {getSortIcon("premium_tag")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("is_archived")}
+                  >
+                    Status
+                    {getSortIcon("is_archived")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                    onClick={() => handleSort("created_at")}
+                  >
+                    Created
+                    {getSortIcon("created_at")}
+                  </Button>
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.map((client) => (
+              {sortedClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-mono text-sm">{client.client_code}</TableCell>
                   <TableCell className="font-medium">{client.name}</TableCell>
