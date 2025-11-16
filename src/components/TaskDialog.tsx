@@ -18,8 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -52,8 +50,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [users, setUsers] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
-  const [statusOptions, setStatusOptions] = useState<Array<{label: string; color: string}>>([]);
-  const [urgencyOptions, setUrgencyOptions] = useState<Array<{label: string; color: string}>>([]);
   const [formData, setFormData] = useState({
     task_name: "",
     client_id: "",
@@ -73,7 +69,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
       fetchClients();
       fetchUsers();
       getCurrentUser();
-      fetchStatusAndUrgencyOptions();
       setCurrentUserRole(userRole || "");
 
       if (task) {
@@ -219,39 +214,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
     setUsers(data || []);
   };
 
-  const fetchStatusAndUrgencyOptions = async () => {
-    try {
-      const { data: settingsData } = await supabase
-        .from("system_settings")
-        .select("setting_key, setting_value")
-        .in("setting_key", ["task_statuses", "task_urgencies"]);
-
-      if (settingsData) {
-        const statusSetting = settingsData.find(s => s.setting_key === "task_statuses");
-        const urgencySetting = settingsData.find(s => s.setting_key === "task_urgencies");
-
-        if (statusSetting) {
-          try {
-            const statuses = JSON.parse(statusSetting.setting_value);
-            setStatusOptions(statuses);
-          } catch (e) {
-            console.error("Failed to parse status options", e);
-          }
-        }
-
-        if (urgencySetting) {
-          try {
-            const urgencies = JSON.parse(urgencySetting.setting_value);
-            setUrgencyOptions(urgencies);
-          } catch (e) {
-            console.error("Failed to parse urgency options", e);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching status and urgency options:", error);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent, keepOpen = false) => {
     e.preventDefault();
@@ -422,69 +384,44 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
             <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="status"
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    {formData.status || "Select status"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-2 bg-background border shadow-lg z-50" align="start">
-                  <div className="space-y-1">
-                    {(currentUserRole === "team_member"
-                      ? statusOptions.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
-                      : statusOptions
-                    ).map((statusOption) => (
-                      <Button
-                        key={statusOption.label}
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start text-sm hover:bg-accent"
-                        onClick={() => setFormData({ ...formData, status: statusOption.label })}
-                      >
-                        <Badge className={`${statusOption.color} mr-2`}>
-                          {statusOption.label}
-                        </Badge>
-                      </Button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {currentUserRole === "team_member" ? (
+                    <>
+                      <SelectItem value="Not Started">Not Started</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="In Approval">In Approval</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="Not Started">Not Started</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="In Approval">In Approval</SelectItem>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
+                      <SelectItem value="Canceled">Canceled</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="urgency">Urgency *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="urgency"
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    {formData.urgency || "Select urgency"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-2 bg-background border shadow-lg z-50" align="start">
-                  <div className="space-y-1">
-                    {urgencyOptions.map((urgencyOption) => (
-                      <Button
-                        key={urgencyOption.label}
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start text-sm hover:bg-accent"
-                        onClick={() => setFormData({ ...formData, urgency: urgencyOption.label })}
-                      >
-                        <Badge className={`${urgencyOption.color} mr-2`}>
-                          {urgencyOption.label}
-                        </Badge>
-                      </Button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <Select value={formData.urgency} onValueChange={(value) => setFormData({ ...formData, urgency: value })}>
+                <SelectTrigger id="urgency">
+                  <SelectValue placeholder="Select urgency" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Immediate">Immediate</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 sm:col-span-2">
