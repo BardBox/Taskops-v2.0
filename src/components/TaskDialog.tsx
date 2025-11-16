@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 
 interface TaskDialogProps {
   open: boolean;
@@ -50,6 +51,9 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [users, setUsers] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  
+  const { statuses, urgencies, isLoading: isLoadingSettings } = useStatusUrgency();
+  
   const [formData, setFormData] = useState({
     task_name: "",
     client_id: "",
@@ -384,42 +388,46 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
             <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value) => setFormData({ ...formData, status: value })}
+                disabled={isLoadingSettings}
+              >
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  {currentUserRole === "team_member" ? (
-                    <>
-                      <SelectItem value="Not Started">Not Started</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="In Approval">In Approval</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="Not Started">Not Started</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="In Approval">In Approval</SelectItem>
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="Rejected">Rejected</SelectItem>
-                      <SelectItem value="Canceled">Canceled</SelectItem>
-                    </>
-                  )}
+                  {statuses.map((status) => {
+                    // Filter based on user role
+                    if (currentUserRole === 'team_member' && !['Not Started', 'In Progress', 'In Approval'].includes(status.label)) {
+                      return null;
+                    }
+                    return (
+                      <SelectItem key={status.label} value={status.label}>
+                        {status.label}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="urgency">Urgency *</Label>
-              <Select value={formData.urgency} onValueChange={(value) => setFormData({ ...formData, urgency: value })}>
+              <Select 
+                value={formData.urgency} 
+                onValueChange={(value) => setFormData({ ...formData, urgency: value })}
+                disabled={isLoadingSettings}
+              >
                 <SelectTrigger id="urgency">
                   <SelectValue placeholder="Select urgency" />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Immediate">Immediate</SelectItem>
+                  {urgencies.map((urgency) => (
+                    <SelectItem key={urgency.label} value={urgency.label}>
+                      {urgency.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

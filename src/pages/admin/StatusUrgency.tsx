@@ -35,6 +35,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { invalidateStatusUrgencyCache } from "@/hooks/useStatusUrgency";
 
 interface StatusUrgencyItem {
   label: string;
@@ -177,12 +178,17 @@ export default function StatusUrgency() {
         .upsert({
           setting_key: "task_statuses",
           setting_value: JSON.stringify(newStatuses),
-        });
+      });
 
       if (error) throw error;
-    } catch (error) {
+      
+      // Invalidate cache to refresh all components
+      await invalidateStatusUrgencyCache();
+      
+      toast.success("Task statuses saved successfully");
+    } catch (error: any) {
       console.error("Error saving statuses:", error);
-      toast.error("Failed to save statuses");
+      toast.error(error.message || "Failed to save statuses");
     }
   };
 
@@ -196,9 +202,14 @@ export default function StatusUrgency() {
         });
 
       if (error) throw error;
-    } catch (error) {
+      
+      // Invalidate cache to refresh all components
+      await invalidateStatusUrgencyCache();
+      
+      toast.success("Task urgencies saved successfully");
+    } catch (error: any) {
       console.error("Error saving urgencies:", error);
-      toast.error("Failed to save urgencies");
+      toast.error(error.message || "Failed to save urgencies");
     }
   };
 
