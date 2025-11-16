@@ -430,17 +430,7 @@ export default function AdminUsers() {
                     {getSortIcon("full_name")}
                   </Button>
                 </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0 font-medium hover:bg-transparent"
-                    onClick={() => handleSort("email")}
-                  >
-                    Email
-                    {getSortIcon("email")}
-                  </Button>
-                </TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
