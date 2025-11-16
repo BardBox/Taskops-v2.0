@@ -83,10 +83,30 @@ const SortableTaskCard = ({
     return urgencyItem?.color || "bg-muted text-muted-foreground";
   };
 
+  const getStickyNoteColor = (urgency: string) => {
+    const urgencyLower = urgency.toLowerCase();
+    if (urgencyLower.includes('high') || urgencyLower.includes('urgent') || urgencyLower.includes('critical')) {
+      return 'from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/30 border-red-300 dark:border-red-700';
+    }
+    if (urgencyLower.includes('medium') || urgencyLower.includes('moderate')) {
+      return 'from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-300 dark:border-orange-700';
+    }
+    return 'from-yellow-100 to-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-300 dark:border-yellow-700';
+  };
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card 
-        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} hover:rotate-0 hover:scale-105 shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2)] bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-700`}
+        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} hover:rotate-0 hover:scale-105 shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2)] bg-gradient-to-br ${getStickyNoteColor(task.urgency)}`}
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 24px,
+            rgba(0,0,0,0.02) 24px,
+            rgba(0,0,0,0.02) 25px
+          )`
+        }}
         onClick={() => onClick(task.id)}
       >
         {/* Decorative pin at top */}
@@ -267,12 +287,25 @@ export const KanbanBoard = ({
         ref={setNodeRef} 
         className={`flex-shrink-0 w-80 transition-all ${isOver ? 'ring-2 ring-primary' : ''}`}
       >
-        <div className="bg-muted/30 rounded-lg p-4 h-full">
+        <div 
+          className="rounded-lg p-4 h-full shadow-inner"
+          style={{
+            background: `
+              radial-gradient(circle at 20% 30%, rgba(139, 90, 43, 0.3) 0%, transparent 2px),
+              radial-gradient(circle at 60% 70%, rgba(139, 90, 43, 0.2) 0%, transparent 1.5px),
+              radial-gradient(circle at 40% 90%, rgba(139, 90, 43, 0.25) 0%, transparent 2px),
+              radial-gradient(circle at 80% 20%, rgba(139, 90, 43, 0.2) 0%, transparent 1px),
+              radial-gradient(circle at 15% 60%, rgba(139, 90, 43, 0.3) 0%, transparent 2.5px),
+              linear-gradient(135deg, #c19a6b 0%, #a67c52 100%)
+            `,
+            backgroundSize: '100px 100px, 80px 80px, 120px 120px, 90px 90px, 110px 110px, 100% 100%'
+          }}
+        >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-white drop-shadow-md">
               <div className={`w-3 h-3 rounded-full ${status.color}`} />
               {status.label}
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 bg-white/90">
                 {tasksByStatus[status.label]?.length || 0}
               </Badge>
             </h3>
