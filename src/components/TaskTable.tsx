@@ -72,13 +72,10 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
-  const [statusOptions, setStatusOptions] = useState<Array<{label: string; color: string}>>([]);
-  const [urgencyOptions, setUrgencyOptions] = useState<Array<{label: string; color: string}>>([]);
 
   useEffect(() => {
     fetchTasks();
     fetchAppreciations();
-    fetchStatusAndUrgencyOptions();
 
     const channel = supabase
       .channel("tasks-changes")
@@ -98,39 +95,6 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     };
   }, []);
 
-  const fetchStatusAndUrgencyOptions = async () => {
-    try {
-      const { data: settingsData } = await supabase
-        .from("system_settings")
-        .select("setting_key, setting_value")
-        .in("setting_key", ["task_statuses", "task_urgencies"]);
-
-      if (settingsData) {
-        const statusSetting = settingsData.find(s => s.setting_key === "task_statuses");
-        const urgencySetting = settingsData.find(s => s.setting_key === "task_urgencies");
-
-        if (statusSetting) {
-          try {
-            const statuses = JSON.parse(statusSetting.setting_value);
-            setStatusOptions(statuses);
-          } catch (e) {
-            console.error("Failed to parse status options", e);
-          }
-        }
-
-        if (urgencySetting) {
-          try {
-            const urgencies = JSON.parse(urgencySetting.setting_value);
-            setUrgencyOptions(urgencies);
-          } catch (e) {
-            console.error("Failed to parse urgency options", e);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching status and urgency options:", error);
-    }
-  };
 
   const fetchAppreciations = async () => {
     const { data } = await supabase
@@ -654,60 +618,36 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 px-3 text-sm font-medium hover:bg-accent">
-                              {task.status}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
-                            <div className="space-y-1">
-                              {statusOptions.map((statusOption) => (
-                                <Button
-                                  key={statusOption.label}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full justify-start text-sm hover:bg-accent"
-                                  onClick={() => handleStatusChange(task.id, statusOption.label)}
-                                >
-                                  <Badge className={`${statusOption.color} mr-2`}>
-                                    {statusOption.label}
-                                  </Badge>
-                                </Button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                        <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value)}>
+                          <SelectTrigger className="h-8 w-[130px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Not Started">Not Started</SelectItem>
+                            <SelectItem value="In Progress">In Progress</SelectItem>
+                            <SelectItem value="In Approval">In Approval</SelectItem>
+                            <SelectItem value="Approved">Approved</SelectItem>
+                            <SelectItem value="Rejected">Rejected</SelectItem>
+                            <SelectItem value="Canceled">Canceled</SelectItem>
+                          </SelectContent>
+                        </Select>
                       ) : (
                         <span className="text-sm">{task.status}</span>
                       )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 px-3 text-sm font-medium hover:bg-accent">
-                              {task.urgency}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
-                            <div className="space-y-1">
-                              {urgencyOptions.map((urgencyOption) => (
-                                <Button
-                                  key={urgencyOption.label}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full justify-start text-sm hover:bg-accent"
-                                  onClick={() => handleUrgencyChange(task.id, urgencyOption.label)}
-                                >
-                                  <Badge className={`${urgencyOption.color} mr-2`}>
-                                    {urgencyOption.label}
-                                  </Badge>
-                                </Button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                        <Select value={task.urgency} onValueChange={(value) => handleUrgencyChange(task.id, value)}>
+                          <SelectTrigger className="h-8 w-[110px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Low">Low</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Immediate">Immediate</SelectItem>
+                          </SelectContent>
+                        </Select>
                       ) : (
                         <span className="text-sm">{task.urgency}</span>
                       )}
