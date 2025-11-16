@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -51,13 +52,15 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [users, setUsers] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  const [statusOptions, setStatusOptions] = useState<Array<{label: string; color: string}>>([]);
+  const [urgencyOptions, setUrgencyOptions] = useState<Array<{label: string; color: string}>>([]);
   const [formData, setFormData] = useState({
     task_name: "",
     client_id: "",
     project_id: "",
     assignee_id: "",
     deadline: "",
-    status: "To Do",
+    status: "Not Started",
     urgency: "Medium",
     reference_link_1: "",
     reference_link_2: "",
@@ -70,6 +73,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
       fetchClients();
       fetchUsers();
       getCurrentUser();
+      fetchStatusAndUrgencyOptions();
       setCurrentUserRole(userRole || "");
 
       if (task) {
@@ -213,6 +217,40 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
       .select("*, user_roles!inner(role)")
       .order("full_name");
     setUsers(data || []);
+  };
+
+  const fetchStatusAndUrgencyOptions = async () => {
+    try {
+      const { data: settingsData } = await supabase
+        .from("system_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["task_statuses", "task_urgencies"]);
+
+      if (settingsData) {
+        const statusSetting = settingsData.find(s => s.setting_key === "task_statuses");
+        const urgencySetting = settingsData.find(s => s.setting_key === "task_urgencies");
+
+        if (statusSetting) {
+          try {
+            const statuses = JSON.parse(statusSetting.setting_value);
+            setStatusOptions(statuses);
+          } catch (e) {
+            console.error("Failed to parse status options", e);
+          }
+        }
+
+        if (urgencySetting) {
+          try {
+            const urgencies = JSON.parse(urgencySetting.setting_value);
+            setUrgencyOptions(urgencies);
+          } catch (e) {
+            console.error("Failed to parse urgency options", e);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching status and urgency options:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent, keepOpen = false) => {
@@ -397,17 +435,19 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 <PopoverContent className="w-full p-2 bg-background border shadow-lg z-50" align="start">
                   <div className="space-y-1">
                     {(currentUserRole === "team_member"
-                      ? ["To Do", "Doing", "Done"]
-                      : ["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"]
-                    ).map((status) => (
+                      ? statusOptions.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
+                      : statusOptions
+                    ).map((statusOption) => (
                       <Button
-                        key={status}
+                        key={statusOption.label}
                         variant="ghost"
                         size="sm"
                         className="w-full justify-start text-sm hover:bg-accent"
-                        onClick={() => setFormData({ ...formData, status })}
+                        onClick={() => setFormData({ ...formData, status: statusOption.label })}
                       >
-                        {status}
+                        <Badge className={`${statusOption.color} mr-2`}>
+                          {statusOption.label}
+                        </Badge>
                       </Button>
                     ))}
                   </div>
@@ -429,15 +469,17 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-2 bg-background border shadow-lg z-50" align="start">
                   <div className="space-y-1">
-                    {["Low", "Medium", "High", "Immediate"].map((urgency) => (
+                    {urgencyOptions.map((urgencyOption) => (
                       <Button
-                        key={urgency}
+                        key={urgencyOption.label}
                         variant="ghost"
                         size="sm"
                         className="w-full justify-start text-sm hover:bg-accent"
-                        onClick={() => setFormData({ ...formData, urgency })}
+                        onClick={() => setFormData({ ...formData, urgency: urgencyOption.label })}
                       >
-                        {urgency}
+                        <Badge className={`${urgencyOption.color} mr-2`}>
+                          {urgencyOption.label}
+                        </Badge>
                       </Button>
                     ))}
                   </div>
