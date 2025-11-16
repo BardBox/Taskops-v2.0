@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -253,6 +253,30 @@ export const KanbanBoard = ({
 
   const activeTask = activeId ? tasks.find(t => t.id === activeId) : null;
 
+  const DroppableColumn = ({ status, children }: { status: { label: string; color: string }; children: React.ReactNode }) => {
+    const { setNodeRef, isOver } = useDroppable({ id: status.label });
+    
+    return (
+      <div 
+        ref={setNodeRef} 
+        className={`flex-shrink-0 w-80 transition-all ${isOver ? 'ring-2 ring-primary' : ''}`}
+      >
+        <div className="bg-muted/30 rounded-lg p-4 h-full">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${status.color}`} />
+              {status.label}
+              <Badge variant="secondary" className="ml-2">
+                {tasksByStatus[status.label]?.length || 0}
+              </Badge>
+            </h3>
+          </div>
+          {children}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -262,47 +286,34 @@ export const KanbanBoard = ({
     >
       <div className="flex gap-4 overflow-x-auto pb-4 animate-fade-in">
         {statuses.map((status) => (
-          <div key={status.label} className="flex-shrink-0 w-80">
-            <div className="bg-muted/30 rounded-lg p-4 h-full">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${status.color}`} />
-                  {status.label}
-                  <Badge variant="secondary" className="ml-2">
-                    {tasksByStatus[status.label]?.length || 0}
-                  </Badge>
-                </h3>
+          <DroppableColumn key={status.label} status={status}>
+            <SortableContext
+              items={tasksByStatus[status.label]?.map(t => t.id) || []}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2 min-h-[200px]">
+                {tasksByStatus[status.label]?.map((task) => (
+                  <SortableTaskCard
+                    key={task.id}
+                    task={task}
+                    userRole={userRole}
+                    userId={userId}
+                    isSelected={selectedTaskIds.has(task.id)}
+                    isAppreciated={taskAppreciations.get(task.id)}
+                    urgencies={urgencies}
+                    onSelect={onSelectTask}
+                    onEdit={onEditTask}
+                    onClick={onTaskClick}
+                    onUrgencyChange={onUrgencyChange}
+                    onAppreciationToggle={onAppreciationToggle}
+                    onSubmit={onSubmit}
+                    onNotesClick={onNotesClick}
+                    canEdit={canEdit(task)}
+                  />
+                ))}
               </div>
-              
-              <SortableContext
-                items={tasksByStatus[status.label]?.map(t => t.id) || []}
-                strategy={verticalListSortingStrategy}
-                id={status.label}
-              >
-                <div className="space-y-2 min-h-[200px]">
-                  {tasksByStatus[status.label]?.map((task) => (
-                    <SortableTaskCard
-                      key={task.id}
-                      task={task}
-                      userRole={userRole}
-                      userId={userId}
-                      isSelected={selectedTaskIds.has(task.id)}
-                      isAppreciated={taskAppreciations.get(task.id)}
-                      urgencies={urgencies}
-                      onSelect={onSelectTask}
-                      onEdit={onEditTask}
-                      onClick={onTaskClick}
-                      onUrgencyChange={onUrgencyChange}
-                      onAppreciationToggle={onAppreciationToggle}
-                      onSubmit={onSubmit}
-                      onNotesClick={onNotesClick}
-                      canEdit={canEdit(task)}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </div>
-          </div>
+            </SortableContext>
+          </DroppableColumn>
         ))}
       </div>
 
