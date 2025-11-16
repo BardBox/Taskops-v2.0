@@ -816,13 +816,13 @@ export function TaskDetailDialog({
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className={`h-8 px-4 text-sm font-medium hover:bg-accent ${getUrgencyColor(task.urgency)}`}>
+                      <Button variant="outline" size="sm" className="h-8 px-4 text-sm font-medium hover:bg-accent">
                         {task.urgency}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-40 p-2 bg-background border shadow-lg z-50" align="start">
                       <div className="space-y-1">
-                        {["Low", "Normal", "High", "Urgent"].map((urgency) => (
+                        {["Low", "Medium", "High", "Immediate"].map((urgency) => (
                           <Button
                             key={urgency}
                             variant="ghost"
