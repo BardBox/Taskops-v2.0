@@ -547,7 +547,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                 return (
                   <TableRow 
                     key={task.id}
-                    className={`${shouldHighlight ? "bg-secondary/10" : ""} cursor-pointer hover:bg-muted/50 transition-colors`}
+                    className={cn(
+                      "relative group cursor-pointer transition-all duration-200",
+                      shouldHighlight && "bg-secondary/10",
+                      "hover:bg-muted/50 hover:shadow-sm"
+                    )}
                     onClick={() => {
                       setSelectedTaskId(task.id);
                       setDetailDialogOpen(true);
@@ -566,6 +570,17 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </TableCell>
                     <TableCell className="font-medium max-w-xs">
                       <div className="flex items-center gap-2">
+                        {/* Status indicator bar */}
+                        <div 
+                          className="w-1 h-8 rounded-full transition-all duration-300" 
+                          style={{ 
+                            backgroundColor: task.status === "Approved" ? "hsl(150 60% 55%)" :
+                                           task.status === "Done" ? "hsl(210 100% 50%)" :
+                                           task.status === "Doing" ? "hsl(48 100% 50%)" :
+                                           task.status === "On Hold" ? "hsl(25 85% 60%)" :
+                                           "hsl(220 13% 75%)"
+                          }}
+                        />
                         <span className="truncate">{task.task_name}</span>
                         {(userRole === "project_owner" || userRole === "project_manager") && (
                           <button
@@ -629,17 +644,19 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                       )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={task.status !== "Done"}
-                        onClick={() => handleOpenSubmitDialog(task)}
-                      >
-                        Submit
-                      </Button>
+                      <div className="flex gap-2 slide-in-actions">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={task.status !== "Done"}
+                          onClick={() => handleOpenSubmitDialog(task)}
+                        >
+                          Submit
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 slide-in-actions">
                         {canEdit(task) && (
                           <Button
                             variant="ghost"
