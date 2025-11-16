@@ -72,10 +72,13 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const [statusOptions, setStatusOptions] = useState<Array<{label: string; color: string}>>([]);
+  const [urgencyOptions, setUrgencyOptions] = useState<Array<{label: string; color: string}>>([]);
 
   useEffect(() => {
     fetchTasks();
     fetchAppreciations();
+    fetchStatusAndUrgencyOptions();
 
     const channel = supabase
       .channel("tasks-changes")
@@ -94,6 +97,40 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const fetchStatusAndUrgencyOptions = async () => {
+    try {
+      const { data: settingsData } = await supabase
+        .from("system_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["task_statuses", "task_urgencies"]);
+
+      if (settingsData) {
+        const statusSetting = settingsData.find(s => s.setting_key === "task_statuses");
+        const urgencySetting = settingsData.find(s => s.setting_key === "task_urgencies");
+
+        if (statusSetting) {
+          try {
+            const statuses = JSON.parse(statusSetting.setting_value);
+            setStatusOptions(statuses);
+          } catch (e) {
+            console.error("Failed to parse status options", e);
+          }
+        }
+
+        if (urgencySetting) {
+          try {
+            const urgencies = JSON.parse(urgencySetting.setting_value);
+            setUrgencyOptions(urgencies);
+          } catch (e) {
+            console.error("Failed to parse urgency options", e);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching status and urgency options:", error);
+    }
+  };
 
   const fetchAppreciations = async () => {
     const { data } = await supabase
@@ -625,15 +662,17 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                           </PopoverTrigger>
                           <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
                             <div className="space-y-1">
-                              {["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"].map((status) => (
+                              {statusOptions.map((statusOption) => (
                                 <Button
-                                  key={status}
+                                  key={statusOption.label}
                                   variant="ghost"
                                   size="sm"
                                   className="w-full justify-start text-sm hover:bg-accent"
-                                  onClick={() => handleStatusChange(task.id, status)}
+                                  onClick={() => handleStatusChange(task.id, statusOption.label)}
                                 >
-                                  {status}
+                                  <Badge className={`${statusOption.color} mr-2`}>
+                                    {statusOption.label}
+                                  </Badge>
                                 </Button>
                               ))}
                             </div>
@@ -653,15 +692,17 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                           </PopoverTrigger>
                           <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
                             <div className="space-y-1">
-                              {["Low", "Medium", "High", "Immediate"].map((urgency) => (
+                              {urgencyOptions.map((urgencyOption) => (
                                 <Button
-                                  key={urgency}
+                                  key={urgencyOption.label}
                                   variant="ghost"
                                   size="sm"
                                   className="w-full justify-start text-sm hover:bg-accent"
-                                  onClick={() => handleUrgencyChange(task.id, urgency)}
+                                  onClick={() => handleUrgencyChange(task.id, urgencyOption.label)}
                                 >
-                                  {urgency}
+                                  <Badge className={`${urgencyOption.color} mr-2`}>
+                                    {urgencyOption.label}
+                                  </Badge>
                                 </Button>
                               ))}
                             </div>
