@@ -30,6 +30,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
+import { InlineBadgeSelector } from "@/components/InlineBadgeSelector";
+import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
@@ -590,38 +592,30 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
-                        <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value)}>
-                          <SelectTrigger className="h-8 w-[130px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            {statuses.map((status) => (
-                              <SelectItem key={status.label} value={status.label}>
-                                {status.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <InlineBadgeSelector
+                          options={statuses}
+                          value={task.status}
+                          onChange={(value) => handleStatusChange(task.id, value)}
+                          className="max-w-[280px]"
+                        />
                       ) : (
-                        <span className="text-sm">{task.status}</span>
+                        <Badge className={cn("rounded-full px-2.5 py-1 text-xs", getStatusColor(task.status))}>
+                          {task.status}
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {canEdit(task) ? (
-                        <Select value={task.urgency} onValueChange={(value) => handleUrgencyChange(task.id, value)}>
-                          <SelectTrigger className="h-8 w-[110px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            {urgencies.map((urgency) => (
-                              <SelectItem key={urgency.label} value={urgency.label}>
-                                {urgency.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <InlineBadgeSelector
+                          options={urgencies}
+                          value={task.urgency}
+                          onChange={(value) => handleUrgencyChange(task.id, value)}
+                          className="max-w-[240px]"
+                        />
                       ) : (
-                        <span className="text-sm">{task.urgency}</span>
+                        <Badge className={cn("rounded-full px-2.5 py-1 text-xs", getUrgencyColor(task.urgency))}>
+                          {task.urgency}
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>
