@@ -168,16 +168,25 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "Not Started":
+        return "bg-status-todo text-status-todo-foreground";
+      case "In Progress":
+        return "bg-status-doing text-status-doing-foreground";
+      case "In Approval":
+        return "bg-status-hold text-status-hold-foreground";
+      case "Approved":
+        return "bg-status-approved text-status-approved-foreground";
+      case "Revision":
+        return "bg-status-cancelled text-status-cancelled-foreground";
+      case "On Hold":
+        return "bg-status-done text-status-done-foreground";
+      // Legacy status mappings for backward compatibility
       case "To Do":
         return "bg-status-todo text-status-todo-foreground";
       case "Doing":
         return "bg-status-doing text-status-doing-foreground";
       case "Done":
         return "bg-status-done text-status-done-foreground";
-      case "Approved":
-        return "bg-status-approved text-status-approved-foreground";
-      case "On Hold":
-        return "bg-status-hold text-status-hold-foreground";
       default:
         return "bg-status-todo text-status-todo-foreground";
     }

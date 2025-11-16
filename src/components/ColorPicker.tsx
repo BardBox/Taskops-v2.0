@@ -1,5 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface ColorPickerProps {
   value: string;
@@ -7,44 +8,69 @@ interface ColorPickerProps {
 }
 
 const colorPresets = [
-  // Critical/High Priority Colors
-  { name: "Bright Red", bg: "bg-red-500", text: "text-white", value: "bg-red-500 text-white", category: "Critical" },
-  { name: "Dark Red", bg: "bg-red-700", text: "text-white", value: "bg-red-700 text-white", category: "Critical" },
-  { name: "Light Red", bg: "bg-red-400", text: "text-white", value: "bg-red-400 text-white", category: "Critical" },
+  // Status Colors
+  { 
+    name: "Not Started", 
+    value: "bg-status-todo text-status-todo-foreground", 
+    category: "Status",
+    preview: "bg-status-todo"
+  },
+  { 
+    name: "In Progress", 
+    value: "bg-status-doing text-status-doing-foreground", 
+    category: "Status",
+    preview: "bg-status-doing"
+  },
+  { 
+    name: "In Approval", 
+    value: "bg-status-hold text-status-hold-foreground", 
+    category: "Status",
+    preview: "bg-status-hold"
+  },
+  { 
+    name: "Approved", 
+    value: "bg-status-approved text-status-approved-foreground", 
+    category: "Status",
+    preview: "bg-status-approved"
+  },
+  { 
+    name: "Revision", 
+    value: "bg-status-cancelled text-status-cancelled-foreground", 
+    category: "Status",
+    preview: "bg-status-cancelled"
+  },
+  { 
+    name: "On Hold", 
+    value: "bg-status-done text-status-done-foreground", 
+    category: "Status",
+    preview: "bg-status-done"
+  },
   
-  // Warning/Attention Colors
-  { name: "Bright Orange", bg: "bg-orange-500", text: "text-white", value: "bg-orange-500 text-white", category: "Warning" },
-  { name: "Dark Orange", bg: "bg-orange-700", text: "text-white", value: "bg-orange-700 text-white", category: "Warning" },
-  { name: "Amber", bg: "bg-amber-500", text: "text-white", value: "bg-amber-500 text-white", category: "Warning" },
-  { name: "Yellow", bg: "bg-yellow-500", text: "text-gray-900", value: "bg-yellow-500 text-gray-900", category: "Warning" },
-  
-  // Success/Complete Colors
-  { name: "Bright Green", bg: "bg-green-500", text: "text-white", value: "bg-green-500 text-white", category: "Success" },
-  { name: "Dark Green", bg: "bg-green-700", text: "text-white", value: "bg-green-700 text-white", category: "Success" },
-  { name: "Emerald", bg: "bg-emerald-500", text: "text-white", value: "bg-emerald-500 text-white", category: "Success" },
-  { name: "Lime", bg: "bg-lime-500", text: "text-gray-900", value: "bg-lime-500 text-gray-900", category: "Success" },
-  
-  // In Progress/Active Colors
-  { name: "Bright Blue", bg: "bg-blue-500", text: "text-white", value: "bg-blue-500 text-white", category: "Active" },
-  { name: "Dark Blue", bg: "bg-blue-700", text: "text-white", value: "bg-blue-700 text-white", category: "Active" },
-  { name: "Sky Blue", bg: "bg-sky-500", text: "text-white", value: "bg-sky-500 text-white", category: "Active" },
-  { name: "Cyan", bg: "bg-cyan-500", text: "text-gray-900", value: "bg-cyan-500 text-gray-900", category: "Active" },
-  
-  // Review/Hold Colors
-  { name: "Bright Purple", bg: "bg-purple-500", text: "text-white", value: "bg-purple-500 text-white", category: "Review" },
-  { name: "Dark Purple", bg: "bg-purple-700", text: "text-white", value: "bg-purple-700 text-white", category: "Review" },
-  { name: "Violet", bg: "bg-violet-500", text: "text-white", value: "bg-violet-500 text-white", category: "Review" },
-  { name: "Indigo", bg: "bg-indigo-500", text: "text-white", value: "bg-indigo-500 text-white", category: "Review" },
-  
-  // Neutral/Pending Colors
-  { name: "Slate", bg: "bg-slate-500", text: "text-white", value: "bg-slate-500 text-white", category: "Neutral" },
-  { name: "Gray", bg: "bg-gray-500", text: "text-white", value: "bg-gray-500 text-white", category: "Neutral" },
-  { name: "Dark Slate", bg: "bg-slate-700", text: "text-white", value: "bg-slate-700 text-white", category: "Neutral" },
-  
-  // Special Colors
-  { name: "Pink", bg: "bg-pink-500", text: "text-white", value: "bg-pink-500 text-white", category: "Special" },
-  { name: "Teal", bg: "bg-teal-500", text: "text-white", value: "bg-teal-500 text-white", category: "Special" },
-  { name: "Rose", bg: "bg-rose-500", text: "text-white", value: "bg-rose-500 text-white", category: "Special" },
+  // Urgency Colors
+  { 
+    name: "Low Priority", 
+    value: "bg-urgency-low text-urgency-low-foreground", 
+    category: "Urgency",
+    preview: "bg-urgency-low"
+  },
+  { 
+    name: "Medium Priority", 
+    value: "bg-urgency-medium text-urgency-medium-foreground", 
+    category: "Urgency",
+    preview: "bg-urgency-medium"
+  },
+  { 
+    name: "High Priority", 
+    value: "bg-urgency-high text-urgency-high-foreground", 
+    category: "Urgency",
+    preview: "bg-urgency-high"
+  },
+  { 
+    name: "Immediate", 
+    value: "bg-urgency-immediate text-urgency-immediate-foreground", 
+    category: "Urgency",
+    preview: "bg-urgency-immediate"
+  },
 ];
 
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
@@ -65,25 +91,23 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 {category}
               </h4>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {categoryColors.map((color) => (
                   <button
                     key={color.name}
                     type="button"
                     onClick={() => onChange(color.value)}
                     className={cn(
-                      "h-14 rounded-lg border-2 transition-all hover:scale-105 hover:shadow-md relative group",
-                      color.bg,
+                      "h-12 rounded-lg border-2 transition-all hover:scale-105 hover:shadow-md relative flex items-center justify-center gap-2 px-3",
                       value === color.value 
-                        ? "border-foreground ring-2 ring-ring ring-offset-2 scale-105" 
+                        ? "border-primary ring-2 ring-ring ring-offset-2 scale-105" 
                         : "border-border"
                     )}
                     title={color.name}
                   >
-                    <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-medium">
-                      <span className={color.text.replace('text-', 'bg-').replace('text-gray-900', 'bg-gray-900').replace('text-white', 'bg-white') + ' px-2 py-1 rounded shadow-sm'}>
-                        {color.name}
-                      </span>
+                    <div className={cn("w-6 h-6 rounded-full", color.preview)} />
+                    <span className="text-xs font-medium text-foreground flex-1 text-left">
+                      {color.name}
                     </span>
                   </button>
                 ))}
@@ -97,9 +121,9 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
         <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground">Preview:</span>
-            <span className={cn("px-4 py-2 rounded-md text-sm font-semibold shadow-sm", value)}>
+            <Badge className={cn("px-4 py-2", value)}>
               Sample Badge
-            </span>
+            </Badge>
           </div>
         </div>
       )}

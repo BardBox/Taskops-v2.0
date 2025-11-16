@@ -37,7 +37,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 
 interface StatusUrgencyItem {
-  value: string;
   label: string;
   color: string;
 }
@@ -57,7 +56,7 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.value });
+  } = useSortable({ id: item.label });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -69,11 +68,11 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center justify-between p-2 rounded-lg hover:bg-muted/50",
+        "flex items-center justify-between p-3 rounded-lg hover:bg-muted/50",
         isDragging && "opacity-50"
       )}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {isOwner && (
           <button
             className="cursor-grab active:cursor-grabbing touch-none"
@@ -83,7 +82,9 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </button>
         )}
-        <span className="text-sm">{item.label}</span>
+        <Badge className={cn("px-3 py-1", item.color)}>
+          {item.label}
+        </Badge>
       </div>
       {isOwner && (
         <div className="flex gap-1">
@@ -110,21 +111,21 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
 }
 
 const defaultStatuses: StatusUrgencyItem[] = [
-  { value: "Not Started", label: "Not Started", color: "bg-slate-500 text-white" },
-  { value: "In Progress", label: "In Progress", color: "bg-blue-500 text-white" },
-  { value: "Waiting for Approval", label: "Waiting for Approval", color: "bg-yellow-500 text-white" },
-  { value: "Approved", label: "Approved", color: "bg-green-500 text-white" },
-  { value: "Revision", label: "Revision", color: "bg-orange-500 text-white" },
-  { value: "On Hold", label: "On Hold", color: "bg-purple-500 text-white" },
+  { label: "Not Started", color: "bg-status-todo text-status-todo-foreground" },
+  { label: "In Progress", color: "bg-status-doing text-status-doing-foreground" },
+  { label: "In Approval", color: "bg-status-hold text-status-hold-foreground" },
+  { label: "Approved", color: "bg-status-approved text-status-approved-foreground" },
+  { label: "Revision", color: "bg-status-cancelled text-status-cancelled-foreground" },
+  { label: "On Hold", color: "bg-status-done text-status-done-foreground" },
 ];
 
 const initialStatuses: StatusUrgencyItem[] = defaultStatuses;
 
 const defaultUrgencies: StatusUrgencyItem[] = [
-  { value: "Low", label: "Low", color: "bg-green-500 text-white" },
-  { value: "Medium", label: "Medium", color: "bg-yellow-500 text-white" },
-  { value: "High", label: "High", color: "bg-orange-500 text-white" },
-  { value: "Immediate", label: "Immediate", color: "bg-red-500 text-white" },
+  { label: "Low", color: "bg-urgency-low text-urgency-low-foreground" },
+  { label: "Medium", color: "bg-urgency-medium text-urgency-medium-foreground" },
+  { label: "High", color: "bg-urgency-high text-urgency-high-foreground" },
+  { label: "Immediate", color: "bg-urgency-immediate text-urgency-immediate-foreground" },
 ];
 
 const initialUrgencies: StatusUrgencyItem[] = defaultUrgencies;
