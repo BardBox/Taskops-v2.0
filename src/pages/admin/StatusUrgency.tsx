@@ -82,31 +82,28 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </button>
         )}
-        <span className="font-medium">{item.label}</span>
+        <span className="text-sm">{item.label}</span>
       </div>
-      <div className="flex items-center gap-2">
-        <Badge className={item.color}>{item.value}</Badge>
-        {isOwner && (
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={onEdit}
-            >
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        )}
-      </div>
+      {isOwner && (
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={onEdit}
+          >
+            <Pencil className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
