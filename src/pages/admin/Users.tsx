@@ -53,6 +53,11 @@ export default function AdminUsers() {
     full_name: "",
     role: "team_member",
   });
+  const [filters, setFilters] = useState({
+    userId: "",
+    name: "",
+    role: "",
+  });
 
   const isOwner = userRole === "project_owner";
   const isPM = userRole === "project_manager";
@@ -267,6 +272,25 @@ export default function AdminUsers() {
     }
   };
 
+  const filteredUsers = users.filter((user) => {
+    if (filters.userId && !user.user_code.toLowerCase().includes(filters.userId.toLowerCase())) {
+      return false;
+    }
+    if (filters.name && !user.full_name.toLowerCase().includes(filters.name.toLowerCase())) {
+      return false;
+    }
+    if (filters.role && user.role !== filters.role) {
+      return false;
+    }
+    return true;
+  });
+
+  const clearFilters = () => {
+    setFilters({ userId: "", name: "", role: "" });
+  };
+
+  const hasActiveFilters = filters.userId || filters.name || filters.role;
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -286,9 +310,63 @@ export default function AdminUsers() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>All Users</CardTitle>
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            )}
+          </div>
+          {hasActiveFilters && (
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {filters.userId && (
+                <Badge variant="secondary">
+                  User ID: {filters.userId}
+                </Badge>
+              )}
+              {filters.name && (
+                <Badge variant="secondary">
+                  Name: {filters.name}
+                </Badge>
+              )}
+              {filters.role && (
+                <Badge variant="secondary">
+                  Role: {filters.role.replace("_", " ")}
+                </Badge>
+              )}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex gap-2 flex-wrap">
+            <Input
+              placeholder="Filter by User ID..."
+              value={filters.userId}
+              onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
+              className="max-w-xs"
+            />
+            <Input
+              placeholder="Filter by Name..."
+              value={filters.name}
+              onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+              className="max-w-xs"
+            />
+            <Select
+              value={filters.role}
+              onValueChange={(value) => setFilters({ ...filters, role: value })}
+            >
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Filter by Role..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" ">All Roles</SelectItem>
+                <SelectItem value="team_member">Team Member</SelectItem>
+                <SelectItem value="project_manager">Project Manager</SelectItem>
+                <SelectItem value="project_owner">Project Owner</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -300,7 +378,7 @@ export default function AdminUsers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-mono text-sm">{user.user_code}</TableCell>
                   <TableCell className="font-medium">{user.full_name}</TableCell>
