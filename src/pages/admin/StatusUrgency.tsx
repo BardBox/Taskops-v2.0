@@ -109,23 +109,25 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
   );
 }
 
-const initialStatuses: StatusUrgencyItem[] = [
-  { value: "To Do", label: "To Do", color: "bg-status-todo text-status-todo-foreground" },
-  { value: "Doing", label: "Doing", color: "bg-status-doing text-status-doing-foreground" },
-  { value: "Done", label: "Done", color: "bg-status-done text-status-done-foreground" },
-  { value: "Approved", label: "Approved", color: "bg-status-approved text-status-approved-foreground" },
-  { value: "On Hold", label: "On Hold", color: "bg-status-hold text-status-hold-foreground" },
-  { value: "Cancelled", label: "Cancelled", color: "bg-status-cancelled text-status-cancelled-foreground" },
-  { value: "Needs Review", label: "Needs Review", color: "bg-status-hold text-status-hold-foreground" },
-  { value: "Blocked", label: "Blocked", color: "bg-status-cancelled text-status-cancelled-foreground" },
+const defaultStatuses: StatusUrgencyItem[] = [
+  { value: "Not Started", label: "Not Started", color: "bg-slate-500 text-white" },
+  { value: "In Progress", label: "In Progress", color: "bg-blue-500 text-white" },
+  { value: "Waiting for Approval", label: "Waiting for Approval", color: "bg-yellow-500 text-white" },
+  { value: "Approved", label: "Approved", color: "bg-green-500 text-white" },
+  { value: "Revision", label: "Revision", color: "bg-orange-500 text-white" },
+  { value: "On Hold", label: "On Hold", color: "bg-purple-500 text-white" },
 ];
 
-const initialUrgencies: StatusUrgencyItem[] = [
-  { value: "Low", label: "Low", color: "bg-urgency-low text-urgency-low-foreground" },
-  { value: "Medium", label: "Medium", color: "bg-urgency-medium text-urgency-medium-foreground" },
-  { value: "High", label: "High", color: "bg-urgency-high text-urgency-high-foreground" },
-  { value: "Immediate", label: "Immediate", color: "bg-urgency-immediate text-urgency-immediate-foreground" },
+const initialStatuses: StatusUrgencyItem[] = defaultStatuses;
+
+const defaultUrgencies: StatusUrgencyItem[] = [
+  { value: "Low", label: "Low", color: "bg-green-500 text-white" },
+  { value: "Medium", label: "Medium", color: "bg-yellow-500 text-white" },
+  { value: "High", label: "High", color: "bg-orange-500 text-white" },
+  { value: "Immediate", label: "Immediate", color: "bg-red-500 text-white" },
 ];
+
+const initialUrgencies: StatusUrgencyItem[] = defaultUrgencies;
 
 export default function StatusUrgency() {
   const { userRole } = useOutletContext<{ userRole: string }>();
@@ -297,6 +299,19 @@ export default function StatusUrgency() {
     toast.success(`${type === "status" ? "Status" : "Urgency"} deleted successfully`);
   };
 
+  const handleReset = async (type: "status" | "urgency") => {
+    if (!window.confirm(`Are you sure you want to reset ${type === "status" ? "statuses" : "urgencies"} to default values? This will replace all current values.`)) return;
+
+    if (type === "status") {
+      setStatuses(defaultStatuses);
+      await saveStatuses(defaultStatuses);
+    } else {
+      setUrgencies(defaultUrgencies);
+      await saveUrgencies(defaultUrgencies);
+    }
+    toast.success(`${type === "status" ? "Statuses" : "Urgencies"} reset to defaults successfully`);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -315,10 +330,15 @@ export default function StatusUrgency() {
                 <CardDescription>Current status options and their colors</CardDescription>
               </div>
               {isOwner && (
-                <Button size="sm" onClick={() => handleAdd("status")}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleReset("status")}>
+                    Reset
+                  </Button>
+                  <Button size="sm" onClick={() => handleAdd("status")}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
               )}
             </div>
           </CardHeader>
@@ -356,10 +376,15 @@ export default function StatusUrgency() {
                 <CardDescription>Current urgency levels and their colors</CardDescription>
               </div>
               {isOwner && (
-                <Button size="sm" onClick={() => handleAdd("urgency")}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleReset("urgency")}>
+                    Reset
+                  </Button>
+                  <Button size="sm" onClick={() => handleAdd("urgency")}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
               )}
             </div>
           </CardHeader>
