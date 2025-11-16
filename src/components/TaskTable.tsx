@@ -1,37 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FilterState } from "@/components/GlobalFilters";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskDialog } from "./TaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { SubmitDialog } from "./SubmitDialog";
 import { NotesDialog } from "./NotesDialog";
-import { Edit2, ExternalLink, FileText, ArrowUp, ArrowDown, Star, Trash2 } from "lucide-react";
-import { format } from "date-fns";
+import { TaskCard } from "./TaskCard";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
-import { BadgeDropdown } from "@/components/BadgeDropdown";
-import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
@@ -197,31 +176,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     return diffDays;
   };
 
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  const SortableHeader = ({ field, label }: { field: string; label: string }) => (
-    <TableHead className="cursor-pointer select-none" onClick={() => handleSort(field)}>
-      <div className="flex items-center gap-1">
-        {label}
-        {sortField === field && (
-          sortDirection === "asc" ? (
-            <ArrowUp className="h-3 w-3" />
-          ) : (
-            <ArrowDown className="h-3 w-3" />
-          )
-        )}
-      </div>
-    </TableHead>
-  );
-
-  const handleRowClick = (taskId: string) => {
+  const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setDetailDialogOpen(true);
   };
@@ -485,214 +440,80 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   };
 
   const filteredTasks = getFilteredAndSortedTasks();
-  
-  const isToday = (date: string | null) => {
-    if (!date) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return date === today;
-  };
 
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              {userRole === "project_owner" && (
-                <TableHead className="w-[80px]">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                    {selectedTaskIds.size > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleDeleteSelected}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                </TableHead>
-              )}
-              <SortableHeader field="date" label="Date" />
-              <SortableHeader field="task" label="Task" />
-              <SortableHeader field="client" label="Client" />
-              <SortableHeader field="project" label="Project" />
-              <SortableHeader field="assignee" label="Assignee" />
-              <SortableHeader field="assigned_by" label="Assigned By" />
-              <SortableHeader field="deadline" label="Deadline" />
-              <SortableHeader field="status" label="Status" />
-              <SortableHeader field="urgency" label="Urgency" />
-              <SortableHeader field="submission" label="Submission" />
-              <SortableHeader field="delay" label="Delay" />
-              <TableHead>Preview</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTasks.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={userRole === "project_owner" ? 14 : 13} className="text-center py-8 text-muted-foreground">
-                  No tasks found matching the selected filters.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredTasks.map((task) => {
-                const delay = calculateDelay(task.deadline, task.actual_delivery, task.status);
-                const shouldHighlight = filters?.highlightToday && isToday(task.deadline);
-                return (
-                  <TableRow 
-                    key={task.id}
-                    className={cn(
-                      "relative group cursor-pointer transition-all duration-200",
-                      shouldHighlight && "bg-secondary/10",
-                      "hover:bg-muted/50 hover:shadow-sm"
-                    )}
-                    onClick={() => {
-                      setSelectedTaskId(task.id);
-                      setDetailDialogOpen(true);
-                    }}
-                  >
-                    {userRole === "project_owner" && (
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedTaskIds.has(task.id)}
-                          onCheckedChange={(checked) => handleSelectTask(task.id, checked as boolean)}
-                        />
-                      </TableCell>
-                    )}
-                    <TableCell className="whitespace-nowrap">
-                      {format(new Date(task.date), "MMM dd")}
-                    </TableCell>
-                    <TableCell className="font-medium max-w-xs">
-                      <div className="flex items-center gap-2">
-                        {/* Status indicator bar */}
-                        <div 
-                          className="w-1 h-8 rounded-full transition-all duration-300" 
-                          style={{ 
-                            backgroundColor: task.status === "Approved" ? "hsl(150 60% 55%)" :
-                                           task.status === "Done" ? "hsl(210 100% 50%)" :
-                                           task.status === "Doing" ? "hsl(48 100% 50%)" :
-                                           task.status === "On Hold" ? "hsl(25 85% 60%)" :
-                                           "hsl(220 13% 75%)"
-                          }}
-                        />
-                        <span className="truncate">{task.task_name}</span>
-                        {(userRole === "project_owner" || userRole === "project_manager") && (
-                          <button
-                            onClick={(e) => toggleAppreciation(task.id, e)}
-                            className="flex-shrink-0 hover:scale-110 transition-transform"
-                          >
-                            <Star
-                              className={`h-4 w-4 ${
-                                taskAppreciations.get(task.id)
-                                  ? "fill-star text-star"
-                                  : "text-muted-foreground/30"
-                              }`}
-                            />
-                          </button>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{task.clients?.name || "-"}</TableCell>
-                    <TableCell>{task.projects?.name || "-"}</TableCell>
-                    <TableCell>{task.assignee?.full_name || "-"}</TableCell>
-                    <TableCell>{task.assigned_by?.full_name || "-"}</TableCell>
-                    <TableCell>
-                      {task.deadline ? format(new Date(task.deadline), "MMM dd") : "-"}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      {canEdit(task) ? (
-                        <BadgeDropdown
-                          options={statuses}
-                          value={task.status}
-                          onChange={(value) => handleStatusChange(task.id, value)}
-                        />
-                      ) : (
-                        <Badge className={cn("rounded-full px-2.5 py-1 text-xs", getStatusColor(task.status))}>
-                          {task.status}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      {canEdit(task) ? (
-                        <BadgeDropdown
-                          options={urgencies}
-                          value={task.urgency}
-                          onChange={(value) => handleUrgencyChange(task.id, value)}
-                        />
-                      ) : (
-                        <Badge className={cn("rounded-full px-2.5 py-1 text-xs", getUrgencyColor(task.urgency))}>
-                          {task.urgency}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {task.actual_delivery ? format(new Date(task.actual_delivery), "MMM dd") : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {delay !== null ? (
-                        <span className={`font-medium ${delay < 0 ? 'text-notification-success' : 'text-destructive'}`}>
-                          {delay}d
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2 slide-in-actions">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={task.status !== "Done"}
-                          onClick={() => handleOpenSubmitDialog(task)}
-                        >
-                          Submit
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2 slide-in-actions">
-                        {canEdit(task) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditTask(task)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {task.asset_link && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(task.asset_link!, "_blank")}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {(task.notes || task.reference_link_1 || task.reference_link_2 || task.reference_link_3) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenNotesDialog(task)}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+      {/* Bulk Actions Bar */}
+      {selectedTaskIds.size > 0 && userRole === "project_owner" && (
+        <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between animate-fade-in">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              checked={selectedTaskIds.size === filteredTasks.length}
+              onCheckedChange={handleSelectAll}
+            />
+            <span className="text-sm font-medium">
+              {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
+            </span>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDeleteSelected}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Selected
+          </Button>
+        </div>
+      )}
+
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+        {filteredTasks.map((task, index) => (
+          <div 
+            key={task.id}
+            style={{ 
+              animationDelay: `${index * 50}ms`,
+              animationFillMode: 'both'
+            }}
+            className="animate-fade-in-up"
+          >
+            <TaskCard
+              task={task}
+              userRole={userRole}
+              isSelected={selectedTaskIds.has(task.id)}
+              isAppreciated={taskAppreciations.get(task.id)}
+              statuses={statuses}
+              urgencies={urgencies}
+              onSelect={(checked) => handleSelectTask(task.id, checked)}
+              onEdit={() => handleEditTask(task)}
+              onClick={() => handleTaskClick(task.id)}
+              onStatusChange={(newStatus) => handleStatusChange(task.id, newStatus)}
+              onUrgencyChange={(newUrgency) => handleUrgencyChange(task.id, newUrgency)}
+              onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
+              onSubmit={() => {
+                setSelectedTaskForSubmit(task);
+                setSubmitDialogOpen(true);
+              }}
+              onNotesClick={() => {
+                setSelectedTask(task);
+                setNotesDialogOpen(true);
+              }}
+            />
+          </div>
+        ))}
       </div>
+
+      {filteredTasks.length === 0 && (
+        <div className="text-center py-16 px-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+            <Trash2 className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">No tasks found</h3>
+          <p className="text-muted-foreground">
+            Try adjusting your filters or create a new task to get started.
+          </p>
+        </div>
+      )}
 
       <TaskDialog
         open={dialogOpen}

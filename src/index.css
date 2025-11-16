@@ -322,3 +322,44 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Micro-interactions */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-1 shadow-lg;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  .hover-scale:hover {
+    @apply scale-105;
+  }
+  
+  .hover-glow {
+    @apply transition-shadow duration-300 ease-out;
+  }
+  
+  .hover-glow:hover {
+    @apply shadow-[0_0_20px_rgba(var(--primary),0.3)];
+  }
+  
+  /* Status indicator bar */
+  .status-indicator {
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full opacity-80;
+  }
+  
+  /* Slide-in actions on hover */
+  .slide-in-actions {
+    @apply opacity-0 translate-x-2 transition-all duration-200 ease-out;
+  }
+  
+  .group:hover .slide-in-actions {
+    @apply opacity-100 translate-x-0;
+  }
+}
