@@ -86,33 +86,40 @@ const SortableTaskCard = ({
   const getStickyNoteColor = (urgency: string) => {
     const urgencyLower = urgency.toLowerCase();
     if (urgencyLower.includes('high') || urgencyLower.includes('urgent') || urgencyLower.includes('critical')) {
-      // Bright orange/coral sticky note for urgent
-      return 'from-[#ffb380] to-[#ffa366] dark:from-[#cc8f66] dark:to-[#b37a52] border-[#ff9966]';
+      // Soft coral/peach sticky note for urgent
+      return 'from-[#ffd4b8] via-[#ffe0cc] to-[#ffeadb] border-[#ffc4a3]';
     }
     if (urgencyLower.includes('medium') || urgencyLower.includes('moderate')) {
-      // Soft blue sticky note for medium
-      return 'from-[#a8e6ff] to-[#8dd9ff] dark:from-[#6ba3bf] dark:to-[#5a8fa6] border-[#7dcdff]';
+      // Soft sky blue sticky note for medium
+      return 'from-[#d4f1ff] via-[#e0f5ff] to-[#ebf8ff] border-[#c4e8ff]';
     }
-    // Vibrant yellow sticky note for low (default)
-    return 'from-[#ffff88] to-[#ffff66] dark:from-[#cccc66] dark:to-[#b3b359] border-[#ffff44]';
+    // Soft yellow sticky note for low (default)
+    return 'from-[#ffffcc] via-[#ffffdd] to-[#ffffee] border-[#ffffbb]';
   };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card 
-        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} hover:rotate-0 hover:scale-105 bg-gradient-to-br ${getStickyNoteColor(task.urgency)} border-2`}
+        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} hover:rotate-0 hover:scale-105 bg-gradient-to-br ${getStickyNoteColor(task.urgency)} border-2 overflow-hidden`}
         style={{
           backgroundImage: `repeating-linear-gradient(
             0deg,
             transparent,
             transparent 24px,
-            rgba(0,0,0,0.02) 24px,
-            rgba(0,0,0,0.02) 25px
+            rgba(0,0,0,0.015) 24px,
+            rgba(0,0,0,0.015) 25px
           )`,
           boxShadow: '0 4px 6px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
         }}
         onClick={() => onClick(task.id)}
       >
+        {/* Page curl effect on hover */}
+        <div className="absolute bottom-0 right-0 w-0 h-0 transition-all duration-300 group-hover:w-8 group-hover:h-8 border-l-[32px] border-l-transparent border-b-[32px] border-b-muted-foreground/20 group-hover:border-b-background/40" 
+          style={{
+            filter: 'drop-shadow(-1px -1px 2px rgba(0,0,0,0.1))'
+          }}
+        />
+        
         {/* Decorative pin at top */}
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-muted-foreground/30 rounded-full shadow-sm border-2 border-muted-foreground/40 z-10" />
         <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-3 bg-muted-foreground/20" />
