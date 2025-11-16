@@ -437,26 +437,7 @@ export function TaskDetailDialog({
   const handleSendComment = async () => {
     if (!taskId || (!newComment.trim() && !selectedImage)) return;
 
-    const optimisticId = `optimistic-${Date.now()}`;
     const messageText = newComment.trim() || "(Image)";
-    
-    // Create optimistic comment
-    const optimisticComment: Comment = {
-      id: optimisticId,
-      task_id: taskId,
-      user_id: userId,
-      message: messageText,
-      image_url: null,
-      created_at: new Date().toISOString(),
-      is_pinned: false,
-      profiles: { full_name: userProfiles.get(userId) || "You" },
-      reactions: [],
-      read_receipts: [],
-    };
-
-    // Add optimistic comment immediately
-    setComments(prev => [...prev, optimisticComment]);
-    
     const tempComment = newComment;
     const tempImage = selectedImage;
     
@@ -474,8 +455,6 @@ export function TaskDetailDialog({
       if (tempImage) {
         imageUrl = await uploadImage(tempImage);
         if (!imageUrl) {
-          // Remove optimistic comment on upload failure
-          setComments(prev => prev.filter(c => c.id !== optimisticId));
           setNewComment(tempComment);
           setSelectedImage(tempImage);
           setUploading(false);
@@ -493,11 +472,7 @@ export function TaskDetailDialog({
       ]);
 
       if (error) throw error;
-
-      // Keep optimistic comment - it will be replaced when realtime update arrives
     } catch (error: any) {
-      // Remove optimistic comment and restore input on error
-      setComments(prev => prev.filter(c => c.id !== optimisticId));
       setNewComment(tempComment);
       setSelectedImage(tempImage);
       toast.error("Failed to send comment");
