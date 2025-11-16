@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -383,52 +384,65 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
             <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {currentUserRole === "team_member" ? (
-                    <>
-                      <SelectItem value="To Do">To Do</SelectItem>
-                      <SelectItem value="Doing">Doing</SelectItem>
-                      <SelectItem value="Done">Done</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="To Do">To Do</SelectItem>
-                      <SelectItem value="Doing">Doing</SelectItem>
-                      <SelectItem value="Done">Done</SelectItem>
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="On Hold">On Hold</SelectItem>
-                      <SelectItem value="Cancelled">Cancelled</SelectItem>
-                      <SelectItem value="Needs Review">Needs Review</SelectItem>
-                      <SelectItem value="Blocked">Blocked</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="status"
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    {formData.status || "Select status"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-2 bg-background border shadow-lg z-50" align="start">
+                  <div className="space-y-1">
+                    {(currentUserRole === "team_member"
+                      ? ["To Do", "Doing", "Done"]
+                      : ["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"]
+                    ).map((status) => (
+                      <Button
+                        key={status}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-sm hover:bg-accent"
+                        onClick={() => setFormData({ ...formData, status })}
+                      >
+                        {status}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="urgency">Urgency *</Label>
-              <Select
-                value={formData.urgency}
-                onValueChange={(value) => setFormData({ ...formData, urgency: value })}
-              >
-                <SelectTrigger id="urgency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Immediate">Immediate</SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="urgency"
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    {formData.urgency || "Select urgency"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-2 bg-background border shadow-lg z-50" align="start">
+                  <div className="space-y-1">
+                    {["Low", "Medium", "High", "Immediate"].map((urgency) => (
+                      <Button
+                        key={urgency}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-sm hover:bg-accent"
+                        onClick={() => setFormData({ ...formData, urgency })}
+                      >
+                        {urgency}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2 sm:col-span-2">
