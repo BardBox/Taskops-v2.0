@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Pencil, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Pencil, Trash2, Archive, ArchiveRestore, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface Project {
@@ -58,6 +58,8 @@ export default function AdminProjects() {
   const [showArchived, setShowArchived] = useState(false);
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [nameFilter, setNameFilter] = useState<string>("");
+  const [sortField, setSortField] = useState<"name" | "client" | "is_archived" | "created_at" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     fetchProjects();
@@ -182,11 +184,61 @@ export default function AdminProjects() {
     return clients.find(c => c.id === clientId)?.name || "Unknown";
   };
 
-  const filteredProjects = projects.filter((project) => {
-    const matchesClient = clientFilter === "all" || project.client_id === clientFilter;
-    const matchesName = nameFilter === "" || project.name.toLowerCase().includes(nameFilter.toLowerCase());
-    return matchesClient && matchesName;
-  });
+  const handleSort = (field: "name" | "client" | "is_archived" | "created_at") => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else {
+        setSortField(null);
+        setSortDirection("asc");
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortIcon = (field: "name" | "client" | "is_archived" | "created_at") => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="h-4 w-4 ml-1" />
+    ) : (
+      <ArrowDown className="h-4 w-4 ml-1" />
+    );
+  };
+
+  const filteredAndSortedProjects = projects
+    .filter((project) => {
+      const matchesClient = clientFilter === "all" || project.client_id === clientFilter;
+      const matchesName = nameFilter === "" || project.name.toLowerCase().includes(nameFilter.toLowerCase());
+      return matchesClient && matchesName;
+    })
+    .sort((a, b) => {
+      if (!sortField) return 0;
+      
+      let aValue: any;
+      let bValue: any;
+      
+      if (sortField === "client") {
+        aValue = getClientName(a.client_id).toLowerCase();
+        bValue = getClientName(b.client_id).toLowerCase();
+      } else if (sortField === "created_at") {
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
+      } else if (sortField === "is_archived") {
+        aValue = a.is_archived ? 1 : 0;
+        bValue = b.is_archived ? 1 : 0;
+      } else {
+        aValue = a[sortField]?.toString().toLowerCase() || "";
+        bValue = b[sortField]?.toString().toLowerCase() || "";
+      }
+      
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
 
   if (loading) return <div>Loading...</div>;
 
@@ -230,16 +282,56 @@ export default function AdminProjects() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Project Name</TableHead>
-            <TableHead>Client</TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 font-medium hover:bg-transparent"
+                onClick={() => handleSort("name")}
+              >
+                Project Name
+                {getSortIcon("name")}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 font-medium hover:bg-transparent"
+                onClick={() => handleSort("client")}
+              >
+                Client
+                {getSortIcon("client")}
+              </Button>
+            </TableHead>
             <TableHead>Default</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 font-medium hover:bg-transparent"
+                onClick={() => handleSort("is_archived")}
+              >
+                Status
+                {getSortIcon("is_archived")}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 font-medium hover:bg-transparent"
+                onClick={() => handleSort("created_at")}
+              >
+                Created
+                {getSortIcon("created_at")}
+              </Button>
+            </TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredProjects.map((project) => (
+          {filteredAndSortedProjects.map((project) => (
             <TableRow key={project.id}>
               <TableCell>{project.name}</TableCell>
               <TableCell>{getClientName(project.client_id)}</TableCell>
