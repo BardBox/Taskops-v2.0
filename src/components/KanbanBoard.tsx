@@ -90,8 +90,8 @@ const SortableTaskCard = ({
         onClick={() => onClick(task.id)}
       >
         {/* Decorative pin at top */}
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-red-500 rounded-full shadow-md border-2 border-red-600 z-10" />
-        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-3 bg-red-400" />
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-muted-foreground/30 rounded-full shadow-sm border-2 border-muted-foreground/40 z-10" />
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-3 bg-muted-foreground/20" />
         <div className="space-y-3 pt-2">
           {/* Header */}
           <div className="flex items-start justify-between gap-2">
