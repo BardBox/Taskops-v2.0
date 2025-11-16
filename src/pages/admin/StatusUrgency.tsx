@@ -112,12 +112,12 @@ function SortableItem({ item, isOwner, onEdit, onDelete }: SortableItemProps) {
 }
 
 const defaultStatuses: StatusUrgencyItem[] = [
-  { label: "Not Started", color: "bg-status-pearl text-status-pearl-foreground" },
-  { label: "In Progress", color: "bg-status-sky-blue text-status-sky-blue-foreground" },
-  { label: "In Approval", color: "bg-status-buttercup text-status-buttercup-foreground" },
+  { label: "Not Started", color: "bg-status-sky-blue text-status-sky-blue-foreground" },
+  { label: "In Progress", color: "bg-status-buttercup text-status-buttercup-foreground" },
+  { label: "In Approval", color: "bg-status-lavender text-status-lavender-foreground" },
   { label: "Approved", color: "bg-status-mint text-status-mint-foreground" },
   { label: "Revision", color: "bg-status-peach text-status-peach-foreground" },
-  { label: "On Hold", color: "bg-status-lavender text-status-lavender-foreground" },
+  { label: "On Hold", color: "bg-status-pearl text-status-pearl-foreground" },
   { label: "Cancelled", color: "bg-status-coral text-status-coral-foreground" },
   { label: "Rejected", color: "bg-status-rose text-status-rose-foreground" },
 ];
@@ -125,11 +125,11 @@ const defaultStatuses: StatusUrgencyItem[] = [
 const initialStatuses: StatusUrgencyItem[] = defaultStatuses;
 
 const defaultUrgencies: StatusUrgencyItem[] = [
-  { label: "Very Low", color: "bg-urgency-very-low text-urgency-very-low-foreground" },
-  { label: "Low", color: "bg-urgency-low text-urgency-low-foreground" },
-  { label: "Medium", color: "bg-urgency-medium text-urgency-medium-foreground" },
-  { label: "High", color: "bg-urgency-high text-urgency-high-foreground" },
-  { label: "Immediate", color: "bg-urgency-immediate text-urgency-immediate-foreground" },
+  { label: "Very Low", color: "bg-urgency-1 text-urgency-1-foreground" },
+  { label: "Low", color: "bg-urgency-5 text-urgency-5-foreground" },
+  { label: "Medium", color: "bg-urgency-10 text-urgency-10-foreground" },
+  { label: "High", color: "bg-urgency-15 text-urgency-15-foreground" },
+  { label: "Immediate", color: "bg-urgency-20 text-urgency-20-foreground" },
 ];
 
 const initialUrgencies: StatusUrgencyItem[] = defaultUrgencies;

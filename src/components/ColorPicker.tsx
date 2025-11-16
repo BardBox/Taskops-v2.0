@@ -50,18 +50,28 @@ const statusColorPresets = [
   { name: "Pearl", value: "bg-status-pearl text-status-pearl-foreground", preview: "bg-status-pearl" },
 ];
 
-// 10 Urgency Colors (Green → Red spectrum)
+// 20 Urgency Colors (Blue → Red spectrum, NO GREEN)
 const urgencyColorPresets = [
-  { name: "Very Low", value: "bg-urgency-very-low text-urgency-very-low-foreground", preview: "bg-urgency-very-low" },
-  { name: "Low", value: "bg-urgency-low text-urgency-low-foreground", preview: "bg-urgency-low" },
-  { name: "Low-Medium", value: "bg-urgency-low-medium text-urgency-low-medium-foreground", preview: "bg-urgency-low-medium" },
-  { name: "Medium", value: "bg-urgency-medium text-urgency-medium-foreground", preview: "bg-urgency-medium" },
-  { name: "Medium-High", value: "bg-urgency-medium-high text-urgency-medium-high-foreground", preview: "bg-urgency-medium-high" },
-  { name: "High", value: "bg-urgency-high text-urgency-high-foreground", preview: "bg-urgency-high" },
-  { name: "Very High", value: "bg-urgency-very-high text-urgency-very-high-foreground", preview: "bg-urgency-very-high" },
-  { name: "Urgent", value: "bg-urgency-urgent text-urgency-urgent-foreground", preview: "bg-urgency-urgent" },
-  { name: "Critical", value: "bg-urgency-critical text-urgency-critical-foreground", preview: "bg-urgency-critical" },
-  { name: "Immediate", value: "bg-urgency-immediate text-urgency-immediate-foreground", preview: "bg-urgency-immediate" },
+  { name: "Ice Blue 1", value: "bg-urgency-1 text-urgency-1-foreground", preview: "bg-urgency-1" },
+  { name: "Ice Blue 2", value: "bg-urgency-2 text-urgency-2-foreground", preview: "bg-urgency-2" },
+  { name: "Sky Blue 1", value: "bg-urgency-3 text-urgency-3-foreground", preview: "bg-urgency-3" },
+  { name: "Sky Blue 2", value: "bg-urgency-4 text-urgency-4-foreground", preview: "bg-urgency-4" },
+  { name: "Cyan 1", value: "bg-urgency-5 text-urgency-5-foreground", preview: "bg-urgency-5" },
+  { name: "Cyan 2", value: "bg-urgency-6 text-urgency-6-foreground", preview: "bg-urgency-6" },
+  { name: "Teal 1", value: "bg-urgency-7 text-urgency-7-foreground", preview: "bg-urgency-7" },
+  { name: "Teal 2", value: "bg-urgency-8 text-urgency-8-foreground", preview: "bg-urgency-8" },
+  { name: "Yellow 1", value: "bg-urgency-9 text-urgency-9-foreground", preview: "bg-urgency-9" },
+  { name: "Yellow 2", value: "bg-urgency-10 text-urgency-10-foreground", preview: "bg-urgency-10" },
+  { name: "Yellow 3", value: "bg-urgency-11 text-urgency-11-foreground", preview: "bg-urgency-11" },
+  { name: "Yellow 4", value: "bg-urgency-12 text-urgency-12-foreground", preview: "bg-urgency-12" },
+  { name: "Amber 1", value: "bg-urgency-13 text-urgency-13-foreground", preview: "bg-urgency-13" },
+  { name: "Amber 2", value: "bg-urgency-14 text-urgency-14-foreground", preview: "bg-urgency-14" },
+  { name: "Orange 1", value: "bg-urgency-15 text-urgency-15-foreground", preview: "bg-urgency-15" },
+  { name: "Orange 2", value: "bg-urgency-16 text-urgency-16-foreground", preview: "bg-urgency-16" },
+  { name: "Orange Red 1", value: "bg-urgency-17 text-urgency-17-foreground", preview: "bg-urgency-17" },
+  { name: "Orange Red 2", value: "bg-urgency-18 text-urgency-18-foreground", preview: "bg-urgency-18" },
+  { name: "Red 1", value: "bg-urgency-19 text-urgency-19-foreground", preview: "bg-urgency-19" },
+  { name: "Coral Red", value: "bg-urgency-20 text-urgency-20-foreground", preview: "bg-urgency-20" },
 ];
 
 export function ColorPicker({ value, onChange, type }: ColorPickerProps) {
@@ -127,50 +137,54 @@ export function ColorPicker({ value, onChange, type }: ColorPickerProps) {
               </div>
             </div>
             
-            <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Urgency Colors (10 Intensity Levels)
-              </h4>
-              <div className="grid grid-cols-5 gap-3">
-                {urgencyColorPresets.map((color) => (
-                  <TooltipProvider key={color.name} delayDuration={100}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={() => onChange(color.value)}
-                          className={cn(
-                            "w-full aspect-square transition-all duration-200 relative flex items-center justify-center",
-                            "hover:scale-110 hover:shadow-lg",
-                            value === color.value 
-                              ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-lg" 
-                              : "hover:ring-2 hover:ring-primary/50"
-                          )}
-                          style={{
-                            clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"
-                          }}
-                          title={color.name}
-                        >
-                          <div 
-                            className={cn("w-full h-full", color.preview)}
+          {type === "urgency" && (
+            <>
+              <div className="mb-4">
+                <Label className="text-sm font-semibold mb-2 block">Urgency Colors</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Blue → Red spectrum (20 colors, no green)
+                </p>
+                <div className="grid grid-cols-5 gap-3">
+                  {urgencyColorPresets.map((color) => (
+                    <TooltipProvider key={color.name} delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => onChange(color.value)}
+                            className={cn(
+                              "w-full aspect-square transition-all duration-200 relative flex items-center justify-center",
+                              "hover:scale-110 hover:shadow-lg",
+                              value === color.value 
+                                ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-lg" 
+                                : "hover:ring-2 hover:ring-primary/50"
+                            )}
                             style={{
                               clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"
                             }}
-                          />
-                          {value === color.value && (
-                            <Check className="absolute w-5 h-5 text-white drop-shadow-md z-10" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs font-medium">{color.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
+                            title={color.name}
+                          >
+                            <div 
+                              className={cn("w-full h-full", color.preview)}
+                              style={{
+                                clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"
+                              }}
+                            />
+                            {value === color.value && (
+                              <Check className="absolute w-5 h-5 text-white drop-shadow-md z-10" />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs font-medium">{color.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
               </div>
-            </div>
-          </>
+            </>
+          )}
         ) : (
           // Show filtered view based on type
           <div className="grid grid-cols-5 gap-3">
@@ -223,7 +237,13 @@ export function ColorPicker({ value, onChange, type }: ColorPickerProps) {
         <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground">Preview:</span>
-            <Badge className={cn("px-4 py-2 text-sm", value)}>
+            <Badge 
+              className={cn(
+                "px-4 py-2 text-sm",
+                value,
+                type === 'urgency' && "border-l-4 border-l-current/40"
+              )}
+            >
               Sample Badge
             </Badge>
           </div>
