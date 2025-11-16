@@ -112,27 +112,56 @@ All colors MUST be HSL.
     --status-pearl: 220 15% 90%;
     --status-pearl-foreground: 220 20% 20%;
 
-    /* Urgency Extended Colors - 10 Color Spectrum (Green → Red) */
-    --urgency-very-low: 142 76% 45%;
-    --urgency-very-low-foreground: 0 0% 100%;
-    --urgency-low: 130 70% 50%;
-    --urgency-low-foreground: 0 0% 100%;
-    --urgency-low-medium: 100 65% 55%;
-    --urgency-low-medium-foreground: 100 60% 15%;
-    --urgency-medium: 60 80% 60%;
-    --urgency-medium-foreground: 60 60% 15%;
-    --urgency-medium-high: 45 90% 58%;
-    --urgency-medium-high-foreground: 45 60% 15%;
-    --urgency-high: 35 95% 56%;
-    --urgency-high-foreground: 0 0% 100%;
-    --urgency-very-high: 25 95% 53%;
-    --urgency-very-high-foreground: 0 0% 100%;
-    --urgency-urgent: 15 90% 50%;
-    --urgency-urgent-foreground: 0 0% 100%;
-    --urgency-critical: 5 85% 52%;
-    --urgency-critical-foreground: 0 0% 100%;
-    --urgency-immediate: 0 85% 55%;
-    --urgency-immediate-foreground: 0 0% 100%;
+    /* Urgency Soft Pastel Colors - 20 Color Spectrum (Blue → Red, NO GREEN) */
+    /* 1-4: Ice Blue to Sky Blue (Coolest/Lowest) */
+    --urgency-1: 200 70% 85%;
+    --urgency-1-foreground: 200 60% 20%;
+    --urgency-2: 195 68% 83%;
+    --urgency-2-foreground: 195 60% 20%;
+    --urgency-3: 190 65% 82%;
+    --urgency-3-foreground: 190 60% 20%;
+    --urgency-4: 185 63% 80%;
+    --urgency-4-foreground: 185 60% 20%;
+    
+    /* 5-8: Cyan to Teal (Cool/Low) */
+    --urgency-5: 180 60% 78%;
+    --urgency-5-foreground: 180 55% 20%;
+    --urgency-6: 175 58% 77%;
+    --urgency-6-foreground: 175 55% 20%;
+    --urgency-7: 170 55% 76%;
+    --urgency-7-foreground: 170 55% 20%;
+    --urgency-8: 165 53% 75%;
+    --urgency-8-foreground: 165 55% 20%;
+    
+    /* 9-12: Yellow (Moderate) */
+    --urgency-9: 55 68% 82%;
+    --urgency-9-foreground: 55 60% 18%;
+    --urgency-10: 50 70% 81%;
+    --urgency-10-foreground: 50 60% 18%;
+    --urgency-11: 48 72% 80%;
+    --urgency-11-foreground: 48 60% 18%;
+    --urgency-12: 46 73% 79%;
+    --urgency-12-foreground: 46 60% 18%;
+    
+    /* 13-16: Amber to Orange (Getting Urgent) */
+    --urgency-13: 42 75% 78%;
+    --urgency-13-foreground: 42 65% 18%;
+    --urgency-14: 38 76% 77%;
+    --urgency-14-foreground: 38 65% 18%;
+    --urgency-15: 32 77% 76%;
+    --urgency-15-foreground: 32 65% 18%;
+    --urgency-16: 28 78% 75%;
+    --urgency-16-foreground: 28 65% 18%;
+    
+    /* 17-20: Orange-Red to Red (Most Urgent) */
+    --urgency-17: 20 75% 78%;
+    --urgency-17-foreground: 20 65% 18%;
+    --urgency-18: 12 73% 79%;
+    --urgency-18-foreground: 12 65% 18%;
+    --urgency-19: 6 71% 80%;
+    --urgency-19-foreground: 6 65% 18%;
+    --urgency-20: 0 70% 81%;
+    --urgency-20-foreground: 0 65% 18%;
 
     /* Notification Colors */
     --notification-info: 217 91% 60%;

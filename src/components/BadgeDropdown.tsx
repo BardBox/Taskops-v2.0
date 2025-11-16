@@ -27,6 +27,7 @@ export const BadgeDropdown = ({
   const [open, setOpen] = useState(false);
   const selectedOption = options.find((opt) => opt.label === value);
   const displayColor = selectedOption?.color || "bg-muted text-muted-foreground";
+  const isUrgency = displayColor?.includes('bg-urgency-');
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -39,6 +40,7 @@ export const BadgeDropdown = ({
             "hover:shadow-md hover:scale-105 active:scale-95",
             "flex items-center gap-1.5 w-fit",
             displayColor,
+            isUrgency && "border-l-4 border-l-current/40",
             disabled && "cursor-not-allowed opacity-50 hover:scale-100 hover:shadow-none"
           )}
         >
@@ -51,25 +53,29 @@ export const BadgeDropdown = ({
         align="start"
       >
         <div className="flex flex-col gap-1.5">
-          {options.map((option) => (
-            <Badge
-              key={option.label}
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange(option.label);
-                setOpen(false);
-              }}
-              className={cn(
-                "cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium",
-                "transition-all duration-200 ease-out",
-                "hover:scale-110 hover:shadow-md active:scale-95",
-                option.color,
-                "justify-start"
-              )}
-            >
-              {option.label}
-            </Badge>
-          ))}
+          {options.map((option) => {
+            const optionIsUrgency = option.color?.includes('bg-urgency-');
+            return (
+              <Badge
+                key={option.label}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(option.label);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium",
+                  "transition-all duration-200 ease-out",
+                  "hover:scale-110 hover:shadow-md active:scale-95",
+                  option.color,
+                  optionIsUrgency && "border-l-4 border-l-current/40",
+                  "justify-start"
+                )}
+              >
+                {option.label}
+              </Badge>
+            );
+          })}
         </div>
       </PopoverContent>
     </Popover>
