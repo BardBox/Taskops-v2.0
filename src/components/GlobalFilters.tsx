@@ -39,18 +39,7 @@ const MONTHS = [
   { value: "12", label: "December" },
 ];
 
-const STATUS_OPTIONS = [
-  "To Do",
-  "Doing",
-  "Done",
-  "Approved",
-  "On Hold",
-  "Cancelled",
-  "Needs Review",
-  "Blocked",
-];
-
-const URGENCY_OPTIONS = ["Low", "Medium", "High", "Immediate"];
+// Status and urgency options will be loaded dynamically from system_settings
 
 const DELAY_OPTIONS = [
   { value: "all", label: "All" },
@@ -67,6 +56,8 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   const [projectManagers, setProjectManagers] = useState<any[]>([]);
   const [userRole, setUserRole] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [statusOptions, setStatusOptions] = useState<string[]>([]);
+  const [urgencyOptions, setUrgencyOptions] = useState<string[]>([]);
 
   useEffect(() => {
     getCurrentUser();
@@ -113,10 +104,24 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
       )
       .subscribe();
 
+    const settingsChannel = supabase
+      .channel("filters-settings-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "system_settings",
+        },
+        () => fetchFilterOptions()
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(rolesChannel);
       supabase.removeChannel(clientsChannel);
+      supabase.removeChannel(settingsChannel);
     };
   }, []);
 
@@ -189,6 +194,35 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
       setTeamMembers(tms);
       setProjectManagers(pms);
     }
+
+    // Fetch status and urgency options from system_settings
+    const { data: settingsData } = await supabase
+      .from("system_settings")
+      .select("setting_key, setting_value")
+      .in("setting_key", ["task_statuses", "task_urgencies"]);
+
+    if (settingsData) {
+      const statusSetting = settingsData.find(s => s.setting_key === "task_statuses");
+      const urgencySetting = settingsData.find(s => s.setting_key === "task_urgencies");
+
+      if (statusSetting) {
+        try {
+          const statuses = JSON.parse(statusSetting.setting_value);
+          setStatusOptions(statuses.map((s: any) => s.label));
+        } catch (e) {
+          console.error("Failed to parse status options", e);
+        }
+      }
+
+      if (urgencySetting) {
+        try {
+          const urgencies = JSON.parse(urgencySetting.setting_value);
+          setUrgencyOptions(urgencies.map((u: any) => u.label));
+        } catch (e) {
+          console.error("Failed to parse urgency options", e);
+        }
+      }
+    }
   };
 
   const loadSavedFilters = () => {
@@ -221,7 +255,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           </SelectTrigger>
           <SelectContent className="bg-background z-50">
             <SelectItem value="all">All Status</SelectItem>
-            {STATUS_OPTIONS.map(status => (
+            {statusOptions.map(status => (
               <SelectItem key={status} value={status}>{status}</SelectItem>
             ))}
           </SelectContent>
@@ -233,7 +267,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           </SelectTrigger>
           <SelectContent className="bg-background z-50">
             <SelectItem value="all">All Urgency</SelectItem>
-            {URGENCY_OPTIONS.map(urgency => (
+            {urgencyOptions.map(urgency => (
               <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
             ))}
           </SelectContent>
@@ -305,7 +339,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
               <SelectItem value="all">All</SelectItem>
-              {STATUS_OPTIONS.map(status => (
+              {statusOptions.map(status => (
                 <SelectItem key={status} value={status}>{status}</SelectItem>
               ))}
             </SelectContent>
@@ -320,7 +354,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
               <SelectItem value="all">All</SelectItem>
-              {URGENCY_OPTIONS.map(urgency => (
+              {urgencyOptions.map(urgency => (
                 <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
               ))}
             </SelectContent>
