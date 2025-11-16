@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,67 @@ export default function StatusUrgency() {
   const [editingItem, setEditingItem] = useState<StatusUrgencyItem | null>(null);
   const [formData, setFormData] = useState({ value: "", label: "", color: "" });
 
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("*")
+        .in("setting_key", ["task_statuses", "task_urgencies"]);
+
+      if (error) throw error;
+
+      if (data) {
+        const statusesSetting = data.find((s) => s.setting_key === "task_statuses");
+        const urgenciesSetting = data.find((s) => s.setting_key === "task_urgencies");
+
+        if (statusesSetting) {
+          setStatuses(JSON.parse(statusesSetting.setting_value));
+        }
+        if (urgenciesSetting) {
+          setUrgencies(JSON.parse(urgenciesSetting.setting_value));
+        }
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    }
+  };
+
+  const saveStatuses = async (newStatuses: StatusUrgencyItem[]) => {
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .upsert({
+          setting_key: "task_statuses",
+          setting_value: JSON.stringify(newStatuses),
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error saving statuses:", error);
+      toast.error("Failed to save statuses");
+    }
+  };
+
+  const saveUrgencies = async (newUrgencies: StatusUrgencyItem[]) => {
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .upsert({
+          setting_key: "task_urgencies",
+          setting_value: JSON.stringify(newUrgencies),
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error saving urgencies:", error);
+      toast.error("Failed to save urgencies");
+    }
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -144,17 +206,25 @@ export default function StatusUrgency() {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent, type: "status" | "urgency") => {
+  const handleDragEnd = async (event: DragEndEvent, type: "status" | "urgency") => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const items = type === "status" ? statuses : urgencies;
-      const setItems = type === "status" ? setStatuses : setUrgencies;
       
       const oldIndex = items.findIndex((item) => item.value === active.id);
       const newIndex = items.findIndex((item) => item.value === over.id);
 
-      setItems(arrayMove(items, oldIndex, newIndex));
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      
+      if (type === "status") {
+        setStatuses(newItems);
+        await saveStatuses(newItems);
+      } else {
+        setUrgencies(newItems);
+        await saveUrgencies(newItems);
+      }
+      
       toast.success(`${type === "status" ? "Status" : "Urgency"} order updated`);
     }
   };
@@ -173,7 +243,7 @@ export default function StatusUrgency() {
     setEditDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.label || !formData.value) {
       toast.error("Please fill in all fields");
       return;
@@ -182,21 +252,29 @@ export default function StatusUrgency() {
     if (editingItem) {
       // Update existing
       if (editingType === "status") {
-        setStatuses(statuses.map(s => 
+        const newStatuses = statuses.map(s => 
           s.value === editingItem.value ? { ...formData } : s
-        ));
+        );
+        setStatuses(newStatuses);
+        await saveStatuses(newStatuses);
       } else {
-        setUrgencies(urgencies.map(u => 
+        const newUrgencies = urgencies.map(u => 
           u.value === editingItem.value ? { ...formData } : u
-        ));
+        );
+        setUrgencies(newUrgencies);
+        await saveUrgencies(newUrgencies);
       }
       toast.success(`${editingType === "status" ? "Status" : "Urgency"} updated successfully`);
     } else {
       // Add new
       if (editingType === "status") {
-        setStatuses([...statuses, formData]);
+        const newStatuses = [...statuses, formData];
+        setStatuses(newStatuses);
+        await saveStatuses(newStatuses);
       } else {
-        setUrgencies([...urgencies, formData]);
+        const newUrgencies = [...urgencies, formData];
+        setUrgencies(newUrgencies);
+        await saveUrgencies(newUrgencies);
       }
       toast.success(`${editingType === "status" ? "Status" : "Urgency"} added successfully`);
     }
@@ -204,13 +282,17 @@ export default function StatusUrgency() {
     setEditDialogOpen(false);
   };
 
-  const handleDelete = (type: "status" | "urgency", value: string) => {
+  const handleDelete = async (type: "status" | "urgency", value: string) => {
     if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
 
     if (type === "status") {
-      setStatuses(statuses.filter(s => s.value !== value));
+      const newStatuses = statuses.filter(s => s.value !== value);
+      setStatuses(newStatuses);
+      await saveStatuses(newStatuses);
     } else {
-      setUrgencies(urgencies.filter(u => u.value !== value));
+      const newUrgencies = urgencies.filter(u => u.value !== value);
+      setUrgencies(newUrgencies);
+      await saveUrgencies(newUrgencies);
     }
     toast.success(`${type === "status" ? "Status" : "Urgency"} deleted successfully`);
   };
