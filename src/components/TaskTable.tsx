@@ -65,12 +65,14 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">("table");
+  const [notifiedTaskIds, setNotifiedTaskIds] = useState<Set<string>>(new Set());
   
   const { statuses, urgencies } = useStatusUrgency();
 
   useEffect(() => {
     fetchTasks();
     fetchAppreciations();
+    fetchNotifications();
 
     const channel = supabase
       .channel("tasks-changes")
@@ -92,6 +94,15 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         },
         () => fetchTasks()
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+        },
+        () => fetchNotifications()
+      )
       .subscribe();
 
     return () => {
@@ -111,6 +122,21 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       appreciationMap.set(app.task_id, true);
     });
     setTaskAppreciations(appreciationMap);
+  };
+
+  const fetchNotifications = async () => {
+    const { data } = await supabase
+      .from("notifications")
+      .select("task_id")
+      .eq("user_id", userId);
+      
+    const notifiedIds = new Set<string>();
+    data?.forEach((notif) => {
+      if (notif.task_id) {
+        notifiedIds.add(notif.task_id);
+      }
+    });
+    setNotifiedTaskIds(notifiedIds);
   };
 
   const toggleAppreciation = async (taskId: string, e: React.MouseEvent) => {
@@ -357,6 +383,10 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         
         if (filters.quickFilter.includes("pending")) {
           filtered = filtered.filter(task => ["In Progress", "Doing"].includes(task.status));
+        }
+        
+        if (filters.quickFilter.includes("notified")) {
+          filtered = filtered.filter(task => notifiedTaskIds.has(task.id));
         }
       }
     }
