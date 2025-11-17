@@ -448,12 +448,13 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
 
         <div className="space-y-2">
           <Label className="text-xs font-medium">Highlight</Label>
-          <div className="flex items-center h-10 gap-6">
+          <div className="flex items-center h-10 gap-6 whitespace-nowrap">
             <div className="flex items-center gap-2">
               <Switch
                 id="highlight-today"
                 checked={filters.highlightToday}
                 onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
+                className="data-[state=checked]:bg-blue-500"
               />
               <Label htmlFor="highlight-today" className="text-sm cursor-pointer">
                 Today
@@ -464,8 +465,9 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                 id="highlight-immediate"
                 checked={filters.highlightImmediate}
                 onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
+                className="data-[state=checked]:bg-red-500"
               />
-              <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer text-red-500">
+              <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer">
                 Immediate
               </Label>
             </div>
@@ -474,8 +476,9 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                 id="highlight-delayed"
                 checked={filters.highlightDelayed}
                 onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
+                className="data-[state=checked]:bg-orange-500"
               />
-              <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer text-orange-500">
+              <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer">
                 Delayed
               </Label>
             </div>
@@ -484,8 +487,9 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                 id="highlight-in-approval"
                 checked={filters.highlightInApproval}
                 onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
+                className="data-[state=checked]:bg-green-500"
               />
-              <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer text-green-500">
+              <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer">
                 In Approval
               </Label>
             </div>
