@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
+import { X } from "lucide-react";
 
 interface TaskDialogProps {
   open: boolean;
@@ -52,6 +53,9 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [users, setUsers] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  const [referenceImage, setReferenceImage] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
   
   const { statuses, urgencies, isLoading: isLoadingSettings } = useStatusUrgency();
   
@@ -90,6 +94,8 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           reference_link_3: task.reference_link_3 || "",
           notes: task.notes || "",
         });
+        setExistingImageUrl(task.reference_image || "");
+        setImagePreview(task.reference_image || "");
         if (task.client_id) {
           fetchProjects(task.client_id);
         }
@@ -98,6 +104,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        
+        setReferenceImage(null);
+        setExistingImageUrl("");
+        setImagePreview("");
         
         // Fetch and set default project
         fetchDefaultProject().then((defaultProject) => {
@@ -219,6 +229,51 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
     setUsers(data || []);
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+      setReferenceImage(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadReferenceImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("task-references")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("task-references")
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload reference image");
+      return null;
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setReferenceImage(null);
+    setImagePreview("");
+  };
 
   const handleSubmit = async (e: React.FormEvent, keepOpen = false) => {
     e.preventDefault();
@@ -226,6 +281,15 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
     try {
       const validated = taskSchema.parse(formData);
+
+      // Upload reference image if new one is selected
+      let referenceImageUrl = existingImageUrl;
+      if (referenceImage) {
+        const uploadedUrl = await uploadReferenceImage(referenceImage);
+        if (uploadedUrl) {
+          referenceImageUrl = uploadedUrl;
+        }
+      }
 
       const taskData: any = {
         task_name: validated.task_name,
@@ -239,6 +303,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         reference_link_1: validated.reference_link_1 || null,
         reference_link_2: validated.reference_link_2 || null,
         reference_link_3: validated.reference_link_3 || null,
+        reference_image: referenceImageUrl || null,
         notes: validated.notes || null,
       };
 
@@ -264,6 +329,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        
+        setReferenceImage(null);
+        setExistingImageUrl("");
+        setImagePreview("");
         
         setFormData({
           task_name: "",
@@ -449,6 +518,35 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 onChange={(e) => setFormData({ ...formData, reference_link_3: e.target.value })}
                 placeholder="https://..."
               />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="reference_image">Reference Image (Max 5MB)</Label>
+              <Input
+                id="reference_image"
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                onChange={handleImageSelect}
+                className="cursor-pointer"
+              />
+              {imagePreview && (
+                <div className="relative mt-2 inline-block">
+                  <img 
+                    src={imagePreview} 
+                    alt="Reference preview" 
+                    className="max-w-xs max-h-40 rounded border"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-1 right-1"
+                    onClick={handleRemoveImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 sm:col-span-2">
