@@ -190,7 +190,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         assignee:profiles!tasks_assignee_id_fkey(full_name),
         assigned_by:profiles!tasks_assigned_by_id_fkey(full_name),
         task_comments(message, created_at),
-        task_collaborators(user_id, profiles(full_name, avatar_url))
+        task_collaborators(user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url))
       `);
     
     // Team members see tasks assigned to them OR where they are collaborators
