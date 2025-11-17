@@ -70,7 +70,7 @@ export default function AdminLayout() {
         <AdminSidebar />
         
         <div className="flex-1 flex flex-col">
-          <header className="h-14 border-b bg-background flex items-center justify-between px-4">
+          <header className="sticky top-0 z-50 h-14 border-b bg-background shadow-sm flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
               <img 
