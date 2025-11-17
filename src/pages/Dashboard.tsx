@@ -249,25 +249,23 @@ const Dashboard = () => {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>All Tasks</CardTitle>
+            {canCreateTasks && (
+              <Button 
+                onClick={() => setDialogOpen(true)} 
+                size="icon"
+                className="h-10 w-10 rounded-full"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <TaskTable userRole={userRole} userId={user?.id || ""} filters={filters} />
           </CardContent>
         </Card>
       </main>
-
-      {/* Floating New Task Button */}
-      {canCreateTasks && (
-        <Button 
-          onClick={() => setDialogOpen(true)} 
-          size="icon"
-          className="fixed top-20 right-6 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all z-40"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      )}
 
       <TaskDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
