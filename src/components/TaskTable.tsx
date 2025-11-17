@@ -216,6 +216,33 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     setDetailDialogOpen(true);
   };
 
+  const getTaskHighlightClass = (task: Task, delayDays: number | null) => {
+    if (!filters) return "";
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const taskDate = new Date(task.date);
+    taskDate.setHours(0, 0, 0, 0);
+    
+    if (filters.highlightToday && taskDate.getTime() === today.getTime()) {
+      return "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-950/30";
+    }
+    
+    if (filters.highlightImmediate && task.urgency === "Immediate") {
+      return "bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100/50 dark:hover:bg-red-950/30";
+    }
+    
+    if (filters.highlightDelayed && delayDays !== null && delayDays > 0) {
+      return "bg-orange-50/50 dark:bg-orange-950/20 hover:bg-orange-100/50 dark:hover:bg-orange-950/30";
+    }
+    
+    if (filters.highlightInApproval && task.status === "In Approval") {
+      return "bg-green-50/50 dark:bg-green-950/20 hover:bg-green-100/50 dark:hover:bg-green-950/30";
+    }
+    
+    return "";
+  };
+
   const getFilteredAndSortedTasks = () => {
     let filtered = [...tasks];
 
@@ -657,10 +684,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
             <TableBody>
               {filteredTasks.map((task) => {
                 const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
+                const highlightClass = getTaskHighlightClass(task, delayDays);
                 return (
                   <TableRow 
                     key={task.id} 
-                    className="cursor-pointer transition-all group"
+                    className={`cursor-pointer transition-all group ${highlightClass}`}
                     onClick={() => handleTaskClick(task.id)}
                   >
                     {userRole === "project_owner" && (
@@ -798,15 +826,18 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       {/* White Board View */}
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-          {filteredTasks.map((task, index) => (
-            <div 
-              key={task.id}
-              style={{ 
-                animationDelay: `${index * 50}ms`,
-                animationFillMode: 'both'
-              }}
-              className="animate-fade-in-up"
-            >
+          {filteredTasks.map((task, index) => {
+            const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
+            const highlightClass = getTaskHighlightClass(task, delayDays);
+            return (
+              <div 
+                key={task.id}
+                style={{ 
+                  animationDelay: `${index * 50}ms`,
+                  animationFillMode: 'both'
+                }}
+                className={`animate-fade-in-up rounded-lg ${highlightClass}`}
+              >
               <TaskCard
                 task={task}
                 userRole={userRole}
@@ -838,7 +869,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                 }}
               />
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
 

@@ -46,6 +46,9 @@ const Dashboard = () => {
     teamMemberId: "all",
     projectManagerId: "all",
     highlightToday: false,
+    highlightImmediate: false,
+    highlightDelayed: false,
+    highlightInApproval: false,
     delay: "all",
     quickFilter: [],
   });
