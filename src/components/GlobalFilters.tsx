@@ -17,6 +17,7 @@ export interface FilterState {
   projectManagerId: string;
   highlightToday: boolean;
   delay: string;
+  quickFilter: string;
 }
 
 interface GlobalFiltersProps {
@@ -204,11 +205,12 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
     if (saved) {
       try {
         const parsedFilters = JSON.parse(saved);
-        // Ensure delay and projectName properties exist for backwards compatibility
+        // Ensure delay, projectName, and quickFilter properties exist for backwards compatibility
         onFiltersChange({ 
           ...parsedFilters, 
           delay: parsedFilters.delay || "all",
-          projectName: parsedFilters.projectName || "all"
+          projectName: parsedFilters.projectName || "all",
+          quickFilter: parsedFilters.quickFilter || "all"
         });
       } catch (e) {
         console.error("Failed to load saved filters", e);
