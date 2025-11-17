@@ -21,6 +21,7 @@ import AdminClients from "./pages/admin/Clients";
 import AdminProjects from "./pages/admin/Projects";
 import StatusUrgency from "./pages/admin/StatusUrgency";
 import AdminSettings from "./pages/admin/Settings";
+import AvatarGenerator from "./pages/admin/AvatarGenerator";
 import PMPerformance from "./pages/analytics/PMPerformance";
 import ClientPerformance from "./pages/analytics/ClientPerformance";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +75,7 @@ const App = () => {
             <Route path="clients" element={<AdminClients />} />
             <Route path="projects" element={<AdminProjects />} />
             <Route path="status-urgency" element={<StatusUrgency />} />
+            <Route path="avatar-generator" element={<AvatarGenerator />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 

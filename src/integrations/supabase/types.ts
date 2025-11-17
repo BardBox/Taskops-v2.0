@@ -146,6 +146,30 @@ export type Database = {
           },
         ]
       }
+      default_avatars: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          image_url: string
+          name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          image_url: string
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          name?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null

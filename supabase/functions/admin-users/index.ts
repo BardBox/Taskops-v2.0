@@ -5,14 +5,16 @@ const createUserSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(8).max(128),
   full_name: z.string().trim().min(2).max(100),
-  role: z.enum(['team_member', 'project_manager', 'project_owner'])
+  role: z.enum(['team_member', 'project_manager', 'project_owner']),
+  avatar_url: z.string().nullable().optional()
 })
 
 const updateUserSchema = z.object({
   userId: z.string().uuid(),
   email: z.string().email().max(255).optional(),
   full_name: z.string().trim().min(2).max(100).optional(),
-  role: z.enum(['team_member', 'project_manager', 'project_owner']).optional()
+  role: z.enum(['team_member', 'project_manager', 'project_owner']).optional(),
+  avatar_url: z.string().nullable().optional()
 })
 
 const corsHeaders = {
@@ -111,7 +113,7 @@ Deno.serve(async (req) => {
       case 'create': {
         // Validate input data
         const validated = createUserSchema.parse(payload)
-        const { email, password, full_name, role } = validated
+        const { email, password, full_name, role, avatar_url } = validated
 
         // Validate PM permissions for creating users
         if (isPM && !isOwner && !['team_member', 'project_manager'].includes(role)) {
@@ -126,7 +128,7 @@ Deno.serve(async (req) => {
           email,
           password,
           email_confirm: true,
-          user_metadata: { full_name, role },
+          user_metadata: { full_name, role, avatar_url },
         })
 
         if (authError) throw authError
@@ -139,7 +141,7 @@ Deno.serve(async (req) => {
       case 'update': {
         // Validate input data
         const validated = updateUserSchema.parse(payload)
-        const { userId, full_name, email, role } = validated
+        const { userId, full_name, email, role, avatar_url } = validated
 
         // Get target user's current role
         const { data: targetUserRole } = await supabaseClient
@@ -173,11 +175,15 @@ Deno.serve(async (req) => {
           if (emailError) throw emailError
         }
 
-        // Update profile
-        if (full_name) {
+        // Update profile (full_name and/or avatar_url)
+        const profileUpdates: any = {}
+        if (full_name !== undefined) profileUpdates.full_name = full_name
+        if (avatar_url !== undefined) profileUpdates.avatar_url = avatar_url
+        
+        if (Object.keys(profileUpdates).length > 0) {
           const { error: profileError } = await supabaseClient
             .from('profiles')
-            .update({ full_name })
+            .update(profileUpdates)
             .eq('id', userId)
 
           if (profileError) throw profileError
