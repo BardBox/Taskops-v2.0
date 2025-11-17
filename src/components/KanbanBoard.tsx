@@ -13,7 +13,8 @@ import { BadgeDropdown } from "./BadgeDropdown";
 import { useGamification } from "@/hooks/useGamification";
 import { GamificationStats } from "./GamificationStats";
 import { playNotificationSound } from "@/utils/notificationSounds";
-import { canChangeUrgency } from "@/utils/roleHelpers";
+import { canChangeUrgency, canTeamMemberChangeStatus } from "@/utils/roleHelpers";
+import { toast } from "sonner";
 
 interface Task {
   id: string;
@@ -347,6 +348,26 @@ export const KanbanBoard = ({
     const newStatus = overTask ? overTask.status : (over.id as string);
     
     const task = tasks.find(t => t.id === taskId);
+    
+    // Check if team member can make this status change
+    if (userRole === "team_member" && task) {
+      const allowedStatuses = ["Not Started", "In Progress", "Waiting for Approval"];
+      
+      // If current status is restricted, prevent any changes
+      if (!canTeamMemberChangeStatus(task.status)) {
+        toast.error("You cannot change this task's status");
+        setActiveId(null);
+        return;
+      }
+      
+      // Only allow dropping to allowed statuses
+      if (!allowedStatuses.includes(newStatus)) {
+        toast.error("You can only move tasks to: Not Started, In Progress, or Waiting for Approval");
+        setActiveId(null);
+        return;
+      }
+    }
+    
     if (task && task.status !== newStatus && canEdit(task)) {
       onStatusChange(taskId, newStatus);
       playNotificationSound('slap', 0.6);

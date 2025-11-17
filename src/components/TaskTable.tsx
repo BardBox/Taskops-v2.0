@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
+import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 
 interface Task {
   id: string;
@@ -730,13 +731,21 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                 userRole={userRole}
                 isSelected={selectedTaskIds.has(task.id)}
                 isAppreciated={taskAppreciations.get(task.id)}
-                statuses={statuses}
+                statuses={
+                  userRole === "team_member"
+                    ? statuses.filter(s => ["Not Started", "In Progress", "Waiting for Approval"].includes(s.label))
+                    : statuses
+                }
                 urgencies={urgencies}
                 onSelect={(checked) => handleSelectTask(task.id, checked)}
                 onEdit={() => handleEditTask(task)}
                 onClick={() => handleTaskClick(task.id)}
-                onStatusChange={(newStatus) => handleStatusChange(task.id, newStatus)}
-                onUrgencyChange={(newUrgency) => handleUrgencyChange(task.id, newUrgency)}
+                onStatusChange={
+                  userRole === "team_member" && task.status && !canTeamMemberChangeStatus(task.status)
+                    ? undefined
+                    : (newStatus) => handleStatusChange(task.id, newStatus)
+                }
+                onUrgencyChange={userRole !== "team_member" ? (newUrgency) => handleUrgencyChange(task.id, newUrgency) : undefined}
                 onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
                 onSubmit={() => {
                   setSelectedTaskForSubmit(task);
