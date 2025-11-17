@@ -329,7 +329,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 <SelectTrigger id="client_id">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
-                <SelectContent className="bg-background z-50">
+                <SelectContent>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
@@ -350,7 +350,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 <SelectTrigger id="project_id">
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
-                <SelectContent className="bg-background z-50">
+                <SelectContent>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
@@ -370,7 +370,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 <SelectTrigger id="assignee_id">
                   <SelectValue placeholder="Select task owner" />
                 </SelectTrigger>
-                <SelectContent className="bg-background z-50">
+                <SelectContent>
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.full_name}
