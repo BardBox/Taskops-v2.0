@@ -856,7 +856,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
               ? (taskId: string, newStatus: string) => {
                   const task = tasks.find(t => t.id === taskId);
                   if (task && canTeamMemberChangeStatus(task.status)) {
-                    const allowedStatuses = ["Not Started", "In Progress", "Waiting for Approval"];
+                    const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
                     if (allowedStatuses.includes(newStatus)) {
                       handleStatusChange(taskId, newStatus);
                     }
