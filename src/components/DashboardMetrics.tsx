@@ -226,9 +226,9 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
 
     setMetrics({
       total: tasks.length,
-      todo: tasks.filter((t) => t.status === "To Do").length,
-      doing: tasks.filter((t) => t.status === "Doing").length,
-      done: tasks.filter((t) => t.status === "Done").length,
+      todo: tasks.filter((t) => t.status === "Not Started").length,
+      doing: tasks.filter((t) => t.status === "In Progress" || t.status === "In Approval" || t.status === "Waiting for Approval").length,
+      done: tasks.filter((t) => t.status === "Approved").length,
       approved: tasks.filter((t) => t.status === "Approved").length,
       onHold: tasks.filter((t) => t.status === "On Hold").length,
       delayed,
