@@ -236,12 +236,14 @@ const Dashboard = () => {
         <Breadcrumbs />
         <DashboardMetrics filters={filters} />
 
-        <QuickFilters 
-          activeFilters={filters.quickFilter} 
-          onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
-        />
-
         <GlobalFilters filters={filters} onFiltersChange={setFilters} />
+
+        <div className="flex items-center justify-center py-4">
+          <QuickFilters 
+            activeFilters={filters.quickFilter} 
+            onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
+          />
+        </div>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">

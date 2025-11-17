@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Calendar, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface QuickFiltersProps {
@@ -9,35 +7,37 @@ interface QuickFiltersProps {
 
 export const QuickFilters = ({ activeFilters, onFiltersChange }: QuickFiltersProps) => {
   const timeBasedFilters = ["today", "this-month"];
-  const additiveFilters = ["urgent", "revisions"];
+  const additiveFilters = ["urgent", "revisions", "pending"];
   
   const quickFilters = [
     {
       id: "today",
       label: "Today",
-      icon: Calendar,
       description: "Today's & pending tasks (time-based)",
       type: "time" as const
     },
     {
       id: "this-month",
       label: "This Month",
-      icon: Clock,
       description: "This month's & pending tasks (time-based)",
       type: "time" as const
     },
     {
       id: "urgent",
       label: "Urgent",
-      icon: AlertTriangle,
       description: "Urgent tasks only (can combine)",
       type: "additive" as const
     },
     {
       id: "revisions",
       label: "Revisions",
-      icon: RefreshCw,
       description: "Tasks with revisions (can combine)",
+      type: "additive" as const
+    },
+    {
+      id: "pending",
+      label: "Pending",
+      description: "In Progress and Doing tasks (can combine)",
       type: "additive" as const
     }
   ];
@@ -62,42 +62,32 @@ export const QuickFilters = ({ activeFilters, onFiltersChange }: QuickFiltersPro
   };
 
   return (
-    <div className="flex flex-wrap gap-2 mb-4">
+    <div className="flex flex-wrap gap-6 items-center">
       {quickFilters.map((filter) => {
-        const Icon = filter.icon;
         const isActive = activeFilters.includes(filter.id);
-        const isTimeFilter = filter.type === "time";
         
         return (
-          <Button
+          <button
             key={filter.id}
-            variant={isActive ? "default" : "outline"}
-            size="sm"
             onClick={() => handleFilterClick(filter.id)}
-            className="gap-2 transition-all hover:scale-105"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary cursor-pointer",
+              isActive ? "text-primary underline underline-offset-4" : "text-muted-foreground"
+            )}
             title={filter.description}
           >
-            <Icon 
-              className={cn(
-                "h-4 w-4",
-                isTimeFilter ? "text-blue-500" : "text-orange-500",
-                isActive && "text-current"
-              )} 
-            />
             {filter.label}
-          </Button>
+          </button>
         );
       })}
       
       {activeFilters.length > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => onFiltersChange([])}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           Clear Filters
-        </Button>
+        </button>
       )}
     </div>
   );
