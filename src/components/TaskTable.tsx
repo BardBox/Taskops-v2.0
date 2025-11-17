@@ -284,6 +284,42 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           }
         });
       }
+
+      // Apply quick filter
+      if (filters.quickFilter && filters.quickFilter !== "all") {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        switch (filters.quickFilter) {
+          case "today":
+            filtered = filtered.filter(task => {
+              const taskDate = new Date(task.date);
+              taskDate.setHours(0, 0, 0, 0);
+              const isToday = taskDate.getTime() === today.getTime();
+              const isPending = !["Approved", "Cancelled"].includes(task.status);
+              return isToday || isPending;
+            });
+            break;
+            
+          case "this-month":
+            filtered = filtered.filter(task => {
+              const taskDate = new Date(task.date);
+              const isThisMonth = taskDate.getMonth() === today.getMonth() && 
+                                 taskDate.getFullYear() === today.getFullYear();
+              const isPending = !["Approved", "Cancelled"].includes(task.status);
+              return isThisMonth || isPending;
+            });
+            break;
+            
+          case "urgent":
+            filtered = filtered.filter(task => task.urgency === "Immediate");
+            break;
+            
+          case "revisions":
+            filtered = filtered.filter(task => task.revision_count > 0);
+            break;
+        }
+      }
     }
 
     // Apply sorting

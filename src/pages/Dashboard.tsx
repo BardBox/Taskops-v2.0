@@ -8,6 +8,7 @@ import { TaskTable } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
+import { QuickFilters } from "@/components/QuickFilters";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { LogOut, Plus, Settings, User as UserIcon, Sliders, ArrowRight, BarChart3, Home } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +47,7 @@ const Dashboard = () => {
     projectManagerId: "all",
     highlightToday: false,
     delay: "all",
+    quickFilter: "all",
   });
 
   useEffect(() => {
@@ -233,6 +235,11 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-8 space-y-6">
         <Breadcrumbs />
         <DashboardMetrics filters={filters} />
+
+        <QuickFilters 
+          activeFilter={filters.quickFilter} 
+          onFilterChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
+        />
 
         <GlobalFilters filters={filters} onFiltersChange={setFilters} />
 
