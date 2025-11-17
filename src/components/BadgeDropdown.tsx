@@ -76,7 +76,7 @@ export const BadgeDropdown = ({
           {options.map((option) => {
             const optionIsUrgency = option.color?.includes('bg-urgency-');
             return (
-              <Badge
+              <div
                 key={option.label}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -87,13 +87,14 @@ export const BadgeDropdown = ({
                   "cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium",
                   "transition-all duration-200 ease-out",
                   "hover:scale-110 hover:shadow-md active:scale-95",
+                  "inline-flex items-center border",
                   option.color,
                   optionIsUrgency && "border-l-4 border-l-current/40",
                   "justify-start"
                 )}
               >
                 {option.label}
-              </Badge>
+              </div>
             );
           })}
         </div>
