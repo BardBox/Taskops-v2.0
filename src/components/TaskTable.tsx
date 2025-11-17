@@ -221,11 +221,18 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const taskDate = new Date(task.date);
-    taskDate.setHours(0, 0, 0, 0);
     
-    if (filters.highlightToday && taskDate.getTime() === today.getTime()) {
-      return "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-950/30";
+    if (filters.highlightToday) {
+      if (task.deadline) {
+        const deadline = new Date(task.deadline);
+        deadline.setHours(0, 0, 0, 0);
+        const isDeadlineToday = deadline.getTime() === today.getTime();
+        const isOverdue = deadline.getTime() < today.getTime() && !["Approved", "Cancelled"].includes(task.status);
+        
+        if (isDeadlineToday || isOverdue) {
+          return "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-950/30";
+        }
+      }
     }
     
     if (filters.highlightImmediate && task.urgency === "Immediate") {
