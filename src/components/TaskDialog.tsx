@@ -333,13 +333,24 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         if (error) throw error;
 
         // Update collaborators
-        // First, remove existing collaborators
+        // First, get existing collaborators to find new ones
+        const { data: existingCollabs } = await supabase
+          .from("task_collaborators")
+          .select("user_id")
+          .eq("task_id", task.id);
+
+        const existingCollabIds = existingCollabs?.map(c => c.user_id) || [];
+        const newCollaborators = selectedCollaborators.filter(
+          userId => !existingCollabIds.includes(userId)
+        );
+
+        // Remove existing collaborators
         await supabase
           .from("task_collaborators")
           .delete()
           .eq("task_id", task.id);
 
-        // Then add new ones
+        // Add new collaborators
         if (selectedCollaborators.length > 0) {
           const collaboratorInserts = selectedCollaborators.map(userId => ({
             task_id: task.id,
@@ -348,6 +359,19 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           }));
 
           await supabase.from("task_collaborators").insert(collaboratorInserts);
+
+          // Send notifications only to new collaborators
+          if (newCollaborators.length > 0) {
+            const notifications = newCollaborators.map(userId => ({
+              user_id: userId,
+              task_id: task.id,
+              title: "Added as Collaborator",
+              message: `You've been added as a collaborator on "${formData.task_name}"`,
+              type: "info"
+            }));
+
+            await supabase.from("notifications").insert(notifications);
+          }
         }
 
         toast.success("Task updated successfully!");

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { format } from "date-fns";
+import { CollaborationMetrics } from "@/components/CollaborationMetrics";
 
 interface Task {
   id: string;
