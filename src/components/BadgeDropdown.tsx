@@ -68,7 +68,7 @@ export const BadgeDropdown = ({
         )}
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-2 bg-background/95 backdrop-blur-sm border shadow-lg z-[100] animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-200" 
+        className="w-auto p-2 bg-card text-card-foreground border shadow-lg z-[100] animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-200" 
         align="start"
         sideOffset={5}
       >
