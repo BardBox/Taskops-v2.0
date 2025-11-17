@@ -22,7 +22,7 @@ export const Breadcrumbs = () => {
   const getPageTitle = (segment: string) => {
     switch (segment) {
       case "analytics":
-        return "Analytics Dashboard";
+        return "Performance Metrics";
       case "preferences":
         return "Preferences";
       case "account-settings":
@@ -39,9 +39,9 @@ export const Breadcrumbs = () => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link to="/dashboard" className="flex items-center gap-1">
+          <Link to="/dashboard" className="flex items-center gap-1">
               <Home className="h-4 w-4" />
-              <span>Homepage</span>
+              <span>Dashboard</span>
             </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>

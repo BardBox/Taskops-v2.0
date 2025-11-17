@@ -188,20 +188,20 @@ const Dashboard = () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {location.pathname !== "/dashboard" && (
-                <DropdownMenuItem 
-                  onClick={() => navigate("/dashboard")}
-                  className="cursor-pointer"
-                >
-                  <Home className="h-4 w-4 mr-2" />
-                  Homepage
-                </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => navigate("/dashboard")}
+                className="cursor-pointer"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Dashboard
+              </DropdownMenuItem>
               )}
               <DropdownMenuItem 
                 onClick={() => navigate("/analytics")}
                 className="cursor-pointer"
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics Dashboard
+                Performance Metrics
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {hasAdminAccess && (

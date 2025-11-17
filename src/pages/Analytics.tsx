@@ -398,7 +398,7 @@ const Analytics = () => {
               className="h-10 w-auto object-contain"
             />
             <div>
-              <h1 className="text-xl font-bold">Analytics Dashboard</h1>
+              <h1 className="text-xl font-bold">Performance Metrics</h1>
               <p className="text-sm text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
             </div>
           </div>
@@ -419,11 +419,11 @@ const Analytics = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                   <Home className="mr-2 h-4 w-4" />
-                  Homepage
+                  Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/analytics")}>
                   <BarChart3 className="mr-2 h-4 w-4" />
-                  Analytics Dashboard
+                  Performance Metrics
                 </DropdownMenuItem>
                 {hasAdminAccess && (
                   <DropdownMenuItem onClick={() => navigate("/admin")}>

@@ -174,9 +174,9 @@ export default function ClientPerformance() {
       <header className="sticky top-0 z-50 border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link to="/dashboard" className="hover:text-foreground">Homepage</Link>
+            <Link to="/dashboard" className="hover:text-foreground">Dashboard</Link>
             <span>/</span>
-            <Link to="/analytics" className="hover:text-foreground">Analytics</Link>
+            <Link to="/analytics" className="hover:text-foreground">Performance Metrics</Link>
             <span>/</span>
             <span className="text-foreground font-medium">{clientName}</span>
           </div>
