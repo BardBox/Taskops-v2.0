@@ -647,16 +647,22 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                       ) : "-"}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <BadgeDropdown
-                        value={task.status}
-                        options={
-                          userRole === "team_member"
-                            ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
-                            : statuses
-                        }
-                        onChange={(value) => handleStatusChange(task.id, value)}
-                        disabled={!canEdit(task) || (userRole === "team_member" && !canTeamMemberChangeStatus(task.status))}
-                      />
+                      {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
+                        <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
+                          {task.status}
+                        </Badge>
+                      ) : (
+                        <BadgeDropdown
+                          value={task.status}
+                          options={
+                            userRole === "team_member"
+                              ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
+                              : statuses
+                          }
+                          onChange={(value) => handleStatusChange(task.id, value)}
+                          disabled={!canEdit(task)}
+                        />
+                      )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {userRole === "team_member" ? (

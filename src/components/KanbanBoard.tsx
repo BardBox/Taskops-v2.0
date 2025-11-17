@@ -89,6 +89,20 @@ const SortableTaskCard = ({
     return urgencyItem?.color || "bg-muted text-muted-foreground";
   };
 
+  const getStatusColor = (status: string) => {
+    const statusItem = [
+      { label: "Not Started", color: "bg-status-1" },
+      { label: "In Progress", color: "bg-status-2" },
+      { label: "In Approval", color: "bg-status-3" },
+      { label: "Approved", color: "bg-status-4" },
+      { label: "Revision", color: "bg-status-5" },
+      { label: "On Hold", color: "bg-status-6" },
+      { label: "Cancelled", color: "bg-status-7" },
+      { label: "Rejected", color: "bg-status-8" }
+    ].find((s: any) => s.label === status);
+    return statusItem?.color || "bg-muted text-muted-foreground";
+  };
+
   const getStickyNoteColor = (urgency: string) => {
     const urgencyItem = urgencies.find((u: any) => u.label === urgency);
     if (!urgencyItem) return 'bg-[hsl(50,40%,96%)] border-[hsl(50,40%,88%)]'; // default soft yellow
