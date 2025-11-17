@@ -105,7 +105,7 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
         </div>
         <h3 className="text-lg font-semibold mb-2">No tasks with deadlines</h3>
         <p className="text-muted-foreground">
-          Add deadlines to your tasks to see them in the Gantt chart view.
+          Add deadlines to your tasks to see them in the Calendar view.
         </p>
       </div>
     );
