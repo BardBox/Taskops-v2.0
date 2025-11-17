@@ -445,8 +445,26 @@ export const KanbanBoard = ({
         setActiveId(null);
         return;
       }
+      
+      // If all TM validations pass, make the change
+      if (task.status !== newStatus) {
+        onStatusChange(taskId, newStatus);
+        playNotificationSound('slap', 0.6);
+        
+        // Check if task was completed
+        if (newStatus.toLowerCase() === 'completed' || newStatus.toLowerCase() === 'done' || newStatus.toLowerCase() === 'approved') {
+          onTaskCompleted({
+            urgency: task.urgency,
+            deadline: task.deadline,
+            created_at: task.date,
+          });
+        }
+      }
+      setActiveId(null);
+      return; // Exit early for team members
     }
     
+    // For PM and PO, use the canEdit check
     if (task && task.status !== newStatus && canEdit(task)) {
       onStatusChange(taskId, newStatus);
       playNotificationSound('slap', 0.6);
