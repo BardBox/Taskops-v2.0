@@ -204,7 +204,7 @@ const SortableTaskCard = ({
                 value={task.urgency}
                 options={urgencies}
                 onChange={(value) => onUrgencyChange(task.id, value)}
-                disabled={!canEdit}
+                disabled={!canEdit || userRole === "team_member"}
                 variant="text"
               />
             </div>
@@ -464,7 +464,7 @@ export const KanbanBoard = ({
                       onSelect={onSelectTask}
                       onEdit={onEditTask}
                       onClick={onTaskClick}
-                      onUrgencyChange={onUrgencyChange}
+                      onUrgencyChange={handleUrgencyChange}
                       onAppreciationToggle={onAppreciationToggle}
                       onSubmit={onSubmit}
                       onNotesClick={onNotesClick}
