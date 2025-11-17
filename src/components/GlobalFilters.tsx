@@ -448,48 +448,48 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
 
         <div className="space-y-2">
           <Label className="text-xs font-medium">Highlight</Label>
-          <div className="flex items-center h-10 gap-6 whitespace-nowrap">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6 whitespace-nowrap min-h-[40px]">
+            <div className="flex items-center gap-2 h-6">
               <Switch
                 id="highlight-today"
                 checked={filters.highlightToday}
                 onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
                 className="data-[state=checked]:bg-blue-500"
               />
-              <Label htmlFor="highlight-today" className="text-sm cursor-pointer">
+              <Label htmlFor="highlight-today" className="text-sm cursor-pointer leading-none">
                 Today
               </Label>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 h-6">
               <Switch
                 id="highlight-immediate"
                 checked={filters.highlightImmediate}
                 onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
                 className="data-[state=checked]:bg-red-500"
               />
-              <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer">
+              <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer leading-none">
                 Immediate
               </Label>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 h-6">
               <Switch
                 id="highlight-delayed"
                 checked={filters.highlightDelayed}
                 onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
                 className="data-[state=checked]:bg-orange-500"
               />
-              <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer">
+              <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer leading-none">
                 Delayed
               </Label>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 h-6">
               <Switch
                 id="highlight-in-approval"
                 checked={filters.highlightInApproval}
                 onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
                 className="data-[state=checked]:bg-green-500"
               />
-              <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer">
+              <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer leading-none">
                 In Approval
               </Label>
             </div>
