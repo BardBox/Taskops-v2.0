@@ -354,6 +354,7 @@ export type Database = {
           notes: string | null
           parent_task_id: string | null
           project_id: string | null
+          reference_image: string | null
           reference_link_1: string | null
           reference_link_2: string | null
           reference_link_3: string | null
@@ -380,6 +381,7 @@ export type Database = {
           notes?: string | null
           parent_task_id?: string | null
           project_id?: string | null
+          reference_image?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
@@ -406,6 +408,7 @@ export type Database = {
           notes?: string | null
           parent_task_id?: string | null
           project_id?: string | null
+          reference_image?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null

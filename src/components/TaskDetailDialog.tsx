@@ -37,6 +37,7 @@ interface Task {
   reference_link_1: string | null;
   reference_link_2: string | null;
   reference_link_3: string | null;
+  reference_image: string | null;
   actual_delivery: string | null;
   date: string;
   revision_count: number;
@@ -950,6 +951,26 @@ export function TaskDetailDialog({
                         {task.reference_link_3}
                       </a>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {task.reference_image && (
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Image</Label>
+                  <div className="mt-1">
+                    <a 
+                      href={task.reference_image} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-block"
+                    >
+                      <img 
+                        src={task.reference_image} 
+                        alt="Task reference" 
+                        className="max-w-sm max-h-60 rounded border hover:opacity-90 transition-opacity cursor-pointer"
+                      />
+                    </a>
                   </div>
                 </div>
               )}
