@@ -370,63 +370,35 @@ export const KanbanBoard = ({
     const { setNodeRef, isOver } = useDroppable({ id: status.label });
     
     return (
-      <div 
+      <motion.div 
         ref={setNodeRef} 
-        className="flex-shrink-0 w-80 relative"
+        className="flex-shrink-0 w-80"
+        animate={{
+          scale: isOver ? 1.02 : 1,
+        }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
-        <motion.div
-          animate={{
-            scale: isOver ? 1.02 : 1,
-            y: isOver ? -4 : 0,
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          className="h-full"
+        <div 
+          className="rounded-lg p-4 h-full bg-muted/30"
         >
-          <div 
-            className={`rounded-lg p-4 h-full transition-all duration-300 ${
-              isOver 
-                ? 'bg-primary/10 ring-4 ring-primary/50 shadow-2xl' 
-                : 'bg-muted/30'
-            }`}
-          >
-            {/* Drop indicator overlay */}
-            {isOver && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 rounded-lg border-4 border-dashed border-primary pointer-events-none z-10 flex items-center justify-center bg-primary/5"
-              >
-                <div className="bg-primary text-primary-foreground px-4 py-2 rounded-full font-semibold text-sm shadow-lg flex items-center gap-2">
-                  <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity }}
-                  >
-                    ↓
-                  </motion.div>
-                  Drop here
-                </div>
-              </motion.div>
-            )}
-            
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground">
-                <div className={`w-3 h-3 rounded-full ${status.color}`} />
-                {status.label}
-              </h3>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 500 }}
-              >
-                <Badge variant="secondary" className="text-xs font-bold">
-                  {tasksByStatus[status.label]?.length || 0}
-                </Badge>
-              </motion.div>
-            </div>
-            {children}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground">
+              <div className={`w-3 h-3 rounded-full ${status.color}`} />
+              {status.label}
+            </h3>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500 }}
+            >
+              <Badge variant="secondary" className="text-xs font-bold">
+                {tasksByStatus[status.label]?.length || 0}
+              </Badge>
+            </motion.div>
           </div>
-        </motion.div>
-      </div>
+          {children}
+        </div>
+      </motion.div>
     );
   };
 
