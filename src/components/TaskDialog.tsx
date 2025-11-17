@@ -319,6 +319,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
             <div className="space-y-2">
               <Label htmlFor="client_id">Client</Label>
               <Select
+                key={`client-${task?.id || 'new'}`}
                 value={formData.client_id}
                 onValueChange={(value) => {
                   setFormData({ ...formData, client_id: value, project_id: "" });
@@ -341,6 +342,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
             <div className="space-y-2">
               <Label htmlFor="project_id">Project</Label>
               <Select
+                key={`project-${task?.id || 'new'}`}
                 value={formData.project_id}
                 onValueChange={(value) => setFormData({ ...formData, project_id: value })}
                 disabled={!formData.client_id}
@@ -361,6 +363,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
             <div className="space-y-2">
               <Label htmlFor="assignee_id">Task Owner *</Label>
               <Select
+                key={task?.id || 'new'}
                 value={formData.assignee_id}
                 onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
               >
