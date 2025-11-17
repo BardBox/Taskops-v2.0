@@ -302,7 +302,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {years.map(year => (
                 <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
@@ -317,7 +317,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {MONTHS.map(month => (
                 <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
@@ -332,7 +332,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {statusOptions.map(status => (
                 <SelectItem key={status} value={status}>{status}</SelectItem>
@@ -347,7 +347,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {urgencyOptions.map(urgency => (
                 <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
@@ -362,7 +362,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent>
               {DELAY_OPTIONS.map(option => (
                 <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
               ))}
@@ -376,7 +376,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {clients.map(client => (
                 <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
@@ -394,7 +394,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {Array.from(new Set(
                 projects
@@ -414,7 +414,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-background z-50">
+              <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 {teamMembers.map(tm => (
                   <SelectItem key={tm.id} value={tm.id}>{tm.full_name}</SelectItem>
@@ -431,7 +431,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-background z-50">
+              <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 {projectManagers.map(pm => (
                   <SelectItem key={pm.id} value={pm.id}>{pm.full_name}</SelectItem>
