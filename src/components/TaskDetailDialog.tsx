@@ -18,6 +18,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency } from "@/utils/roleHelpers";
 
 interface Task {
   id: string;
@@ -788,54 +790,71 @@ export function TaskDetailDialog({
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 px-4 text-sm font-medium hover:bg-accent">
-                        {task.status}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
-                      <div className="space-y-1">
-                        {["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"].map((status) => (
-                          <Button
-                            key={status}
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start text-sm hover:bg-accent"
-                            onClick={() => handleStatusChange(status)}
-                          >
-                            {status}
-                          </Button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  {userRole === "team_member" && task.status && !canTeamMemberChangeStatus(task.status) ? (
+                    <Badge variant="outline" className="h-8 px-4">
+                      {task.status}
+                    </Badge>
+                  ) : (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 px-4 text-sm font-medium hover:bg-accent"
+                          disabled={userRole === "team_member" && getAvailableStatuses(userRole, task.status || "").length === 0}
+                        >
+                          {task.status}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
+                        <div className="space-y-1">
+                          {getAvailableStatuses(userRole, task.status || "").map((status) => (
+                            <Button
+                              key={status}
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start text-sm hover:bg-accent"
+                              onClick={() => handleStatusChange(status)}
+                            >
+                              {status}
+                            </Button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 px-4 text-sm font-medium hover:bg-accent">
-                        {task.urgency}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-40 p-2 bg-background border shadow-lg z-50" align="start">
-                      <div className="space-y-1">
-                        {["Low", "Medium", "High", "Immediate"].map((urgency) => (
-                          <Button
-                            key={urgency}
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start text-sm hover:bg-accent"
-                            onClick={() => handleUrgencyChange(urgency)}
-                          >
-                            {urgency}
-                          </Button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  {!canChangeUrgency(userRole) ? (
+                    <Badge variant="outline" className="h-8 px-4">
+                      {task.urgency}
+                    </Badge>
+                  ) : (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 px-4 text-sm font-medium hover:bg-accent">
+                          {task.urgency}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-40 p-2 bg-background border shadow-lg z-50" align="start">
+                        <div className="space-y-1">
+                          {["Low", "Medium", "High", "Immediate"].map((urgency) => (
+                            <Button
+                              key={urgency}
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start text-sm hover:bg-accent"
+                              onClick={() => handleUrgencyChange(urgency)}
+                            >
+                              {urgency}
+                            </Button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </div>
               </div>
 

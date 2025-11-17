@@ -13,7 +13,7 @@ import { BadgeDropdown } from "./BadgeDropdown";
 import { useGamification } from "@/hooks/useGamification";
 import { GamificationStats } from "./GamificationStats";
 import { playNotificationSound } from "@/utils/notificationSounds";
-import { triggerSparkles } from "@/utils/celebrationEffects";
+import { canChangeUrgency } from "@/utils/roleHelpers";
 
 interface Task {
   id: string;
@@ -318,6 +318,11 @@ export const KanbanBoard = ({
       return task.status !== "Approved";
     }
     return false;
+  };
+
+  const handleUrgencyChange = (taskId: string, newUrgency: string) => {
+    if (userRole === "team_member") return; // TMs can't change urgency
+    onUrgencyChange(taskId, newUrgency);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
