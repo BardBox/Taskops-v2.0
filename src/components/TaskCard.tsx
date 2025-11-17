@@ -34,6 +34,7 @@ interface Task {
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
   task_comments?: Array<{ message: string; created_at: string }>;
+  collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
 
 interface TaskCardProps {

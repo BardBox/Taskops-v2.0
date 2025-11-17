@@ -41,7 +41,7 @@ interface Task {
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
-  collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url?: string } }>;
+  collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
 
 interface KanbanBoardProps {
