@@ -189,9 +189,20 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         task_comments(message, created_at)
       `);
     
-    // Team members should only see tasks assigned to them
+    // Team members see tasks assigned to them OR where they are collaborators
     if (userRole === "team_member") {
-      query = query.eq("assignee_id", userId);
+      const { data: collaboratedTasks } = await supabase
+        .from("task_collaborators")
+        .select("task_id")
+        .eq("user_id", userId);
+      
+      const collaboratedTaskIds = collaboratedTasks?.map(ct => ct.task_id) || [];
+      
+      if (collaboratedTaskIds.length > 0) {
+        query = query.or(`assignee_id.eq.${userId},id.in.(${collaboratedTaskIds.join(',')})`);
+      } else {
+        query = query.eq("assignee_id", userId);
+      }
     }
     
     const { data, error } = await query.order("date", { ascending: false });

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -108,6 +108,7 @@ export function TaskDetailDialog({
   const [showMessageEmojiPicker, setShowMessageEmojiPicker] = useState(false);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [editHistory, setEditHistory] = useState<any[]>([]);
+  const [isCollaborator, setIsCollaborator] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -341,6 +342,16 @@ export function TaskDetailDialog({
         .eq("id", taskData.assigned_by_id)
         .single();
       setAssignedByName(assignedByData?.full_name || "");
+
+      // Check if user is a collaborator
+      const { data: collabCheck } = await supabase
+        .from("task_collaborators")
+        .select("user_id")
+        .eq("task_id", taskId)
+        .eq("user_id", userId)
+        .single();
+
+      setIsCollaborator(!!collabCheck);
     } catch (error: any) {
       toast.error("Failed to fetch task details");
     }
@@ -639,6 +650,23 @@ export function TaskDetailDialog({
     }
   };
 
+  const handleDeadlineChange = async (newDeadline: string) => {
+    if (!task) return;
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ deadline: newDeadline })
+        .eq("id", task.id);
+
+      if (error) throw error;
+      setTask({ ...task, deadline: newDeadline });
+      toast.success("Deadline updated");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Failed to update deadline");
+    }
+  };
+
   const handleNotesSave = async () => {
     if (!task) return;
     try {
@@ -754,6 +782,12 @@ export function TaskDetailDialog({
 
   if (!task) return null;
 
+  const canEditTaskProperties = (
+    userRole === 'project_manager' || 
+    userRole === 'project_owner' || 
+    (task?.assignee_id === userId && !isCollaborator)
+  );
+
   const delayStatus = getDelayStatus();
   const typingUserNames = Array.from(typingUsers)
     .map(uid => userProfiles.get(uid))
@@ -833,9 +867,21 @@ export function TaskDetailDialog({
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Deadline</Label>
-                  <p className="text-sm font-medium mt-1">
-                    {task.deadline ? format(new Date(task.deadline), 'PPP') : 'No deadline'}
-                  </p>
+                  {canEditTaskProperties ? (
+                    <Input 
+                      type="date"
+                      value={task.deadline || ''}
+                      onChange={(e) => {
+                        setTask({ ...task, deadline: e.target.value });
+                        handleDeadlineChange(e.target.value);
+                      }}
+                      className="text-sm font-medium mt-1"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium mt-1">
+                      {task.deadline ? format(new Date(task.deadline), 'PPP') : 'No deadline'}
+                    </p>
+                  )}
                 </div>
                 {task.actual_delivery && (
                   <div>
@@ -850,7 +896,7 @@ export function TaskDetailDialog({
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
                   {(() => {
                     const availableStatuses = getAvailableStatuses(userRole, task.status || "");
-                    const canChange = userRole !== "team_member" || (userRole === "team_member" && availableStatuses.length > 0);
+                    const canChange = canEditTaskProperties && (userRole !== "team_member" || availableStatuses.length > 0);
                     
                     if (!canChange) {
                       return (
@@ -893,7 +939,7 @@ export function TaskDetailDialog({
                 
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
-                  {!canChangeUrgency(userRole) ? (
+                  {!canEditTaskProperties || !canChangeUrgency(userRole) ? (
                     <Badge variant="outline" className="h-8 px-4">
                       {task.urgency}
                     </Badge>
@@ -923,6 +969,13 @@ export function TaskDetailDialog({
                   )}
                 </div>
               </div>
+
+              {!canEditTaskProperties && isCollaborator && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Collaborators cannot modify task status, urgency, or deadline
+                </p>
+              )}
 
               <div>
                 <div className="flex items-center justify-between">

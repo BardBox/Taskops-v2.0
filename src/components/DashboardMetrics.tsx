@@ -113,6 +113,7 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
   });
   const [userRole, setUserRole] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [collaboratedCount, setCollaboratedCount] = useState(0);
 
   useEffect(() => {
     getCurrentUser();
@@ -213,6 +214,16 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
 
     if (!tasks) return;
 
+    // Fetch collaborated tasks count for team members
+    if (userRole === "team_member" && userId) {
+      const { data: collabTasks } = await supabase
+        .from("task_collaborators")
+        .select("task_id")
+        .eq("user_id", userId);
+      
+      setCollaboratedCount(collabTasks?.length || 0);
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -252,6 +263,11 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
           <div className="text-3xl font-bold mb-2">
             <AnimatedCounter value={metrics.total} />
           </div>
+          {collaboratedCount > 0 && (
+            <p className="text-xs text-muted-foreground mb-2">
+              {collaboratedCount} as collaborator
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <CircularProgress 
               percentage={completionRate} 
