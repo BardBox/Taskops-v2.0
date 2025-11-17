@@ -111,9 +111,17 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
     onHold: 0,
     delayed: 0,
   });
+  const [userRole, setUserRole] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
 
   useEffect(() => {
-    fetchMetrics();
+    getCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchMetrics();
+    }
 
     const channel = supabase
       .channel("tasks-metrics")
@@ -131,12 +139,33 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [filters]);
+  }, [filters, userId]);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (roleData) {
+        setUserRole(roleData.role);
+      }
+    }
+  };
 
   const fetchMetrics = async () => {
     let query = supabase
       .from("tasks")
       .select("status, deadline, actual_delivery, date, urgency, client_id, assignee_id, assigned_by_id");
+
+    // Team members only see their own tasks
+    if (userRole === "team_member" && userId) {
+      query = query.eq("assignee_id", userId);
+    }
 
     // Apply filters
     if (filters) {

@@ -384,35 +384,39 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Team Member</Label>
-          <Select value={filters.teamMemberId} onValueChange={(v) => updateFilter("teamMemberId", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="all">All</SelectItem>
-              {teamMembers.map(tm => (
-                <SelectItem key={tm.id} value={tm.id}>{tm.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {userRole !== "team_member" && (
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Team Member</Label>
+            <Select value={filters.teamMemberId} onValueChange={(v) => updateFilter("teamMemberId", v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">All</SelectItem>
+                {teamMembers.map(tm => (
+                  <SelectItem key={tm.id} value={tm.id}>{tm.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">PM</Label>
-          <Select value={filters.projectManagerId} onValueChange={(v) => updateFilter("projectManagerId", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="all">All</SelectItem>
-              {projectManagers.map(pm => (
-                <SelectItem key={pm.id} value={pm.id}>{pm.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {userRole !== "team_member" && (
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">PM</Label>
+            <Select value={filters.projectManagerId} onValueChange={(v) => updateFilter("projectManagerId", v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">All</SelectItem>
+                {projectManagers.map(pm => (
+                  <SelectItem key={pm.id} value={pm.id}>{pm.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label className="text-xs font-medium">Highlight</Label>

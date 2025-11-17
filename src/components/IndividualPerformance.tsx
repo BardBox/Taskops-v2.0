@@ -37,13 +37,15 @@ interface IndividualPerformanceProps {
     onTimeRate: number;
     avgDelayDays: number;
   };
+  hideBackButton?: boolean;
 }
 
 export const IndividualPerformance = ({ 
   individualId, 
   individualName, 
   onBack,
-  teamAverage 
+  teamAverage,
+  hideBackButton = false
 }: IndividualPerformanceProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,10 +210,12 @@ export const IndividualPerformance = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Overview
-          </Button>
+          {!hideBackButton && (
+            <Button variant="ghost" size="sm" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Overview
+            </Button>
+          )}
           <div>
             <h2 className="text-2xl font-bold">{individualName}</h2>
             <p className="text-muted-foreground">Individual Performance Analysis</p>
