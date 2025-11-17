@@ -33,6 +33,9 @@ interface Task {
   reference_link_1: string | null;
   reference_link_2: string | null;
   reference_link_3: string | null;
+  parent_task_id: string | null;
+  revision_number: number;
+  is_revision: boolean;
   clients: { name: string } | null;
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
@@ -95,7 +98,6 @@ const SortableTaskCard = ({
       { label: "In Progress", color: "bg-status-2" },
       { label: "In Approval", color: "bg-status-3" },
       { label: "Approved", color: "bg-status-4" },
-      { label: "Revision", color: "bg-status-5" },
       { label: "On Hold", color: "bg-status-6" },
       { label: "Cancelled", color: "bg-status-7" },
       { label: "Rejected", color: "bg-status-8" }
@@ -204,7 +206,14 @@ const SortableTaskCard = ({
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-sm mb-1 line-clamp-2">{task.task_name}</h4>
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-semibold text-sm line-clamp-2 flex-1">{task.task_name}</h4>
+                  {task.is_revision && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0">
+                      Rev {task.revision_number}
+                    </Badge>
+                  )}
+                </div>
                 {task.clients && (
                   <p className="text-xs text-muted-foreground">{task.clients.name}</p>
                 )}

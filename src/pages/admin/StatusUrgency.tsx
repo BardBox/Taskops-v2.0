@@ -116,7 +116,6 @@ const defaultStatuses: StatusUrgencyItem[] = [
   { label: "In Progress", color: "bg-status-buttercup text-status-buttercup-foreground" },
   { label: "In Approval", color: "bg-status-lavender text-status-lavender-foreground" },
   { label: "Approved", color: "bg-status-mint text-status-mint-foreground" },
-  { label: "Revision", color: "bg-status-peach text-status-peach-foreground" },
   { label: "On Hold", color: "bg-status-pearl text-status-pearl-foreground" },
   { label: "Cancelled", color: "bg-status-coral text-status-coral-foreground" },
   { label: "Rejected", color: "bg-status-rose text-status-rose-foreground" },
