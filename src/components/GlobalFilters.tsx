@@ -321,10 +321,10 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                   delay: "all",
                 });
               }}
-              className="h-5 w-5 rounded-full bg-foreground/90 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12"
+              className="h-5 w-5 rounded-full bg-background border border-foreground/20 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12 group"
               title="Reset Filters"
             >
-              <RotateCcw className="h-3 w-3 text-background transition-transform" />
+              <RotateCcw className="h-3 w-3 text-foreground group-hover:text-background transition-transform" />
             </button>
           </div>
           
@@ -490,10 +490,10 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                   highlightInApproval: false,
                 });
               }}
-              className="h-5 w-5 rounded-full bg-foreground/90 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12"
+              className="h-5 w-5 rounded-full bg-background border border-foreground/20 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12 group"
               title="Reset Highlights"
             >
-              <RotateCcw className="h-3 w-3 text-background transition-transform" />
+              <RotateCcw className="h-3 w-3 text-foreground group-hover:text-background transition-transform" />
             </button>
           </div>
           
