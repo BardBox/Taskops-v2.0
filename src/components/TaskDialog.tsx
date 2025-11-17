@@ -572,7 +572,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="deadline">Deadline</Label>
               <Input
                 id="deadline"
