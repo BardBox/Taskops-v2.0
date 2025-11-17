@@ -357,7 +357,10 @@ export type Database = {
           reference_link_1: string | null
           reference_link_2: string | null
           reference_link_3: string | null
+          revision_count: number
           revision_number: number
+          revision_requested_at: string | null
+          revision_requested_by: string | null
           status: string
           task_name: string
           updated_at: string
@@ -380,7 +383,10 @@ export type Database = {
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
+          revision_count?: number
           revision_number?: number
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
           status?: string
           task_name: string
           updated_at?: string
@@ -403,7 +409,10 @@ export type Database = {
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
+          revision_count?: number
           revision_number?: number
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
           status?: string
           task_name?: string
           updated_at?: string
