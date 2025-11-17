@@ -90,42 +90,42 @@ const SortableTaskCard = ({
 
   const getStickyNoteColor = (urgency: string) => {
     const urgencyItem = urgencies.find((u: any) => u.label === urgency);
-    if (!urgencyItem) return 'bg-[hsl(50,45%,88%)] border-[hsl(50,45%,78%)]'; // default soft yellow
+    if (!urgencyItem) return 'bg-[hsl(50,40%,96%)] border-[hsl(50,40%,88%)]'; // default soft yellow
     
     // Extract urgency level number from color class (e.g., "bg-urgency-15" -> 15)
     const colorMatch = urgencyItem.color.match(/urgency-(\d+)/);
-    if (!colorMatch) return 'bg-[hsl(50,45%,88%)] border-[hsl(50,45%,78%)]';
+    if (!colorMatch) return 'bg-[hsl(50,40%,96%)] border-[hsl(50,40%,88%)]';
     
     const level = parseInt(colorMatch[1]);
     
-    // Map urgency levels to soft, desaturated sticky note colors
-    // Lower levels (1-7): Cool blues/cyans - light and desaturated
-    // Mid levels (8-13): Warm yellows/oranges - light and desaturated
-    // High levels (14-20): Warm oranges/reds - light and desaturated
+    // Map urgency levels to very light, desaturated sticky note colors
+    // Lower levels (1-7): Cool blues/cyans - very light and desaturated
+    // Mid levels (8-13): Warm yellows/oranges - very light and desaturated
+    // High levels (14-20): Warm oranges/reds - very light and desaturated
     const colorMap: { [key: number]: string } = {
-      1: 'bg-[hsl(200,40%,87%)] border-[hsl(200,40%,77%)]',
-      2: 'bg-[hsl(195,38%,86%)] border-[hsl(195,38%,76%)]',
-      3: 'bg-[hsl(190,36%,86%)] border-[hsl(190,36%,76%)]',
-      4: 'bg-[hsl(185,35%,85%)] border-[hsl(185,35%,75%)]',
-      5: 'bg-[hsl(180,33%,85%)] border-[hsl(180,33%,75%)]',
-      6: 'bg-[hsl(175,32%,84%)] border-[hsl(175,32%,74%)]',
-      7: 'bg-[hsl(170,30%,84%)] border-[hsl(170,30%,74%)]',
-      8: 'bg-[hsl(60,45%,87%)] border-[hsl(60,45%,77%)]',
-      9: 'bg-[hsl(55,46%,86%)] border-[hsl(55,46%,76%)]',
-      10: 'bg-[hsl(50,47%,86%)] border-[hsl(50,47%,76%)]',
-      11: 'bg-[hsl(45,48%,85%)] border-[hsl(45,48%,75%)]',
-      12: 'bg-[hsl(40,49%,85%)] border-[hsl(40,49%,75%)]',
-      13: 'bg-[hsl(35,50%,84%)] border-[hsl(35,50%,74%)]',
-      14: 'bg-[hsl(30,51%,84%)] border-[hsl(30,51%,74%)]',
-      15: 'bg-[hsl(25,52%,83%)] border-[hsl(25,52%,73%)]',
-      16: 'bg-[hsl(20,53%,83%)] border-[hsl(20,53%,73%)]',
-      17: 'bg-[hsl(15,54%,82%)] border-[hsl(15,54%,72%)]',
-      18: 'bg-[hsl(10,55%,82%)] border-[hsl(10,55%,72%)]',
-      19: 'bg-[hsl(5,56%,81%)] border-[hsl(5,56%,71%)]',
-      20: 'bg-[hsl(0,57%,81%)] border-[hsl(0,57%,71%)]'
+      1: 'bg-[hsl(200,35%,96%)] border-[hsl(200,35%,88%)]',
+      2: 'bg-[hsl(195,34%,96%)] border-[hsl(195,34%,88%)]',
+      3: 'bg-[hsl(190,33%,96%)] border-[hsl(190,33%,88%)]',
+      4: 'bg-[hsl(185,32%,96%)] border-[hsl(185,32%,88%)]',
+      5: 'bg-[hsl(180,31%,96%)] border-[hsl(180,31%,88%)]',
+      6: 'bg-[hsl(175,30%,96%)] border-[hsl(175,30%,88%)]',
+      7: 'bg-[hsl(170,29%,96%)] border-[hsl(170,29%,88%)]',
+      8: 'bg-[hsl(60,40%,96%)] border-[hsl(60,40%,88%)]',
+      9: 'bg-[hsl(55,41%,96%)] border-[hsl(55,41%,88%)]',
+      10: 'bg-[hsl(50,42%,96%)] border-[hsl(50,42%,88%)]',
+      11: 'bg-[hsl(45,43%,96%)] border-[hsl(45,43%,88%)]',
+      12: 'bg-[hsl(40,44%,96%)] border-[hsl(40,44%,88%)]',
+      13: 'bg-[hsl(35,45%,96%)] border-[hsl(35,45%,88%)]',
+      14: 'bg-[hsl(30,46%,96%)] border-[hsl(30,46%,88%)]',
+      15: 'bg-[hsl(25,47%,96%)] border-[hsl(25,47%,88%)]',
+      16: 'bg-[hsl(20,48%,96%)] border-[hsl(20,48%,88%)]',
+      17: 'bg-[hsl(15,49%,96%)] border-[hsl(15,49%,88%)]',
+      18: 'bg-[hsl(10,50%,96%)] border-[hsl(10,50%,88%)]',
+      19: 'bg-[hsl(5,51%,96%)] border-[hsl(5,51%,88%)]',
+      20: 'bg-[hsl(0,52%,96%)] border-[hsl(0,52%,88%)]'
     };
     
-    return colorMap[level] || 'bg-[hsl(50,45%,88%)] border-[hsl(50,45%,78%)]';
+    return colorMap[level] || 'bg-[hsl(50,40%,96%)] border-[hsl(50,40%,88%)]';
   };
 
   // Check if task is overdue
