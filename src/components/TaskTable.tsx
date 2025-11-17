@@ -312,13 +312,17 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           });
         }
         
-        // Apply additive filters (urgent and revisions)
+        // Apply additive filters (urgent, revisions, and pending)
         if (filters.quickFilter.includes("urgent")) {
           filtered = filtered.filter(task => task.urgency === "Immediate");
         }
         
         if (filters.quickFilter.includes("revisions")) {
           filtered = filtered.filter(task => task.revision_count > 0);
+        }
+        
+        if (filters.quickFilter.includes("pending")) {
+          filtered = filtered.filter(task => ["In Progress", "Doing"].includes(task.status));
         }
       }
     }
@@ -522,7 +526,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     <>
       {/* View Toggle and Bulk Actions Bar */}
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg flex-wrap">
+        <div className="grid grid-cols-4 gap-2 w-full max-w-3xl">
           <Button
             variant={viewMode === "table" ? "default" : "ghost"}
             size="sm"
