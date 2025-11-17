@@ -87,7 +87,7 @@ export const TaskCard = ({
   return (
     <div 
       className={cn(
-        "group relative bg-card rounded-lg border border-border p-6 hover-lift hover-glow transition-all duration-300",
+        "group relative bg-card rounded-lg border border-border p-7 hover-lift hover-glow transition-all duration-300",
         "cursor-pointer",
         isSelected && "ring-2 ring-primary/50 border-primary/50"
       )}
@@ -102,7 +102,7 @@ export const TaskCard = ({
       />
 
       {/* Header Section */}
-      <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="flex items-start justify-between gap-4 mb-5">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           {userRole === "project_owner" && onSelect && (
             <Checkbox
@@ -167,7 +167,7 @@ export const TaskCard = ({
       </div>
 
       {/* Status & Urgency Badges */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-5">
         {onStatusChange ? (
           <div onClick={(e) => e.stopPropagation()}>
             <BadgeDropdown
@@ -208,7 +208,7 @@ export const TaskCard = ({
       </div>
 
       {/* Meta Information Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+      <div className="grid grid-cols-2 gap-4 mb-5 text-sm">
         {/* Date */}
         <div className="flex items-center gap-2 text-muted-foreground">
           <Calendar className="h-4 w-4 text-primary/60" />
@@ -244,15 +244,30 @@ export const TaskCard = ({
         </div>
       </div>
 
-      {/* Last Comment Preview */}
+      {/* Last Comment Preview with Count Badge */}
       {lastComment && (
-        <div className="mb-4 pb-4 border-b border-border/50">
+        <div className="mb-5 pb-5 border-b border-border/50">
           <div className="flex items-start gap-2 text-sm">
-            <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="relative flex-shrink-0">
+              <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
+              {task.task_comments && task.task_comments.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                  {task.task_comments.length}
+                </span>
+              )}
+            </div>
             <p className="text-muted-foreground truncate">
               {lastComment.message}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Submission Date */}
+      {task.actual_delivery && (
+        <div className="mb-5 flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4 text-primary/60" />
+          <span>Submitted: {format(new Date(task.actual_delivery), "MMM d, yyyy")}</span>
         </div>
       )}
 

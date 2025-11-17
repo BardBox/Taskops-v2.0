@@ -78,6 +78,15 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         },
         () => fetchTasks()
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "task_comments",
+        },
+        () => fetchTasks()
+      )
       .subscribe();
 
     return () => {
