@@ -448,50 +448,89 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
 
         <div className="space-y-2">
           <Label className="text-xs font-medium">Highlight</Label>
-          <div className="flex items-center gap-6 whitespace-nowrap min-h-[40px]">
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-today"
-                checked={filters.highlightToday}
-                onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
-                className="data-[state=checked]:bg-blue-500"
-              />
-              <Label htmlFor="highlight-today" className="text-sm cursor-pointer leading-none">
-                Today
-              </Label>
+          <div className="flex items-center justify-between gap-6 whitespace-nowrap min-h-[40px]">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 h-6">
+                <Switch
+                  id="highlight-today"
+                  checked={filters.highlightToday}
+                  onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
+                  className="data-[state=checked]:bg-blue-500"
+                />
+                <Label htmlFor="highlight-today" className="text-sm cursor-pointer leading-none">
+                  Today
+                </Label>
+              </div>
+              <div className="flex items-center gap-2 h-6">
+                <Switch
+                  id="highlight-immediate"
+                  checked={filters.highlightImmediate}
+                  onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
+                  className="data-[state=checked]:bg-red-500"
+                />
+                <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer leading-none">
+                  Immediate
+                </Label>
+              </div>
+              <div className="flex items-center gap-2 h-6">
+                <Switch
+                  id="highlight-delayed"
+                  checked={filters.highlightDelayed}
+                  onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
+                  className="data-[state=checked]:bg-orange-500"
+                />
+                <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer leading-none">
+                  Delayed
+                </Label>
+              </div>
+              <div className="flex items-center gap-2 h-6">
+                <Switch
+                  id="highlight-in-approval"
+                  checked={filters.highlightInApproval}
+                  onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
+                  className="data-[state=checked]:bg-green-500"
+                />
+                <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer leading-none">
+                  In Approval
+                </Label>
+              </div>
             </div>
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-immediate"
-                checked={filters.highlightImmediate}
-                onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
-                className="data-[state=checked]:bg-red-500"
-              />
-              <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer leading-none">
-                Immediate
-              </Label>
-            </div>
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-delayed"
-                checked={filters.highlightDelayed}
-                onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
-                className="data-[state=checked]:bg-orange-500"
-              />
-              <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer leading-none">
-                Delayed
-              </Label>
-            </div>
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-in-approval"
-                checked={filters.highlightInApproval}
-                onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
-                className="data-[state=checked]:bg-green-500"
-              />
-              <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer leading-none">
-                In Approval
-              </Label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  onFiltersChange({
+                    ...filters,
+                    highlightToday: false,
+                    highlightImmediate: false,
+                    highlightDelayed: false,
+                    highlightInApproval: false,
+                  });
+                }}
+                className="h-6 w-6 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors"
+                title="Reset Toggles"
+              >
+                ↻
+              </button>
+              <button
+                onClick={() => {
+                  onFiltersChange({
+                    ...filters,
+                    year: "all",
+                    month: "all",
+                    status: "all",
+                    urgency: "all",
+                    clientId: "all",
+                    projectName: "all",
+                    teamMemberId: "all",
+                    projectManagerId: "all",
+                    delay: "all",
+                  });
+                }}
+                className="h-6 px-3 rounded bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors"
+                title="Reset Filters"
+              >
+                Reset
+              </button>
             </div>
           </div>
         </div>
