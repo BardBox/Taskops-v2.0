@@ -985,6 +985,7 @@ export function TaskDetailDialog({
                 referenceLink1={task.reference_link_1}
                 referenceLink2={task.reference_link_2}
                 referenceLink3={task.reference_link_3}
+                status={task.status}
                 userRole={userRole}
                 userId={userId}
                 isRevision={task.is_revision}

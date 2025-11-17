@@ -32,6 +32,7 @@ interface TaskRevisionsProps {
   referenceLink1: string | null;
   referenceLink2: string | null;
   referenceLink3: string | null;
+  status: string;
   userRole: string;
   userId: string;
   isRevision: boolean;
@@ -51,6 +52,7 @@ export function TaskRevisions({
   referenceLink1,
   referenceLink2,
   referenceLink3,
+  status,
   userRole,
   userId,
   isRevision,
@@ -159,7 +161,9 @@ export function TaskRevisions({
     }
   };
 
-  const canRequestRevision = userRole === "project_manager" || userRole === "project_owner";
+  const canRequestRevision = 
+    (userRole === "project_manager" || userRole === "project_owner") && 
+    (status === "Waiting for Approval" || status === "In Approval");
 
   return (
     <div className="space-y-4">
