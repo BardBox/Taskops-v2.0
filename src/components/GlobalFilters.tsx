@@ -448,7 +448,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
 
         <div className="space-y-2">
           <Label className="text-xs font-medium">Highlight</Label>
-          <div className="flex items-center justify-between gap-6 whitespace-nowrap min-h-[40px]">
+          <div className="flex items-center gap-6 whitespace-nowrap min-h-[40px]">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 h-6">
                 <Switch
@@ -495,7 +495,8 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                 </Label>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex-1" />
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => {
                   onFiltersChange({
@@ -506,10 +507,9 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                     highlightInApproval: false,
                   });
                 }}
-                className="h-6 w-6 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors"
-                title="Reset Toggles"
+                className="h-8 px-3 rounded bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors whitespace-nowrap"
               >
-                ↻
+                Reset Highlights
               </button>
               <button
                 onClick={() => {
@@ -526,10 +526,9 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
                     delay: "all",
                   });
                 }}
-                className="h-6 px-3 rounded bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors"
-                title="Reset Filters"
+                className="h-8 px-4 rounded bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors whitespace-nowrap"
               >
-                Reset
+                Reset Filters
               </button>
             </div>
           </div>
