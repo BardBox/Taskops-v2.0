@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
+import { RotateCcw } from "lucide-react";
 
 export interface FilterState {
   year: string;
@@ -299,237 +300,247 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   }
 
   return (
-    <Card className="p-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Year</Label>
-          <Select value={filters.year} onValueChange={(v) => updateFilter("year", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {years.map(year => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Month</Label>
-          <Select value={filters.month} onValueChange={(v) => updateFilter("month", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {MONTHS.map(month => (
-                <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Status</Label>
-          <Select value={filters.status} onValueChange={(v) => updateFilter("status", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {statusOptions.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Urgency</Label>
-          <Select value={filters.urgency} onValueChange={(v) => updateFilter("urgency", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {urgencyOptions.map(urgency => (
-                <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Delay</Label>
-          <Select value={filters.delay} onValueChange={(v) => updateFilter("delay", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DELAY_OPTIONS.map(option => (
-                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Client</Label>
-          <Select value={filters.clientId} onValueChange={(v) => updateFilter("clientId", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {clients.map(client => (
-                <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Project</Label>
-          <Select 
-            value={filters.projectName} 
-            onValueChange={(v) => updateFilter("projectName", v)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {Array.from(new Set(
-                projects
-                  .filter(p => filters.clientId === "all" || p.client_id === filters.clientId)
-                  .map(p => p.name)
-              )).sort().map(projectName => (
-                <SelectItem key={projectName} value={projectName}>{projectName}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {userRole !== "team_member" && (
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Team Member</Label>
-            <Select value={filters.teamMemberId} onValueChange={(v) => updateFilter("teamMemberId", v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {teamMembers.map(tm => (
-                  <SelectItem key={tm.id} value={tm.id}>{tm.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <Card className="p-6">
+      <div className="space-y-6">
+        {/* View Filters Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">View Filters</h3>
+            <button
+              onClick={() => {
+                onFiltersChange({
+                  ...filters,
+                  year: "all",
+                  month: "all",
+                  status: "all",
+                  urgency: "all",
+                  clientId: "all",
+                  projectName: "all",
+                  teamMemberId: "all",
+                  projectManagerId: "all",
+                  delay: "all",
+                });
+              }}
+              className="h-5 w-5 rounded-full bg-foreground/90 hover:bg-foreground flex items-center justify-center transition-colors"
+              title="Reset Filters"
+            >
+              <RotateCcw className="h-3 w-3 text-background" />
+            </button>
           </div>
-        )}
-
-        {userRole !== "team_member" && (
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">PM</Label>
-            <Select value={filters.projectManagerId} onValueChange={(v) => updateFilter("projectManagerId", v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {projectManagers.map(pm => (
-                  <SelectItem key={pm.id} value={pm.id}>{pm.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Highlight</Label>
-          <div className="flex items-center gap-6 whitespace-nowrap min-h-[40px]">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 h-6">
-                <Switch
-                  id="highlight-today"
-                  checked={filters.highlightToday}
-                  onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
-                  className="data-[state=checked]:bg-blue-500"
-                />
-                <Label htmlFor="highlight-today" className="text-sm cursor-pointer leading-none">
-                  Today
-                </Label>
-              </div>
-              <div className="flex items-center gap-2 h-6">
-                <Switch
-                  id="highlight-immediate"
-                  checked={filters.highlightImmediate}
-                  onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
-                  className="data-[state=checked]:bg-red-500"
-                />
-                <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer leading-none">
-                  Immediate
-                </Label>
-              </div>
-              <div className="flex items-center gap-2 h-6">
-                <Switch
-                  id="highlight-delayed"
-                  checked={filters.highlightDelayed}
-                  onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
-                  className="data-[state=checked]:bg-orange-500"
-                />
-                <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer leading-none">
-                  Delayed
-                </Label>
-              </div>
-              <div className="flex items-center gap-2 h-6">
-                <Switch
-                  id="highlight-in-approval"
-                  checked={filters.highlightInApproval}
-                  onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
-                  className="data-[state=checked]:bg-green-500"
-                />
-                <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer leading-none">
-                  In Approval
-                </Label>
-              </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Year</Label>
+              <Select value={filters.year} onValueChange={(v) => updateFilter("year", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {years.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex-1" />
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  onFiltersChange({
-                    ...filters,
-                    highlightToday: false,
-                    highlightImmediate: false,
-                    highlightDelayed: false,
-                    highlightInApproval: false,
-                  });
-                }}
-                className="h-8 px-3 rounded bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors whitespace-nowrap"
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Month</Label>
+              <Select value={filters.month} onValueChange={(v) => updateFilter("month", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {MONTHS.map(month => (
+                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Status</Label>
+              <Select value={filters.status} onValueChange={(v) => updateFilter("status", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {statusOptions.map(status => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Urgency</Label>
+              <Select value={filters.urgency} onValueChange={(v) => updateFilter("urgency", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {urgencyOptions.map(urgency => (
+                    <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Delay</Label>
+              <Select value={filters.delay} onValueChange={(v) => updateFilter("delay", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DELAY_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Client</Label>
+              <Select value={filters.clientId} onValueChange={(v) => updateFilter("clientId", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {clients.map(client => (
+                    <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Project</Label>
+              <Select 
+                value={filters.projectName} 
+                onValueChange={(v) => updateFilter("projectName", v)}
               >
-                Reset Highlights
-              </button>
-              <button
-                onClick={() => {
-                  onFiltersChange({
-                    ...filters,
-                    year: "all",
-                    month: "all",
-                    status: "all",
-                    urgency: "all",
-                    clientId: "all",
-                    projectName: "all",
-                    teamMemberId: "all",
-                    projectManagerId: "all",
-                    delay: "all",
-                  });
-                }}
-                className="h-8 px-4 rounded bg-muted hover:bg-muted/80 flex items-center justify-center text-xs font-medium transition-colors whitespace-nowrap"
-              >
-                Reset Filters
-              </button>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {Array.from(new Set(
+                    projects
+                      .filter(p => filters.clientId === "all" || p.client_id === filters.clientId)
+                      .map(p => p.name)
+                  )).sort().map(projectName => (
+                    <SelectItem key={projectName} value={projectName}>{projectName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {userRole !== "team_member" && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Team Member</Label>
+                <Select value={filters.teamMemberId} onValueChange={(v) => updateFilter("teamMemberId", v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {teamMembers.map(tm => (
+                      <SelectItem key={tm.id} value={tm.id}>{tm.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {userRole !== "team_member" && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">PM</Label>
+                <Select value={filters.projectManagerId} onValueChange={(v) => updateFilter("projectManagerId", v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {projectManagers.map(pm => (
+                      <SelectItem key={pm.id} value={pm.id}>{pm.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Highlight Tasks Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">Highlight Tasks</h3>
+            <button
+              onClick={() => {
+                onFiltersChange({
+                  ...filters,
+                  highlightToday: false,
+                  highlightImmediate: false,
+                  highlightDelayed: false,
+                  highlightInApproval: false,
+                });
+              }}
+              className="h-5 w-5 rounded-full bg-foreground/90 hover:bg-foreground flex items-center justify-center transition-colors"
+              title="Reset Highlights"
+            >
+              <RotateCcw className="h-3 w-3 text-background" />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-6 flex-wrap">
+            <div className="flex items-center gap-2 h-6">
+              <Switch
+                id="highlight-today"
+                checked={filters.highlightToday}
+                onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
+                className="data-[state=checked]:bg-blue-500"
+              />
+              <Label htmlFor="highlight-today" className="text-sm cursor-pointer leading-none">
+                Today
+              </Label>
+            </div>
+            <div className="flex items-center gap-2 h-6">
+              <Switch
+                id="highlight-immediate"
+                checked={filters.highlightImmediate}
+                onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
+                className="data-[state=checked]:bg-red-500"
+              />
+              <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer leading-none">
+                Immediate
+              </Label>
+            </div>
+            <div className="flex items-center gap-2 h-6">
+              <Switch
+                id="highlight-delayed"
+                checked={filters.highlightDelayed}
+                onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
+                className="data-[state=checked]:bg-orange-500"
+              />
+              <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer leading-none">
+                Delayed
+              </Label>
+            </div>
+            <div className="flex items-center gap-2 h-6">
+              <Switch
+                id="highlight-in-approval"
+                checked={filters.highlightInApproval}
+                onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
+                className="data-[state=checked]:bg-green-500"
+              />
+              <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer leading-none">
+                In Approval
+              </Label>
             </div>
           </div>
         </div>
