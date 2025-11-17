@@ -378,9 +378,31 @@ export const KanbanBoard = ({
     
     const task = tasks.find(t => t.id === taskId);
     
+    if (!task) {
+      console.error("Task not found:", taskId);
+      setActiveId(null);
+      return;
+    }
+    
+    console.log("Drag attempt:", {
+      userRole,
+      userId,
+      taskAssigneeId: task.assignee_id,
+      currentStatus: task.status,
+      newStatus,
+      canEditResult: canEdit(task)
+    });
+    
     // Check if team member can make this status change
-    if (userRole === "team_member" && task) {
+    if (userRole === "team_member") {
       const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
+      
+      // Check if task is assigned to this user
+      if (task.assignee_id !== userId) {
+        toast.error("You can only move tasks assigned to you");
+        setActiveId(null);
+        return;
+      }
       
       // If current status is restricted, prevent any changes
       if (!canTeamMemberChangeStatus(task.status)) {
@@ -409,6 +431,11 @@ export const KanbanBoard = ({
           created_at: task.date,
         });
       }
+    } else if (task && task.status === newStatus) {
+      console.log("Same status, no change needed");
+    } else if (task && !canEdit(task)) {
+      console.error("Cannot edit task - canEdit returned false");
+      toast.error("You cannot edit this task");
     }
 
     setActiveId(null);
