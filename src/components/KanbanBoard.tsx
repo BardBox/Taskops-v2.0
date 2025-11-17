@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Star, Edit, FileText, Upload, Calendar, User } from "lucide-react";
+import { Star, Edit, FileText, Upload, Calendar, User, Lock } from "lucide-react";
 import { BadgeDropdown } from "./BadgeDropdown";
 import { useGamification } from "@/hooks/useGamification";
 import { GamificationStats } from "./GamificationStats";
@@ -174,7 +174,7 @@ const SortableTaskCard = ({
       whileTap={{ scale: 0.98 }}
     >
       <Card 
-        className={`p-4 mb-3 cursor-pointer transition-all group relative ${randomRotation} ${getStickyNoteColor(task.urgency)} border-2 overflow-hidden shadow-lg hover:shadow-2xl ${isOverdue ? 'ring-2 ring-red-500/50' : ''} ${isFresh ? 'ring-2 ring-yellow-400/50' : ''}`}
+        className={`p-4 mb-3 transition-all group relative ${randomRotation} ${getStickyNoteColor(task.urgency)} border-2 overflow-hidden shadow-lg hover:shadow-2xl ${isOverdue ? 'ring-2 ring-red-500/50' : ''} ${isFresh ? 'ring-2 ring-yellow-400/50' : ''} ${isDragDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         style={{
           backgroundImage: `repeating-linear-gradient(
             0deg,
@@ -187,6 +187,12 @@ const SortableTaskCard = ({
         }}
         onClick={() => onClick(task.id)}
       >
+        {/* Lock icon for non-draggable tasks (team members only) */}
+        {isDragDisabled && userRole === "team_member" && (
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
         {/* Page curl effect on bottom-right corner - realistic with shadow */}
         <div 
           className="absolute bottom-0 right-0 w-0 h-0 group-hover:w-14 group-hover:h-14 pointer-events-none transition-all duration-300 ease-out"
@@ -459,7 +465,6 @@ export const KanbanBoard = ({
     
     return (
       <motion.div 
-        ref={setNodeRef} 
         className="flex-shrink-0 w-80"
         animate={{
           scale: isOver ? 1.02 : 1,
@@ -467,7 +472,7 @@ export const KanbanBoard = ({
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
         <div 
-          className="rounded-lg p-4 h-full bg-muted/30"
+          className="rounded-lg p-4 h-full bg-muted/30 flex flex-col"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground">
@@ -484,7 +489,9 @@ export const KanbanBoard = ({
               </Badge>
             </motion.div>
           </div>
-          {children}
+          <div ref={setNodeRef} className="flex-1 min-h-[500px]">
+            {children}
+          </div>
         </div>
       </motion.div>
     );
@@ -513,7 +520,7 @@ export const KanbanBoard = ({
                 items={tasksByStatus[status.label]?.map(t => t.id) || []}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-2 min-h-[200px]">
+                <div className="space-y-2 h-full">
                   {tasksByStatus[status.label]?.map((task) => (
                     <SortableTaskCard
                       key={task.id}
