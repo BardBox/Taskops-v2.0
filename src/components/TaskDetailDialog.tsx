@@ -760,7 +760,7 @@ export function TaskDetailDialog({
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Assignee</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Task Owner</Label>
                   <p className="text-sm font-medium mt-1">{assigneeName}</p>
                 </div>
                 <div>

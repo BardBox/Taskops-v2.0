@@ -359,13 +359,13 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assignee_id">Assignee *</Label>
+              <Label htmlFor="assignee_id">Task Owner *</Label>
               <Select
                 value={formData.assignee_id}
                 onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
               >
                 <SelectTrigger id="assignee_id">
-                  <SelectValue placeholder="Select assignee" />
+                  <SelectValue placeholder="Select task owner" />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
                   {users.map((user) => (

@@ -477,7 +477,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
             className="gap-2"
           >
             <List className="h-4 w-4" />
-            Table
+            Task Diary
           </Button>
           <Button
             variant={viewMode === "cards" ? "default" : "ghost"}
@@ -486,7 +486,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
             className="gap-2"
           >
             <LayoutGrid className="h-4 w-4" />
-            Cards
+            White Board
           </Button>
           <Button
             variant={viewMode === "kanban" ? "default" : "ghost"}
@@ -495,7 +495,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
             className="gap-2"
           >
             <Columns className="h-4 w-4" />
-            Kanban
+            Sticky Notes
           </Button>
           <Button
             variant={viewMode === "gantt" ? "default" : "ghost"}
@@ -504,7 +504,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
             className="gap-2"
           >
             <GanttChartSquare className="h-4 w-4" />
-            Gantt
+            Calendar
           </Button>
         </div>
 
@@ -525,7 +525,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         )}
       </div>
 
-      {/* Table View */}
+      {/* Task Diary View */}
       {viewMode === "table" && (
         <div className="rounded-lg border bg-card overflow-hidden animate-fade-in">
           <Table>
@@ -561,7 +561,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
                   <div className="flex items-center gap-2">
-                    Assignee {sortField === "assignee" && <ArrowUpDown className="h-4 w-4" />}
+                    Task Owner {sortField === "assignee" && <ArrowUpDown className="h-4 w-4" />}
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
@@ -713,7 +713,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         </div>
       )}
 
-      {/* Cards View */}
+      {/* White Board View */}
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
           {filteredTasks.map((task, index) => (
@@ -752,7 +752,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         </div>
       )}
 
-      {/* Kanban View */}
+      {/* Sticky Notes View */}
       {viewMode === "kanban" && (
         <KanbanBoard
           tasks={filteredTasks}
@@ -779,7 +779,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         />
       )}
 
-      {/* Gantt View */}
+      {/* Calendar View */}
       {viewMode === "gantt" && (
         <GanttChart
           tasks={filteredTasks}
