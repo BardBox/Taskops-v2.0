@@ -526,7 +526,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
     <>
       {/* View Toggle and Bulk Actions Bar */}
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
-        <div className="grid grid-cols-4 gap-2 w-full max-w-3xl">
+        <div className="bg-muted/50 rounded-lg p-1 grid grid-cols-4 gap-1 w-full max-w-3xl">
           <Button
             variant={viewMode === "table" ? "default" : "ghost"}
             size="sm"
