@@ -377,9 +377,15 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
               <SelectItem value="all">All</SelectItem>
               {projects
                 .filter(p => filters.clientId === "all" || p.client_id === filters.clientId)
-                .map(project => (
-                  <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
-                ))}
+                .map(project => {
+                  const client = clients.find(c => c.id === project.client_id);
+                  const displayName = filters.clientId === "all" && client
+                    ? `${project.name} (${client.name})`
+                    : project.name;
+                  return (
+                    <SelectItem key={project.id} value={project.id}>{displayName}</SelectItem>
+                  );
+                })}
             </SelectContent>
           </Select>
         </div>
