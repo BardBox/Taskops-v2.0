@@ -20,6 +20,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency } from "@/utils/roleHelpers";
+import { TaskRevisions } from "@/components/TaskRevisions";
 
 interface Task {
   id: string;
@@ -38,6 +39,9 @@ interface Task {
   reference_link_3: string | null;
   actual_delivery: string | null;
   date: string;
+  parent_task_id: string | null;
+  revision_number: number;
+  is_revision: boolean;
 }
 
 interface Comment {
@@ -735,6 +739,11 @@ export function TaskDetailDialog({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold text-foreground">{clientName}</h2>
+                {task.is_revision && (
+                  <Badge variant="secondary" className="text-xs">
+                    Revision {task.revision_number}
+                  </Badge>
+                )}
                 <Badge variant="outline" className={getUrgencyColor(task.urgency)}>
                   {task.urgency}
                 </Badge>
@@ -959,6 +968,29 @@ export function TaskDetailDialog({
                   </a>
                 </div>
               )}
+            </div>
+
+            <Separator className="my-4" />
+
+            <div className="px-6 pb-6">
+              <TaskRevisions
+                taskId={task.id}
+                taskName={task.task_name}
+                clientId={task.client_id}
+                projectId={task.project_id}
+                assigneeId={task.assignee_id}
+                deadline={task.deadline}
+                urgency={task.urgency}
+                notes={task.notes}
+                referenceLink1={task.reference_link_1}
+                referenceLink2={task.reference_link_2}
+                referenceLink3={task.reference_link_3}
+                userRole={userRole}
+                userId={userId}
+                isRevision={task.is_revision}
+                parentTaskId={task.parent_task_id}
+                onRevisionCreated={fetchTaskDetails}
+              />
             </div>
           </div>
 

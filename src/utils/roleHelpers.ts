@@ -6,7 +6,7 @@ export const canTeamMemberChangeStatus = (currentStatus: string): boolean => {
 };
 
 export const getAvailableStatuses = (userRole: string, currentStatus?: string): string[] => {
-  const allStatuses = ["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"];
+  const allStatuses = ["Not Started", "In Progress", "Waiting for Approval", "Approved", "On Hold", "Cancelled", "Rejected"];
   
   if (userRole === "team_member") {
     const allowedStatuses = ["Not Started", "In Progress", "In Approval"];

@@ -350,11 +350,14 @@ export type Database = {
           date: string
           deadline: string | null
           id: string
+          is_revision: boolean
           notes: string | null
+          parent_task_id: string | null
           project_id: string | null
           reference_link_1: string | null
           reference_link_2: string | null
           reference_link_3: string | null
+          revision_number: number
           status: string
           task_name: string
           updated_at: string
@@ -370,11 +373,14 @@ export type Database = {
           date?: string
           deadline?: string | null
           id?: string
+          is_revision?: boolean
           notes?: string | null
+          parent_task_id?: string | null
           project_id?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
+          revision_number?: number
           status?: string
           task_name: string
           updated_at?: string
@@ -390,11 +396,14 @@ export type Database = {
           date?: string
           deadline?: string | null
           id?: string
+          is_revision?: boolean
           notes?: string | null
+          parent_task_id?: string | null
           project_id?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
+          revision_number?: number
           status?: string
           task_name?: string
           updated_at?: string
@@ -420,6 +429,20 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "taskops_filtered_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
           {
@@ -596,6 +619,7 @@ export type Database = {
     Functions: {
       generate_client_code: { Args: never; Returns: string }
       generate_user_code: { Args: never; Returns: string }
+      get_revision_count: { Args: { task_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
