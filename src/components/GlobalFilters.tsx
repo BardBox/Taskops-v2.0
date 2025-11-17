@@ -17,7 +17,7 @@ export interface FilterState {
   projectManagerId: string;
   highlightToday: boolean;
   delay: string;
-  quickFilter: string;
+  quickFilter: string[];
 }
 
 interface GlobalFiltersProps {
@@ -210,7 +210,9 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           ...parsedFilters, 
           delay: parsedFilters.delay || "all",
           projectName: parsedFilters.projectName || "all",
-          quickFilter: parsedFilters.quickFilter || "all"
+          quickFilter: Array.isArray(parsedFilters.quickFilter) 
+            ? parsedFilters.quickFilter 
+            : (parsedFilters.quickFilter === "all" || !parsedFilters.quickFilter ? [] : [parsedFilters.quickFilter])
         });
       } catch (e) {
         console.error("Failed to load saved filters", e);
