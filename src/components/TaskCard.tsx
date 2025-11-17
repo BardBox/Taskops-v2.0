@@ -87,7 +87,7 @@ export const TaskCard = ({
   return (
     <div 
       className={cn(
-        "group relative bg-muted/10 rounded-lg border border-border/50 p-6 hover-lift hover-glow transition-all duration-300",
+        "group relative bg-card rounded-lg border border-border p-6 hover-lift hover-glow transition-all duration-300",
         "cursor-pointer",
         isSelected && "ring-2 ring-primary/50 border-primary/50"
       )}
