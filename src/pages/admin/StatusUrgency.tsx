@@ -287,8 +287,14 @@ export default function StatusUrgency() {
   };
 
   const handleSave = async () => {
-    if (!formData.label) {
+    if (!formData.label || !formData.color) {
       toast.error("Please fill in all fields");
+      return;
+    }
+
+    // Validate color format
+    if (!formData.color.includes('bg-') || !formData.color.includes('text-')) {
+      toast.error("Invalid color format. Please select a valid color from the picker.");
       return;
     }
 
