@@ -196,6 +196,23 @@ export const useTaskNotifications = (userId: string | undefined) => {
               task_id: newTask.id,
             });
 
+            // Also notify collaborators
+            const { data: collabs } = await supabase
+              .from("task_collaborators")
+              .select("user_id")
+              .eq("task_id", newTask.id);
+
+            if (collabs && collabs.length > 0) {
+              const collabNotifications = collabs.map(c => ({
+                user_id: c.user_id,
+                title: "Collaborated Task Updated",
+                message: description,
+                type: "info",
+                task_id: newTask.id,
+              }));
+              await supabase.from("notifications").insert(collabNotifications);
+            }
+
             toast.info(`Task Updated`, {
               description,
               duration: 5000,

@@ -41,6 +41,50 @@ export type Database = {
         }
         Relationships: []
       }
+      collaboration_metrics: {
+        Row: {
+          collaborated_tasks: number | null
+          collaboration_leadership_score: number | null
+          collaboration_participation_score: number | null
+          id: string
+          last_updated: string | null
+          successful_collaboration_assists: number | null
+          successful_collaborations: number | null
+          tasks_with_collaborators: number | null
+          user_id: string
+        }
+        Insert: {
+          collaborated_tasks?: number | null
+          collaboration_leadership_score?: number | null
+          collaboration_participation_score?: number | null
+          id?: string
+          last_updated?: string | null
+          successful_collaboration_assists?: number | null
+          successful_collaborations?: number | null
+          tasks_with_collaborators?: number | null
+          user_id: string
+        }
+        Update: {
+          collaborated_tasks?: number | null
+          collaboration_leadership_score?: number | null
+          collaboration_participation_score?: number | null
+          id?: string
+          last_updated?: string | null
+          successful_collaboration_assists?: number | null
+          successful_collaborations?: number | null
+          tasks_with_collaborators?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaboration_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_reactions: {
         Row: {
           comment_id: string
@@ -278,6 +322,59 @@ export type Database = {
           },
         ]
       }
+      task_collaborators: {
+        Row: {
+          added_at: string
+          added_by_id: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by_id: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by_id?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_collaborators_added_by_id_fkey"
+            columns: ["added_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_collaborators_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "taskops_filtered_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_collaborators_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_collaborators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_comments: {
         Row: {
           created_at: string
@@ -332,6 +429,61 @@ export type Database = {
           },
           {
             foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_edit_history: {
+        Row: {
+          change_description: string | null
+          edited_at: string
+          edited_by_id: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          task_id: string
+        }
+        Insert: {
+          change_description?: string | null
+          edited_at?: string
+          edited_by_id: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id: string
+        }
+        Update: {
+          change_description?: string | null
+          edited_at?: string
+          edited_by_id?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_edit_history_edited_by_id_fkey"
+            columns: ["edited_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_edit_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "taskops_filtered_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_edit_history_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
@@ -631,6 +783,7 @@ export type Database = {
     Functions: {
       generate_client_code: { Args: never; Returns: string }
       generate_user_code: { Args: never; Returns: string }
+      get_collaborator_count: { Args: { _task_id: string }; Returns: number }
       get_revision_count: { Args: { task_id: string }; Returns: number }
       has_role: {
         Args: {
@@ -638,6 +791,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      is_task_collaborator: {
+        Args: { _task_id: string; _user_id: string }
+        Returns: boolean
+      }
+      update_collaboration_metrics: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       update_setting: {
         Args: { key: string; value: string }

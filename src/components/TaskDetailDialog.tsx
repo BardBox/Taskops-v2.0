@@ -106,6 +106,8 @@ export function TaskDetailDialog({
   const [isTaskDetailsCollapsed, setIsTaskDetailsCollapsed] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [showMessageEmojiPicker, setShowMessageEmojiPicker] = useState(false);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [editHistory, setEditHistory] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -342,6 +344,32 @@ export function TaskDetailDialog({
     } catch (error: any) {
       toast.error("Failed to fetch task details");
     }
+  };
+
+  const fetchCollaborators = async () => {
+    if (!taskId) return;
+    
+    const { data } = await supabase
+      .from("task_collaborators")
+      .select("user_id, profiles(full_name, avatar_url)")
+      .eq("task_id", taskId);
+    
+    setCollaborators(data || []);
+  };
+
+  const fetchEditHistory = async () => {
+    if (!taskId) return;
+    
+    const { data } = await supabase
+      .from("task_edit_history")
+      .select(`
+        *,
+        profiles:edited_by_id(full_name)
+      `)
+      .eq("task_id", taskId)
+      .order("edited_at", { ascending: false });
+    
+    setEditHistory(data || []);
   };
 
   const fetchComments = async () => {
@@ -775,6 +803,26 @@ export function TaskDetailDialog({
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Task Owner</Label>
                   <p className="text-sm font-medium mt-1">{assigneeName}</p>
                 </div>
+                
+                {/* Collaborators Section */}
+                {collaborators.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Collaborators</Label>
+                    <div className="flex gap-2 mt-1 flex-wrap">
+                      {collaborators.map((collab: any) => (
+                        <div key={collab.user_id} className="flex items-center gap-1.5 text-sm font-medium">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                              {(collab.profiles?.full_name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{collab.profiles?.full_name || "Unknown"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project Manager</Label>
                   <p className="text-sm font-medium mt-1">{assignedByName}</p>
@@ -987,6 +1035,30 @@ export function TaskDetailDialog({
                     <ExternalLink className="h-3 w-3" />
                     {task.asset_link}
                   </a>
+                </div>
+              )}
+              
+              {/* Edit History */}
+              {editHistory.length > 0 && (
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Edit History</Label>
+                  <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
+                    {editHistory.map((edit: any) => (
+                      <div key={edit.id} className="border-l-2 border-primary/30 pl-3 py-2 text-sm">
+                        <p className="font-medium text-foreground">{edit.change_description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          By {edit.profiles?.full_name} • {format(new Date(edit.edited_at), 'PPp')}
+                        </p>
+                        {edit.old_value && edit.new_value && (
+                          <div className="mt-1 text-xs">
+                            <span className="line-through text-muted-foreground">{edit.old_value.substring(0, 50)}</span>
+                            <span className="mx-1">→</span>
+                            <span className="text-foreground">{edit.new_value.substring(0, 50)}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

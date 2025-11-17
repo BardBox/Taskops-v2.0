@@ -23,6 +23,7 @@ import { z } from "zod";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
 import { X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface TaskDialogProps {
   open: boolean;
@@ -56,8 +57,9 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
   
-  const { statuses, urgencies, isLoading: isLoadingSettings } = useStatusUrgency();
+  const { statuses, urgencies, isLoading: isLoadingSettings} = useStatusUrgency();
   
   const [formData, setFormData] = useState({
     task_name: "",
@@ -99,6 +101,19 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         if (task.client_id) {
           fetchProjects(task.client_id);
         }
+
+        // Fetch existing collaborators
+        const fetchCollabs = async () => {
+          const { data: collabData } = await supabase
+            .from("task_collaborators")
+            .select("user_id")
+            .eq("task_id", task.id);
+          
+          if (collabData) {
+            setSelectedCollaborators(collabData.map(c => c.user_id));
+          }
+        };
+        fetchCollabs();
       } else {
         // Auto-set deadline to tomorrow and default project to SMO
         const tomorrow = new Date();
@@ -108,6 +123,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         setReferenceImage(null);
         setExistingImageUrl("");
         setImagePreview("");
+        setSelectedCollaborators([]);
         
         // Fetch and set default project
         fetchDefaultProject().then((defaultProject) => {
@@ -315,12 +331,62 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           .eq("id", task.id);
 
         if (error) throw error;
+
+        // Update collaborators
+        // First, remove existing collaborators
+        await supabase
+          .from("task_collaborators")
+          .delete()
+          .eq("task_id", task.id);
+
+        // Then add new ones
+        if (selectedCollaborators.length > 0) {
+          const collaboratorInserts = selectedCollaborators.map(userId => ({
+            task_id: task.id,
+            user_id: userId,
+            added_by_id: currentUserId
+          }));
+
+          await supabase.from("task_collaborators").insert(collaboratorInserts);
+        }
+
         toast.success("Task updated successfully!");
       } else {
         // Create new task
-        const { error } = await supabase.from("tasks").insert([taskData]);
+        const { data: newTask, error } = await supabase
+          .from("tasks")
+          .insert([taskData])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Handle collaborators
+        if (selectedCollaborators.length > 0) {
+          const collaboratorInserts = selectedCollaborators.map(userId => ({
+            task_id: newTask.id,
+            user_id: userId,
+            added_by_id: currentUserId
+          }));
+
+          const { error: collabError } = await supabase
+            .from("task_collaborators")
+            .insert(collaboratorInserts);
+
+          if (!collabError) {
+            // Send notifications to collaborators
+            const notifications = selectedCollaborators.map(userId => ({
+              user_id: userId,
+              task_id: newTask.id,
+              title: "Added as Collaborator",
+              message: `You've been added as a collaborator on "${formData.task_name}"`,
+              type: "info"
+            }));
+
+            await supabase.from("notifications").insert(notifications);
+          }
+        }
+
         toast.success("Task created successfully!");
       }
 
@@ -333,6 +399,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         setReferenceImage(null);
         setExistingImageUrl("");
         setImagePreview("");
+        setSelectedCollaborators([]);
         
         setFormData({
           task_name: "",
@@ -447,6 +514,62 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Collaborators */}
+            <div className="space-y-2">
+              <Label htmlFor="collaborators">Collaborators (Max 2)</Label>
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  if (selectedCollaborators.length < 2 && !selectedCollaborators.includes(value) && value !== formData.assignee_id) {
+                    setSelectedCollaborators([...selectedCollaborators, value]);
+                  } else if (selectedCollaborators.length >= 2) {
+                    toast.error("Maximum 2 collaborators allowed");
+                  } else if (value === formData.assignee_id) {
+                    toast.error("Task owner cannot be a collaborator");
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Add collaborators..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {users
+                    .filter(u => u.id !== formData.assignee_id && !selectedCollaborators.includes(u.id))
+                    .map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.full_name}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+              
+              {/* Selected Collaborators Display */}
+              {selectedCollaborators.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedCollaborators.map(collabId => {
+                    const collab = users.find(u => u.id === collabId);
+                    return (
+                      <Badge key={collabId} variant="secondary" className="pl-2 pr-1 py-1">
+                        {collab?.full_name}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedCollaborators(prev => prev.filter(id => id !== collabId));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
