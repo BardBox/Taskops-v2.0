@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Calendar, Clock, AlertTriangle, RefreshCw, ListChecks } from "lucide-react";
+import { Calendar, Clock, AlertTriangle, RefreshCw, ListChecks, Bell } from "lucide-react";
 
 interface QuickFiltersProps {
   activeFilters: string[];
@@ -8,7 +8,7 @@ interface QuickFiltersProps {
 
 export const QuickFilters = ({ activeFilters, onFiltersChange }: QuickFiltersProps) => {
   const timeBasedFilters = ["today", "this-month"];
-  const additiveFilters = ["urgent", "revisions", "pending"];
+  const additiveFilters = ["urgent", "revisions", "pending", "notified"];
   
   const quickFilters = [
     {
@@ -50,6 +50,14 @@ export const QuickFilters = ({ activeFilters, onFiltersChange }: QuickFiltersPro
       type: "additive" as const,
       icon: ListChecks,
       color: "text-yellow-500"
+    },
+    {
+      id: "notified",
+      label: "Notified",
+      description: "Tasks with notifications (can combine)",
+      type: "additive" as const,
+      icon: Bell,
+      color: "text-lime-500"
     }
   ];
 
