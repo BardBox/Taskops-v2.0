@@ -248,7 +248,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="bg-background z-50">
+          <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             {statusOptions.map(status => (
               <SelectItem key={status} value={status}>{status}</SelectItem>
@@ -260,7 +260,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Urgency" />
           </SelectTrigger>
-          <SelectContent className="bg-background z-50">
+          <SelectContent>
             <SelectItem value="all">All Urgency</SelectItem>
             {urgencyOptions.map(urgency => (
               <SelectItem key={urgency} value={urgency}>{urgency}</SelectItem>
@@ -272,7 +272,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Delay" />
           </SelectTrigger>
-          <SelectContent className="bg-background z-50">
+          <SelectContent>
             {DELAY_OPTIONS.map(option => (
               <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
             ))}
