@@ -148,7 +148,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   };
 
   const fetchTasks = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("tasks")
       .select(`
         *,
@@ -157,8 +157,14 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         assignee:profiles!tasks_assignee_id_fkey(full_name),
         assigned_by:profiles!tasks_assigned_by_id_fkey(full_name),
         task_comments(message, created_at)
-      `)
-      .order("date", { ascending: false });
+      `);
+    
+    // Team members should only see tasks assigned to them
+    if (userRole === "team_member") {
+      query = query.eq("assignee_id", userId);
+    }
+    
+    const { data, error } = await query.order("date", { ascending: false });
 
     if (error) {
       console.error("Error fetching tasks:", error);
@@ -774,8 +780,20 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           onTaskClick={handleTaskClick}
           onSelectTask={handleSelectTask}
           onEditTask={handleEditTask}
-          onStatusChange={handleStatusChange}
-          onUrgencyChange={handleUrgencyChange}
+          onStatusChange={
+            userRole === "team_member" 
+              ? (taskId: string, newStatus: string) => {
+                  const task = tasks.find(t => t.id === taskId);
+                  if (task && canTeamMemberChangeStatus(task.status)) {
+                    const allowedStatuses = ["Not Started", "In Progress", "Waiting for Approval"];
+                    if (allowedStatuses.includes(newStatus)) {
+                      handleStatusChange(taskId, newStatus);
+                    }
+                  }
+                }
+              : handleStatusChange
+          }
+          onUrgencyChange={userRole !== "team_member" ? handleUrgencyChange : () => {}}
           onAppreciationToggle={toggleAppreciation}
           onSubmit={(task) => {
             setSelectedTaskForSubmit(task);

@@ -790,39 +790,47 @@ export function TaskDetailDialog({
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
-                  {userRole === "team_member" && task.status && !canTeamMemberChangeStatus(task.status) ? (
-                    <Badge variant="outline" className="h-8 px-4">
-                      {task.status}
-                    </Badge>
-                  ) : (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 px-4 text-sm font-medium hover:bg-accent"
-                          disabled={userRole === "team_member" && getAvailableStatuses(userRole, task.status || "").length === 0}
-                        >
+                  {(() => {
+                    const availableStatuses = getAvailableStatuses(userRole, task.status || "");
+                    const canChange = userRole !== "team_member" || (userRole === "team_member" && availableStatuses.length > 0);
+                    
+                    if (!canChange) {
+                      return (
+                        <Badge variant="outline" className="h-8 px-4">
                           {task.status}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
-                        <div className="space-y-1">
-                          {getAvailableStatuses(userRole, task.status || "").map((status) => (
-                            <Button
-                              key={status}
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start text-sm hover:bg-accent"
-                              onClick={() => handleStatusChange(status)}
-                            >
-                              {status}
-                            </Button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  )}
+                        </Badge>
+                      );
+                    }
+                    
+                    return (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-4 text-sm font-medium hover:bg-accent"
+                          >
+                            {task.status}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="start">
+                          <div className="space-y-1">
+                            {availableStatuses.map((status) => (
+                              <Button
+                                key={status}
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start text-sm hover:bg-accent"
+                                onClick={() => handleStatusChange(status)}
+                              >
+                                {status}
+                              </Button>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    );
+                  })()}
                 </div>
                 
                 <div className="flex items-center gap-3">
