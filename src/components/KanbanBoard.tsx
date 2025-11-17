@@ -259,6 +259,15 @@ const SortableTaskCard = ({
                 {task.assignee.full_name}
               </div>
             )}
+            {/* Show collaborators in Kanban */}
+            {task.collaborators && task.collaborators.length > 0 && (
+              <div className="flex items-center gap-1 text-xs">
+                <span className="text-muted-foreground">+</span>
+                {task.collaborators.map((c: any, idx: number) => (
+                  <span key={idx}>{c.profiles?.full_name || "?"}{idx < task.collaborators.length - 1 ? ", " : ""}</span>
+                ))}
+              </div>
+            )}
             {task.deadline && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />

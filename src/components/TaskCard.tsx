@@ -6,6 +6,9 @@ import { Edit2, ExternalLink, FileText, Star, Calendar, Clock, User, MessageSqua
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Task {
   id: string;
@@ -64,8 +67,40 @@ export const TaskCard = ({
   onSubmit,
   onNotesClick,
 }: TaskCardProps) => {
+  const [isCollaborator, setIsCollaborator] = useState(false);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+  
   const statusConfig = statuses.find((s) => s.label === task.status);
   const urgencyConfig = urgencies.find((u) => u.label === task.urgency);
+
+  useEffect(() => {
+    const fetchCollaboratorInfo = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      setCurrentUserId(user.id);
+      
+      // Check if current user is a collaborator
+      const { data: collabData } = await supabase
+        .from("task_collaborators")
+        .select("user_id")
+        .eq("task_id", task.id)
+        .eq("user_id", user.id);
+      
+      setIsCollaborator(collabData && collabData.length > 0);
+      
+      // Fetch all collaborators for this task
+      const { data: allCollabs } = await supabase
+        .from("task_collaborators")
+        .select("user_id, profiles(full_name, avatar_url)")
+        .eq("task_id", task.id);
+      
+      setCollaborators(allCollabs || []);
+    };
+    
+    fetchCollaboratorInfo();
+  }, [task.id]);
   
   const isToday = (date: string | null) => {
     if (!date) return false;
