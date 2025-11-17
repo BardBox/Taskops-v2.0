@@ -37,6 +37,7 @@ interface Task {
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
+  task_comments?: Array<{ message: string; created_at: string }>;
 }
 
 interface TaskTableProps {
@@ -144,7 +145,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         clients(name),
         projects(name),
         assignee:profiles!tasks_assignee_id_fkey(full_name),
-        assigned_by:profiles!tasks_assigned_by_id_fkey(full_name)
+        assigned_by:profiles!tasks_assigned_by_id_fkey(full_name),
+        task_comments(message, created_at)
       `)
       .order("date", { ascending: false });
 
@@ -153,7 +155,15 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       return;
     }
 
-    setTasks(data as any || []);
+    // Sort comments by created_at descending to get the latest one first
+    const tasksWithSortedComments = (data as any || []).map((task: any) => ({
+      ...task,
+      task_comments: task.task_comments?.sort((a: any, b: any) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ) || []
+    }));
+
+    setTasks(tasksWithSortedComments);
   };
 
   const getStatusColor = (status: string) => {

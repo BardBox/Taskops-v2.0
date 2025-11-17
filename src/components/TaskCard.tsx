@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit2, ExternalLink, FileText, Star, Calendar, Clock, User } from "lucide-react";
+import { Edit2, ExternalLink, FileText, Star, Calendar, Clock, User, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
@@ -28,6 +28,7 @@ interface Task {
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
+  task_comments?: Array<{ message: string; created_at: string }>;
 }
 
 interface TaskCardProps {
@@ -81,10 +82,12 @@ export const TaskCard = ({
       .slice(0, 2);
   };
 
+  const lastComment = task.task_comments?.[0];
+
   return (
     <div 
       className={cn(
-        "group relative bg-card rounded-lg border border-border/50 p-6 hover-lift hover-glow transition-all duration-300",
+        "group relative bg-muted/10 rounded-lg border border-border/50 p-6 hover-lift hover-glow transition-all duration-300",
         "cursor-pointer",
         isSelected && "ring-2 ring-primary/50 border-primary/50"
       )}
@@ -240,6 +243,18 @@ export const TaskCard = ({
           <span className="truncate">{task.assigned_by?.full_name || "Unknown"}</span>
         </div>
       </div>
+
+      {/* Last Comment Preview */}
+      {lastComment && (
+        <div className="mb-4 pb-4 border-b border-border/50">
+          <div className="flex items-start gap-2 text-sm">
+            <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <p className="text-muted-foreground truncate">
+              {lastComment.message}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons Footer */}
       <div className="flex items-center gap-2 pt-4 border-t border-border/50">
