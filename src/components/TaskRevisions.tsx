@@ -35,7 +35,6 @@ export function TaskRevisions({
           revision_count: revisionCount + 1,
           revision_requested_at: new Date().toISOString(),
           revision_requested_by: userId,
-          status: "Not Started",
         })
         .eq("id", taskId);
 
@@ -80,7 +79,7 @@ export function TaskRevisions({
           <AlertDialogHeader>
             <AlertDialogTitle>Request Revision</AlertDialogTitle>
             <AlertDialogDescription>
-              This will increment the revision counter and reset the task status to "Not Started". 
+              This will increment the revision counter. The team member can then update the task status as they work on the revision.
               The revision request will be tracked in the task discussion.
             </AlertDialogDescription>
           </AlertDialogHeader>
