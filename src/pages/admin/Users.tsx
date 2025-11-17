@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Edit, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Edit, ArrowUpDown, ArrowUp, ArrowDown, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -207,6 +207,47 @@ export default function AdminUsers() {
     } catch (error: any) {
       console.error("Error updating user:", error);
       toast.error(error.message || "Failed to update user");
+    }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Session expired. Please sign in again.");
+        await supabase.auth.signOut();
+        window.location.href = "/auth";
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'resetPassword',
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Session expired. Please sign in again.");
+          await supabase.auth.signOut();
+          window.location.href = "/auth";
+          return;
+        }
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to reset password');
+      }
+
+      toast.success("Password reset email sent successfully");
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      toast.error(error.message || "Failed to reset password");
     }
   };
 
@@ -615,11 +656,21 @@ export default function AdminUsers() {
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Cancel
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => editingUser && handleResetPassword(editingUser.id)}
+              className="sm:mr-auto"
+            >
+              <KeyRound className="h-4 w-4 mr-2" />
+              Reset Password
             </Button>
-            <Button onClick={handleUpdateUser}>Update User</Button>
+            <div className="flex gap-2 sm:ml-auto">
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateUser}>Update User</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
