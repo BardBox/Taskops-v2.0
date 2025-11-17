@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, pointerWithin, rectIntersection, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -323,6 +323,20 @@ const SortableTaskCard = ({
   );
 };
 
+// Custom collision detection that works with empty columns
+const customCollisionDetection = (args: any) => {
+  // First, try to find collisions with pointer within droppable areas
+  const pointerCollisions = pointerWithin(args);
+  
+  // If we found collisions with pointerWithin, use those
+  if (pointerCollisions.length > 0) {
+    return pointerCollisions;
+  }
+  
+  // Otherwise, fall back to rectangle intersection
+  return rectIntersection(args);
+};
+
 export const KanbanBoard = ({
   tasks,
   userRole,
@@ -491,6 +505,12 @@ export const KanbanBoard = ({
           </div>
           <div ref={setNodeRef} className="flex-1 min-h-[500px]">
             {children}
+            {/* Placeholder for empty columns to ensure droppable area is detectable */}
+            {tasksByStatus[status.label]?.length === 0 && (
+              <div className="h-full min-h-[200px] flex items-center justify-center text-muted-foreground/50 text-sm border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                Drop tasks here
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -509,7 +529,7 @@ export const KanbanBoard = ({
       
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={customCollisionDetection}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
