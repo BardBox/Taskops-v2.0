@@ -47,7 +47,7 @@ const Dashboard = () => {
     projectManagerId: "all",
     highlightToday: false,
     delay: "all",
-    quickFilter: "all",
+    quickFilter: [],
   });
 
   useEffect(() => {
@@ -237,8 +237,8 @@ const Dashboard = () => {
         <DashboardMetrics filters={filters} />
 
         <QuickFilters 
-          activeFilter={filters.quickFilter} 
-          onFilterChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
+          activeFilters={filters.quickFilter} 
+          onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
         />
 
         <GlobalFilters filters={filters} onFiltersChange={setFilters} />
