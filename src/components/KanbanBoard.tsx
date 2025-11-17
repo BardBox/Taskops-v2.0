@@ -200,13 +200,19 @@ const SortableTaskCard = ({
               </div>
             </div>
             <div onClick={(e) => e.stopPropagation()}>
-              <BadgeDropdown
-                value={task.urgency}
-                options={urgencies}
-                onChange={(value) => onUrgencyChange(task.id, value)}
-                disabled={!canEdit || userRole === "team_member"}
-                variant="text"
-              />
+              {userRole === "team_member" ? (
+                <Badge className={getUrgencyColor(task.urgency)}>
+                  {task.urgency}
+                </Badge>
+              ) : (
+                <BadgeDropdown
+                  value={task.urgency}
+                  options={urgencies}
+                  onChange={(value) => onUrgencyChange(task.id, value)}
+                  disabled={!canEdit}
+                  variant="text"
+                />
+              )}
             </div>
           </div>
 
@@ -351,7 +357,7 @@ export const KanbanBoard = ({
     
     // Check if team member can make this status change
     if (userRole === "team_member" && task) {
-      const allowedStatuses = ["Not Started", "In Progress", "Waiting for Approval"];
+      const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
       
       // If current status is restricted, prevent any changes
       if (!canTeamMemberChangeStatus(task.status)) {
@@ -362,7 +368,7 @@ export const KanbanBoard = ({
       
       // Only allow dropping to allowed statuses
       if (!allowedStatuses.includes(newStatus)) {
-        toast.error("You can only move tasks to: Not Started, In Progress, or Waiting for Approval");
+        toast.error("You can only move tasks to: Not Started, In Progress, or In Approval");
         setActiveId(null);
         return;
       }

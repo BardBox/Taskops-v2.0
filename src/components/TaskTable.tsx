@@ -11,6 +11,7 @@ import { TaskCard } from "./TaskCard";
 import { KanbanBoard } from "./KanbanBoard";
 import { GanttChart } from "./GanttChart";
 import { BadgeDropdown } from "./BadgeDropdown";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare } from "lucide-react";
 import { toast } from "sonner";
@@ -650,7 +651,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                         value={task.status}
                         options={
                           userRole === "team_member"
-                            ? statuses.filter(s => ["Not Started", "In Progress", "Waiting for Approval"].includes(s.label))
+                            ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
                             : statuses
                         }
                         onChange={(value) => handleStatusChange(task.id, value)}
@@ -658,12 +659,18 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                       />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <BadgeDropdown
-                        value={task.urgency}
-                        options={urgencies}
-                        onChange={(value) => handleUrgencyChange(task.id, value)}
-                        disabled={!canEdit(task) || userRole === "team_member"}
-                      />
+                      {userRole === "team_member" ? (
+                        <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
+                          {task.urgency}
+                        </Badge>
+                      ) : (
+                        <BadgeDropdown
+                          value={task.urgency}
+                          options={urgencies}
+                          onChange={(value) => handleUrgencyChange(task.id, value)}
+                          disabled={!canEdit(task)}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity slide-in-actions">
