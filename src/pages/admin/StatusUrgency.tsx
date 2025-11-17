@@ -173,8 +173,28 @@ export default function StatusUrgency() {
     }
   };
 
+  const validateColor = (color: string, type: "status" | "urgency"): boolean => {
+    // Check if color string contains both bg- and text- classes
+    const hasBgClass = color.includes('bg-');
+    const hasTextClass = color.includes('text-');
+    
+    if (!hasBgClass || !hasTextClass) {
+      toast.error(`Invalid color format. ${type === "status" ? "Status" : "Urgency"} colors must include both background (bg-) and text (text-) classes.`);
+      return false;
+    }
+    
+    return true;
+  };
+
   const saveStatuses = async (newStatuses: StatusUrgencyItem[]) => {
     try {
+      // Validate all colors before saving
+      for (const status of newStatuses) {
+        if (!validateColor(status.color, "status")) {
+          return;
+        }
+      }
+      
       const { error } = await supabase
         .from("system_settings")
         .upsert({
@@ -196,6 +216,13 @@ export default function StatusUrgency() {
 
   const saveUrgencies = async (newUrgencies: StatusUrgencyItem[]) => {
     try {
+      // Validate all colors before saving
+      for (const urgency of newUrgencies) {
+        if (!validateColor(urgency.color, "urgency")) {
+          return;
+        }
+      }
+      
       const { error } = await supabase
         .from("system_settings")
         .upsert({
