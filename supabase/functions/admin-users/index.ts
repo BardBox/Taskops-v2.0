@@ -217,6 +217,47 @@ Deno.serve(async (req) => {
         })
       }
 
+      case 'resetPassword': {
+        const { userId } = payload
+
+        // Get target user's current role
+        const { data: targetUserRole } = await supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .single()
+
+        // PMs cannot reset passwords for Project Owners
+        if (isPM && !isOwner && targetUserRole?.role === 'project_owner') {
+          return new Response(JSON.stringify({ error: 'Cannot reset password for project owners' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+
+        // Get user's email
+        const { data: authUser, error: getUserError } = await supabaseClient.auth.admin.getUserById(userId)
+        if (getUserError || !authUser.user?.email) {
+          throw new Error('User not found or email missing')
+        }
+
+        // Generate password reset link
+        const { data, error: resetError } = await supabaseClient.auth.admin.generateLink({
+          type: 'recovery',
+          email: authUser.user.email,
+        })
+
+        if (resetError) throw resetError
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: 'Password reset email sent successfully',
+          resetLink: data.properties.action_link 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Invalid action' }), {
           status: 400,
