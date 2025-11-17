@@ -25,3 +25,28 @@ export const getAvailableStatuses = (userRole: string, currentStatus?: string): 
 export const canChangeUrgency = (userRole: string): boolean => {
   return userRole !== "team_member";
 };
+
+export const getUserRole = async (userId: string): Promise<string | null> => {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .single();
+  
+  return data?.role || null;
+};
+
+export const getUserRoles = async (userIds: string[]): Promise<Map<string, string>> => {
+  if (userIds.length === 0) return new Map();
+  
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data } = await supabase
+    .from("user_roles")
+    .select("user_id, role")
+    .in("user_id", userIds);
+  
+  const roleMap = new Map<string, string>();
+  data?.forEach(item => roleMap.set(item.user_id, item.role));
+  return roleMap;
+};

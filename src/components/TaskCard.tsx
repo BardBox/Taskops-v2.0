@@ -9,6 +9,8 @@ import { BadgeDropdown } from "@/components/BadgeDropdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RoleBadge } from "@/components/RoleBadge";
+import { getUserRoles } from "@/utils/roleHelpers";
 
 interface Task {
   id: string;
@@ -70,6 +72,7 @@ export const TaskCard = ({
   const [isCollaborator, setIsCollaborator] = useState(false);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [roles, setRoles] = useState<Map<string, string>>(new Map());
   
   const statusConfig = statuses.find((s) => s.label === task.status);
   const urgencyConfig = urgencies.find((u) => u.label === task.urgency);
@@ -97,10 +100,20 @@ export const TaskCard = ({
         .eq("task_id", task.id);
       
       setCollaborators(allCollabs || []);
+      
+      // Fetch roles for all relevant users
+      const userIds = [
+        task.assignee_id,
+        task.assigned_by_id,
+        ...(allCollabs || []).map(c => c.user_id)
+      ].filter(Boolean);
+      
+      const rolesMap = await getUserRoles(userIds);
+      setRoles(rolesMap);
     };
     
     fetchCollaboratorInfo();
-  }, [task.id]);
+  }, [task.id, task.assignee_id, task.assigned_by_id]);
   
   const isToday = (date: string | null) => {
     if (!date) return false;
@@ -167,6 +180,35 @@ export const TaskCard = ({
                 </span>
               )}
             </div>
+            
+            {/* Collaborators */}
+            {!isCollaborator && collaborators.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap">
+                <span className="text-xs text-muted-foreground">Collaborators:</span>
+                {collaborators.map((collab, idx) => (
+                  <TooltipProvider key={idx}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="flex items-center gap-1">
+                          <Avatar className="h-5 w-5 border border-background">
+                            <AvatarFallback className="text-[8px]">
+                              {getInitials(collab.profiles.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <RoleBadge role={roles.get(collab.user_id) as any} size="sm" showIcon={false} />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="flex items-center gap-1">
+                          {collab.profiles.full_name}
+                          <RoleBadge role={roles.get(collab.user_id) as any} size="sm" />
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -267,15 +309,19 @@ export const TaskCard = ({
               {task.assignee ? getInitials(task.assignee.full_name) : "?"}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm text-muted-foreground truncate">
-            {task.assignee?.full_name || "Unassigned"}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-muted-foreground truncate">
+              {task.assignee?.full_name || "Unassigned"}
+            </span>
+            <RoleBadge role={roles.get(task.assignee_id) as any} size="sm" />
+          </div>
         </div>
 
         {/* Assigned By */}
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <User className="h-4 w-4 text-primary/60" />
           <span className="truncate">{task.assigned_by?.full_name || "Unknown"}</span>
+          <RoleBadge role={roles.get(task.assigned_by_id) as any} size="sm" />
         </div>
       </div>
 

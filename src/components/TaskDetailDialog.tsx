@@ -19,8 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency } from "@/utils/roleHelpers";
+import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency, getUserRoles } from "@/utils/roleHelpers";
 import { TaskRevisions } from "@/components/TaskRevisions";
+import { RoleBadge } from "@/components/RoleBadge";
 
 interface Task {
   id: string;
@@ -108,7 +109,9 @@ export function TaskDetailDialog({
   const [showMessageEmojiPicker, setShowMessageEmojiPicker] = useState(false);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [editHistory, setEditHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [isCollaborator, setIsCollaborator] = useState(false);
+  const [roles, setRoles] = useState<Map<string, string>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -352,6 +355,24 @@ export function TaskDetailDialog({
         .single();
 
       setIsCollaborator(!!collabCheck);
+      
+      // Fetch collaborators for role fetching
+      const { data: collabData } = await supabase
+        .from("task_collaborators")
+        .select("user_id, profiles(full_name, avatar_url)")
+        .eq("task_id", taskId);
+      
+      setCollaborators(collabData || []);
+      
+      // Fetch roles for all relevant users
+      const userIds = [
+        taskData.assignee_id,
+        taskData.assigned_by_id,
+        ...(collabData || []).map(c => c.user_id)
+      ].filter(Boolean);
+      
+      const rolesMap = await getUserRoles(userIds);
+      setRoles(rolesMap);
     } catch (error: any) {
       toast.error("Failed to fetch task details");
     }
@@ -835,7 +856,10 @@ export function TaskDetailDialog({
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Task Owner</Label>
-                  <p className="text-sm font-medium mt-1">{assigneeName}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <p className="text-sm font-medium">{assigneeName}</p>
+                    <RoleBadge role={roles.get(task.assignee_id) as any} size="sm" />
+                  </div>
                 </div>
                 
                 {/* Collaborators Section */}
@@ -851,6 +875,7 @@ export function TaskDetailDialog({
                             </AvatarFallback>
                           </Avatar>
                           <span>{collab.profiles?.full_name || "Unknown"}</span>
+                          <RoleBadge role={roles.get(collab.user_id) as any} size="sm" />
                         </div>
                       ))}
                     </div>
@@ -859,7 +884,10 @@ export function TaskDetailDialog({
                 
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project Manager</Label>
-                  <p className="text-sm font-medium mt-1">{assignedByName}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <p className="text-sm font-medium">{assignedByName}</p>
+                    <RoleBadge role={roles.get(task.assigned_by_id) as any} size="sm" />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date Assigned</Label>
