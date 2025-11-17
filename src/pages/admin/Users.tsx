@@ -31,6 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Edit, ArrowUpDown, ArrowUp, ArrowDown, KeyRound } from "lucide-react";
 import { toast } from "sonner";
+import { AvatarSelector } from "@/components/AvatarSelector";
 
 interface User {
   id: string;
@@ -38,6 +39,7 @@ interface User {
   full_name: string;
   user_code: string;
   role: string;
+  avatar_url?: string | null;
 }
 
 export default function AdminUsers() {
@@ -54,6 +56,7 @@ export default function AdminUsers() {
     password: "",
     full_name: "",
     role: "team_member",
+    avatar_url: null as string | null,
   });
   const [filters, setFilters] = useState({
     userId: "",
@@ -150,7 +153,7 @@ export default function AdminUsers() {
 
       toast.success("User created successfully");
       setCreateDialogOpen(false);
-      setNewUser({ email: "", password: "", full_name: "", role: "team_member" });
+      setNewUser({ email: "", password: "", full_name: "", role: "team_member", avatar_url: null });
       fetchUsers();
     } catch (error: any) {
       console.error("Error creating user:", error);
@@ -188,6 +191,7 @@ export default function AdminUsers() {
           full_name: editingUser.full_name,
           email: editingUser.email,
           role: editingUser.role,
+          avatar_url: editingUser.avatar_url,
         }),
       });
 
@@ -642,6 +646,11 @@ export default function AdminUsers() {
                 </p>
               )}
             </div>
+
+            <AvatarSelector
+              selectedAvatarUrl={newUser.avatar_url}
+              onAvatarSelect={(url) => setNewUser({ ...newUser, avatar_url: url })}
+            />
           </div>
 
           <DialogFooter>
@@ -706,6 +715,11 @@ export default function AdminUsers() {
                   </p>
                 )}
               </div>
+
+              <AvatarSelector
+                selectedAvatarUrl={editingUser.avatar_url || null}
+                onAvatarSelect={(url) => setEditingUser({ ...editingUser, avatar_url: url })}
+              />
             </div>
           )}
 
