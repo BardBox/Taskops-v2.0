@@ -1,8 +1,13 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, differenceInDays, isWithinInterval } from "date-fns";
 import { Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { getUserRoles } from "@/utils/roleHelpers";
+import { RoleBadge } from "@/components/RoleBadge";
 
 interface Task {
   id: string;
@@ -25,6 +30,7 @@ interface Task {
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
+  collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url?: string } }>;
 }
 
 interface GanttChartProps {
@@ -34,6 +40,50 @@ interface GanttChartProps {
 }
 
 export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) => {
+  const [roles, setRoles] = useState<Map<string, string>>(new Map());
+  const [taskCollaborators, setTaskCollaborators] = useState<Map<string, any[]>>(new Map());
+
+  // Fetch collaborators and roles
+  useEffect(() => {
+    const fetchCollaboratorsAndRoles = async () => {
+      const collabMap = new Map<string, any[]>();
+      const userIds = new Set<string>();
+      
+      // Fetch collaborators for all tasks
+      for (const task of tasks) {
+        userIds.add(task.assignee_id);
+        userIds.add(task.assigned_by_id);
+        
+        const { data } = await supabase
+          .from("task_collaborators")
+          .select("user_id, profiles(full_name, avatar_url)")
+          .eq("task_id", task.id);
+        
+        if (data) {
+          collabMap.set(task.id, data);
+          data.forEach(c => userIds.add(c.user_id));
+        }
+      }
+      
+      setTaskCollaborators(collabMap);
+      
+      // Fetch roles
+      const rolesMap = await getUserRoles(Array.from(userIds));
+      setRoles(rolesMap);
+    };
+    
+    fetchCollaboratorsAndRoles();
+  }, [tasks]);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const { timelineRange, tasksWithTimeline } = useMemo(() => {
     // Filter tasks that have deadlines
     const tasksWithDeadlines = tasks.filter(task => task.deadline);
@@ -146,10 +196,44 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
                   <div className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
                     {task.task_name}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary" className="text-xs">
-                      {task.assignee?.full_name}
-                    </Badge>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      <Badge variant="secondary" className="text-xs">
+                        {task.assignee?.full_name}
+                      </Badge>
+                      <RoleBadge role={roles.get(task.assignee_id) as any} size="sm" showIcon={false} />
+                    </div>
+                    
+                    {/* Show collaborator avatars */}
+                    {taskCollaborators.get(task.id)?.length > 0 && (
+                      <div className="flex -space-x-2">
+                        {taskCollaborators.get(task.id)?.slice(0, 2).map((collab, idx) => (
+                          <TooltipProvider key={idx}>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Avatar className="h-5 w-5 border-2 border-background">
+                                  <AvatarFallback className="text-[8px]">
+                                    {getInitials(collab.profiles.full_name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="flex items-center gap-1">
+                                  {collab.profiles.full_name}
+                                  <RoleBadge role={roles.get(collab.user_id) as any} size="sm" />
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ))}
+                        {taskCollaborators.get(task.id)?.length > 2 && (
+                          <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[8px]">
+                            +{taskCollaborators.get(task.id).length - 2}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(task.status)}`}>
                       {task.status}
                     </div>

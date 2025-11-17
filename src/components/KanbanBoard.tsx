@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, pointerWithin, rectIntersection, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
@@ -13,8 +13,9 @@ import { BadgeDropdown } from "./BadgeDropdown";
 import { useGamification } from "@/hooks/useGamification";
 import { GamificationStats } from "./GamificationStats";
 import { playNotificationSound } from "@/utils/notificationSounds";
-import { canChangeUrgency, canTeamMemberChangeStatus } from "@/utils/roleHelpers";
+import { canChangeUrgency, canTeamMemberChangeStatus, getUserRoles } from "@/utils/roleHelpers";
 import { toast } from "sonner";
+import { RoleBadge } from "./RoleBadge";
 
 interface Task {
   id: string;
@@ -40,6 +41,7 @@ interface Task {
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
+  collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url?: string } }>;
 }
 
 interface KanbanBoardProps {
@@ -67,6 +69,7 @@ const SortableTaskCard = ({
   isSelected,
   isAppreciated,
   urgencies,
+  roles,
   onSelect,
   onEdit,
   onClick,
@@ -256,15 +259,20 @@ const SortableTaskCard = ({
             {task.assignee && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
-                {task.assignee.full_name}
+                <span>{task.assignee.full_name}</span>
+                <RoleBadge role={roles?.get(task.assignee_id) as any} size="sm" showIcon={false} />
               </div>
             )}
             {/* Show collaborators in Kanban */}
             {task.collaborators && task.collaborators.length > 0 && (
-              <div className="flex items-center gap-1 text-xs">
+              <div className="flex items-center gap-1 text-xs flex-wrap">
                 <span className="text-muted-foreground">+</span>
                 {task.collaborators.map((c: any, idx: number) => (
-                  <span key={idx}>{c.profiles?.full_name || "?"}{idx < task.collaborators.length - 1 ? ", " : ""}</span>
+                  <span key={idx} className="flex items-center gap-0.5">
+                    {c.profiles?.full_name || "?"}
+                    <RoleBadge role={roles?.get(c.user_id) as any} size="sm" showIcon={false} />
+                    {idx < task.collaborators.length - 1 && <span>,</span>}
+                  </span>
                 ))}
               </div>
             )}
@@ -364,9 +372,27 @@ export const KanbanBoard = ({
   onNotesClick,
 }: KanbanBoardProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [roles, setRoles] = useState<Map<string, string>>(new Map());
   
   // Initialize gamification hook
   const { stats, onTaskCompleted } = useGamification(userId);
+  
+  // Fetch roles for all users in tasks
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const userIds = new Set<string>();
+      tasks.forEach(task => {
+        userIds.add(task.assignee_id);
+        userIds.add(task.assigned_by_id);
+        task.collaborators?.forEach((c: any) => userIds.add(c.user_id));
+      });
+      
+      const rolesMap = await getUserRoles(Array.from(userIds));
+      setRoles(rolesMap);
+    };
+    
+    fetchRoles();
+  }, [tasks]);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -579,6 +605,7 @@ export const KanbanBoard = ({
                       isSelected={selectedTaskIds.has(task.id)}
                       isAppreciated={taskAppreciations.get(task.id)}
                       urgencies={urgencies}
+                      roles={roles}
                       onSelect={onSelectTask}
                       onEdit={onEditTask}
                       onClick={onTaskClick}
