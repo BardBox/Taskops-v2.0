@@ -258,6 +258,41 @@ Deno.serve(async (req) => {
         })
       }
 
+      case 'changePassword': {
+        // Only owners can directly change passwords
+        if (!isOwner) {
+          return new Response(JSON.stringify({ error: 'Only project owners can change passwords directly' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+
+        const { userId, newPassword } = payload
+
+        // Validate password
+        if (!newPassword || newPassword.length < 8 || newPassword.length > 128) {
+          return new Response(JSON.stringify({ error: 'Password must be between 8 and 128 characters' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+
+        // Update user's password
+        const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
+          userId,
+          { password: newPassword }
+        )
+
+        if (updateError) throw updateError
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: 'Password changed successfully'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Invalid action' }), {
           status: 400,
