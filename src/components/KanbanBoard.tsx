@@ -33,9 +33,9 @@ interface Task {
   reference_link_1: string | null;
   reference_link_2: string | null;
   reference_link_3: string | null;
-  parent_task_id: string | null;
-  revision_number: number;
-  is_revision: boolean;
+  revision_count: number;
+  revision_requested_at: string | null;
+  revision_requested_by: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
@@ -208,9 +208,9 @@ const SortableTaskCard = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-semibold text-sm line-clamp-2 flex-1">{task.task_name}</h4>
-                  {task.is_revision && (
+                  {task.revision_count > 0 && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0">
-                      Rev {task.revision_number}
+                      Rev {task.revision_count}
                     </Badge>
                   )}
                 </div>

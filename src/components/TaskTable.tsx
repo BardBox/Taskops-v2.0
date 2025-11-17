@@ -35,9 +35,9 @@ interface Task {
   reference_link_1: string | null;
   reference_link_2: string | null;
   reference_link_3: string | null;
-  parent_task_id: string | null;
-  revision_number: number;
-  is_revision: boolean;
+  revision_count: number;
+  revision_requested_at: string | null;
+  revision_requested_by: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
   assignee: { full_name: string } | null;
@@ -634,9 +634,9 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <span>{task.task_name}</span>
-                        {task.is_revision && (
+                        {task.revision_count > 0 && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
-                            Rev {task.revision_number}
+                            Rev {task.revision_count}
                           </Badge>
                         )}
                       </div>
