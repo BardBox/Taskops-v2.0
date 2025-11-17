@@ -9,7 +9,7 @@ export const getAvailableStatuses = (userRole: string, currentStatus?: string): 
   const allStatuses = ["Not Started", "In Progress", "Waiting for Approval", "Approved", "Revision", "On Hold"];
   
   if (userRole === "team_member") {
-    const allowedStatuses = ["Not Started", "In Progress", "Waiting for Approval"];
+    const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
     if (!currentStatus) return allowedStatuses;
     
     // If current status is restricted, don't allow any changes
