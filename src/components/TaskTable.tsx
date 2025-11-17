@@ -251,6 +251,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         filtered = filtered.filter(task => task.client_id === filters.clientId);
       }
 
+      // Apply project name filter
+      if (filters.projectName !== "all") {
+        filtered = filtered.filter(task => task.projects?.name === filters.projectName);
+      }
+
       // Apply team member filter
       if (filters.teamMemberId !== "all") {
         filtered = filtered.filter(task => task.assignee_id === filters.teamMemberId);
