@@ -410,18 +410,20 @@ export const KanbanBoard = ({
       return;
     }
     
-    console.log("Drag attempt:", {
-      userRole,
-      userId,
-      taskAssigneeId: task.assignee_id,
-      currentStatus: task.status,
-      newStatus,
-      canEditResult: canEdit(task)
-    });
+    console.log("Drag attempt - over.id:", over.id, "newStatus:", newStatus, "userRole:", userRole);
     
     // Check if team member can make this status change
     if (userRole === "team_member") {
       const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
+      
+      console.log("TM validation:", {
+        taskAssignedTo: task.assignee_id,
+        currentUserId: userId,
+        currentStatus: task.status,
+        targetStatus: newStatus,
+        isAllowedStatus: allowedStatuses.includes(newStatus),
+        canChangeFromCurrent: canTeamMemberChangeStatus(task.status)
+      });
       
       // Check if task is assigned to this user
       if (task.assignee_id !== userId) {
