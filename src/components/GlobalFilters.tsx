@@ -12,7 +12,7 @@ export interface FilterState {
   status: string;
   urgency: string;
   clientId: string;
-  projectId: string;
+  projectName: string;
   teamMemberId: string;
   projectManagerId: string;
   highlightToday: boolean;
@@ -204,8 +204,12 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
     if (saved) {
       try {
         const parsedFilters = JSON.parse(saved);
-        // Ensure delay property exists for backwards compatibility
-        onFiltersChange({ ...parsedFilters, delay: parsedFilters.delay || "all" });
+        // Ensure delay and projectName properties exist for backwards compatibility
+        onFiltersChange({ 
+          ...parsedFilters, 
+          delay: parsedFilters.delay || "all",
+          projectName: parsedFilters.projectName || "all"
+        });
       } catch (e) {
         console.error("Failed to load saved filters", e);
       }
@@ -217,7 +221,22 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   };
 
   const updateFilter = (key: keyof FilterState, value: any) => {
-    onFiltersChange({ ...filters, [key]: value });
+    const newFilters = { ...filters, [key]: value };
+    
+    // If client changes, reset project if selected project is not available for the new client
+    if (key === "clientId" && value !== "all") {
+      const availableProjectNames = projects
+        .filter(p => p.client_id === value)
+        .map(p => p.name);
+      
+      if (filters.projectName !== "all" && !availableProjectNames.includes(filters.projectName)) {
+        newFilters.projectName = "all";
+      }
+    }
+    
+    // If client is set to "all", keep projectName as is (it will show all projects with that name)
+    
+    onFiltersChange(newFilters);
   };
 
   if (compact) {
@@ -367,25 +386,21 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
         <div className="space-y-2">
           <Label className="text-xs font-medium">Project</Label>
           <Select 
-            value={filters.projectId} 
-            onValueChange={(v) => updateFilter("projectId", v)}
+            value={filters.projectName} 
+            onValueChange={(v) => updateFilter("projectName", v)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
               <SelectItem value="all">All</SelectItem>
-              {projects
-                .filter(p => filters.clientId === "all" || p.client_id === filters.clientId)
-                .map(project => {
-                  const client = clients.find(c => c.id === project.client_id);
-                  const displayName = filters.clientId === "all" && client
-                    ? `${project.name} (${client.name})`
-                    : project.name;
-                  return (
-                    <SelectItem key={project.id} value={project.id}>{displayName}</SelectItem>
-                  );
-                })}
+              {Array.from(new Set(
+                projects
+                  .filter(p => filters.clientId === "all" || p.client_id === filters.clientId)
+                  .map(p => p.name)
+              )).sort().map(projectName => (
+                <SelectItem key={projectName} value={projectName}>{projectName}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
