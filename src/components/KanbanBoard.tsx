@@ -76,7 +76,13 @@ const SortableTaskCard = ({
   onNotesClick,
   canEdit
 }: any) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+  // Enable dragging based on user permissions
+  const isDragDisabled = !canEdit || (userRole === "team_member" && !canTeamMemberChangeStatus(task.status));
+  
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id: task.id,
+    disabled: isDragDisabled
+  });
 
   const rotations = ['rotate-[-1deg]', 'rotate-[0.5deg]', 'rotate-[-0.5deg]', 'rotate-[1deg]'];
   const randomRotation = rotations[Math.floor(Math.random() * rotations.length)];
