@@ -47,6 +47,8 @@ export default function AdminUsers() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
@@ -248,6 +250,57 @@ export default function AdminUsers() {
     } catch (error: any) {
       console.error("Error resetting password:", error);
       toast.error(error.message || "Failed to reset password");
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!editingUser || !newPassword) return;
+
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Session expired. Please sign in again.");
+        await supabase.auth.signOut();
+        window.location.href = "/auth";
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'changePassword',
+          userId: editingUser.id,
+          newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Session expired. Please sign in again.");
+          await supabase.auth.signOut();
+          window.location.href = "/auth";
+          return;
+        }
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to change password');
+      }
+
+      toast.success("Password changed successfully");
+      setChangePasswordDialogOpen(false);
+      setNewPassword("");
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      toast.error(error.message || "Failed to change password");
     }
   };
 
@@ -657,20 +710,72 @@ export default function AdminUsers() {
           )}
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => editingUser && handleResetPassword(editingUser.id)}
-              className="sm:mr-auto"
-            >
-              <KeyRound className="h-4 w-4 mr-2" />
-              Reset Password
-            </Button>
+            <div className="flex gap-2 sm:mr-auto">
+              {isOwner && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setEditDialogOpen(false);
+                    setChangePasswordDialogOpen(true);
+                  }}
+                >
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  Change Password
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={() => editingUser && handleResetPassword(editingUser.id)}
+              >
+                <KeyRound className="h-4 w-4 mr-2" />
+                Reset Password
+              </Button>
+            </div>
             <div className="flex gap-2 sm:ml-auto">
               <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
                 Cancel
               </Button>
               <Button onClick={handleUpdateUser}>Update User</Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={changePasswordDialogOpen} onOpenChange={setChangePasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for {editingUser?.full_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                placeholder="Enter new password (min 8 characters)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Password must be at least 8 characters long
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setChangePasswordDialogOpen(false);
+                setNewPassword("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleChangePassword}>Change Password</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
