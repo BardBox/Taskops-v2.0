@@ -16,7 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
-import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
+import { canTeamMemberChangeStatus, getUserRoles } from "@/utils/roleHelpers";
+import { RoleBadge } from "@/components/RoleBadge";
 
 interface Task {
   id: string;
@@ -43,6 +44,7 @@ interface Task {
   assignee: { full_name: string } | null;
   assigned_by: { full_name: string } | null;
   task_comments?: Array<{ message: string; created_at: string }>;
+  collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
 
 interface TaskTableProps {
@@ -66,6 +68,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">("table");
   const [notifiedTaskIds, setNotifiedTaskIds] = useState<Set<string>>(new Set());
+  const [userRoles, setUserRoles] = useState<Map<string, string>>(new Map());
   
   const { statuses, urgencies } = useStatusUrgency();
 
@@ -186,7 +189,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         projects(name),
         assignee:profiles!tasks_assignee_id_fkey(full_name),
         assigned_by:profiles!tasks_assigned_by_id_fkey(full_name),
-        task_comments(message, created_at)
+        task_comments(message, created_at),
+        task_collaborators(user_id, profiles(full_name, avatar_url))
       `);
     
     // Team members see tasks assigned to them OR where they are collaborators
@@ -217,8 +221,24 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
       ...task,
       task_comments: task.task_comments?.sort((a: any, b: any) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ) || []
+      ) || [],
+      collaborators: task.task_collaborators || []
     }));
+
+    // Extract all user IDs including collaborators and fetch roles
+    const userIds = new Set<string>();
+    tasksWithSortedComments.forEach(task => {
+      if (task.assignee_id) userIds.add(task.assignee_id);
+      if (task.assigned_by_id) userIds.add(task.assigned_by_id);
+      task.collaborators?.forEach((c: any) => {
+        if (c.user_id) userIds.add(c.user_id);
+      });
+    });
+
+    if (userIds.size > 0) {
+      const rolesMap = await getUserRoles(Array.from(userIds));
+      setUserRoles(rolesMap);
+    }
 
     setTasks(tasksWithSortedComments);
   };
@@ -765,8 +785,22 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </TableCell>
                     <TableCell>{task.clients?.name || "-"}</TableCell>
                     <TableCell>{task.projects?.name || "-"}</TableCell>
-                    <TableCell>{task.assignee?.full_name || "-"}</TableCell>
-                    <TableCell>{task.assigned_by?.full_name || "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span>{task.assignee?.full_name || "-"}</span>
+                        {task.assignee && (
+                          <RoleBadge role={userRoles.get(task.assignee_id) as any} size="sm" showIcon={false} />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span>{task.assigned_by?.full_name || "-"}</span>
+                        {task.assigned_by && (
+                          <RoleBadge role={userRoles.get(task.assigned_by_id) as any} size="sm" showIcon={false} />
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}
                     </TableCell>

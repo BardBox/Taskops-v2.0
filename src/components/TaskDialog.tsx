@@ -80,33 +80,18 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
   useEffect(() => {
     if (open) {
-      fetchClients();
-      fetchUsers();
-      getCurrentUser();
-      setCurrentUserRole(userRole || "");
+      const initializeDialog = async () => {
+        setCurrentUserRole(userRole || "");
+        await getCurrentUser();
+        
+        // Fetch all data first
+        await Promise.all([
+          fetchClients(),
+          fetchUsers()
+        ]);
 
-      if (task) {
-        setFormData({
-          task_name: task.task_name || "",
-          client_id: task.client_id || "",
-          project_id: task.project_id || "",
-          assignee_id: task.assignee_id || "",
-          deadline: task.deadline || "",
-          status: task.status || "Not Started",
-          urgency: task.urgency || "Medium",
-          reference_link_1: task.reference_link_1 || "",
-          reference_link_2: task.reference_link_2 || "",
-          reference_link_3: task.reference_link_3 || "",
-          notes: task.notes || "",
-        });
-        setExistingImageUrl(task.reference_image || "");
-        setImagePreview(task.reference_image || "");
-        if (task.client_id) {
-          fetchProjects(task.client_id);
-        }
-
-        // Fetch existing collaborators
-        const fetchCollabs = async () => {
+        if (task) {
+          // Fetch existing collaborators
           const { data: collabData } = await supabase
             .from("task_collaborators")
             .select("user_id")
@@ -115,21 +100,41 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           if (collabData) {
             setSelectedCollaborators(collabData.map(c => c.user_id));
           }
-        };
-        fetchCollabs();
-      } else {
-        // Auto-set deadline to tomorrow and default project to SMO
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        
-        setReferenceImage(null);
-        setExistingImageUrl("");
-        setImagePreview("");
-        setSelectedCollaborators([]);
-        
-        // Fetch and set default project
-        fetchDefaultProject().then((defaultProject) => {
+
+          // Set form data AFTER options are loaded
+          setFormData({
+            task_name: task.task_name || "",
+            client_id: task.client_id || "",
+            project_id: task.project_id || "",
+            assignee_id: task.assignee_id || "",
+            deadline: task.deadline || "",
+            status: task.status || "Not Started",
+            urgency: task.urgency || "Medium",
+            reference_link_1: task.reference_link_1 || "",
+            reference_link_2: task.reference_link_2 || "",
+            reference_link_3: task.reference_link_3 || "",
+            notes: task.notes || "",
+          });
+          
+          setExistingImageUrl(task.reference_image || "");
+          setImagePreview(task.reference_image || "");
+          
+          if (task.client_id) {
+            await fetchProjects(task.client_id);
+          }
+        } else {
+          // Creating new task - set default values
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split('T')[0];
+          
+          setReferenceImage(null);
+          setExistingImageUrl("");
+          setImagePreview("");
+          setSelectedCollaborators([]);
+          
+          // Fetch default project and set it in form
+          const defaultProject = await fetchDefaultProject();
           setFormData({
             task_name: "",
             client_id: defaultProject?.client_id || "",
@@ -143,11 +148,15 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
             reference_link_3: "",
             notes: "",
           });
+          
+          // Fetch projects for the default client
           if (defaultProject?.client_id) {
-            fetchProjects(defaultProject.client_id);
+            await fetchProjects(defaultProject.client_id);
           }
-        });
-      }
+        }
+      };
+
+      initializeDialog();
 
       // Set up real-time subscription for profiles
       const profilesChannel = supabase
