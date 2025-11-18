@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AvatarSelector } from "@/components/AvatarSelector";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 const AccountSettings = () => {
   const navigate = useNavigate();
@@ -127,6 +128,8 @@ const AccountSettings = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-3xl mx-auto space-y-6">
+        <Breadcrumbs />
+        
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
