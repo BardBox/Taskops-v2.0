@@ -68,6 +68,68 @@ const avatarPrompts = [
   { name: "Star Character", category: "abstract", prompt: "A cute cartoon avatar of a glowing star with cheerful face and sparkles, simple flat design, bright and fun, transparent background, 1024x1024" },
   { name: "Plant Friend", category: "abstract", prompt: "A cute cartoon avatar of a potted plant with happy face and green leaves, simple flat design, friendly and whimsical, transparent background, 1024x1024" },
   { name: "Gradient Ghost", category: "abstract", prompt: "A cute cartoon avatar of a friendly ghost with colorful gradient body and smiling face, simple flat design, fun and whimsical, transparent background, 1024x1024" },
+  
+  // Humans - More Professionals (8)
+  { name: "Sales Expert", category: "human", prompt: "A cute cartoon avatar of a confident sales expert with big smile, modern suit, presentation board, energetic pose, simple flat design, professional, transparent background, 1024x1024" },
+  { name: "Financial Advisor", category: "human", prompt: "A cute cartoon avatar of a trustworthy financial advisor with glasses, calculator, professional attire, confident expression, simple flat design, transparent background, 1024x1024" },
+  { name: "Architect", category: "human", prompt: "A cute cartoon avatar of a creative architect with blueprints, hard hat, pencil, thoughtful expression, simple flat design, artistic, transparent background, 1024x1024" },
+  { name: "Nurse", category: "human", prompt: "A cute cartoon avatar of a caring nurse in medical scrubs with stethoscope, warm smile, compassionate expression, simple flat design, healthcare colors, transparent background, 1024x1024" },
+  { name: "Teacher", category: "human", prompt: "A cute cartoon avatar of a patient teacher with glasses, books and apple, kind expression, simple flat design, educational vibe, transparent background, 1024x1024" },
+  { name: "Photographer", category: "human", prompt: "A cute cartoon avatar of an artistic photographer with camera around neck, adventurous outfit, excited expression, simple flat design, creative energy, transparent background, 1024x1024" },
+  { name: "Journalist", category: "human", prompt: "A cute cartoon avatar of an investigative journalist with notepad and microphone, determined expression, professional attire, simple flat design, transparent background, 1024x1024" },
+  { name: "Lawyer", category: "human", prompt: "A cute cartoon avatar of a confident lawyer with briefcase, formal suit, professional glasses, trustworthy expression, simple flat design, transparent background, 1024x1024" },
+  
+  // Humans - Hobbies & Creative (8)
+  { name: "Gardener", category: "human", prompt: "A cute cartoon avatar of a happy gardener with flowers, sun hat, gardening gloves, surrounded by plants, peaceful expression, simple flat design, natural colors, transparent background, 1024x1024" },
+  { name: "Baker", category: "human", prompt: "A cute cartoon avatar of a cheerful baker with apron, rolling pin, flour dust on cheeks, chef hat, warm smile, simple flat design, baking colors, transparent background, 1024x1024" },
+  { name: "Dancer", category: "human", prompt: "A cute cartoon avatar of a graceful dancer in ballet shoes, flowing hair, elegant pose, tutu or dance outfit, simple flat design, artistic expression, transparent background, 1024x1024" },
+  { name: "Swimmer", category: "human", prompt: "A cute cartoon avatar of an energetic swimmer with goggles, swimsuit, water drops, swimming cap, athletic build, simple flat design, aquatic colors, transparent background, 1024x1024" },
+  { name: "Cyclist", category: "human", prompt: "A cute cartoon avatar of an enthusiastic cyclist with helmet, bike gear, sporty outfit, energetic pose, simple flat design, adventure colors, transparent background, 1024x1024" },
+  { name: "Yogi", category: "human", prompt: "A cute cartoon avatar of a peaceful yogi in meditation pose, zen expression, yoga mat, comfortable clothing, calm aura, simple flat design, spiritual colors, transparent background, 1024x1024" },
+  { name: "Potter", category: "human", prompt: "A cute cartoon avatar of an artistic potter with clay on hands, spinning wheel, focused expression, handmade pottery, simple flat design, artisan vibe, transparent background, 1024x1024" },
+  { name: "Astronomer", category: "human", prompt: "A cute cartoon avatar of a curious astronomer with telescope, starry eyes, notebook, fascinated expression, nighttime theme, simple flat design, cosmic colors, transparent background, 1024x1024" },
+  
+  // Animals - Wild & Domestic (8)
+  { name: "Curious Raccoon", category: "animal", prompt: "A cute cartoon avatar of a curious raccoon with mask pattern, clever expression, holding something shiny, playful pose, simple flat design, mischievous colors, transparent background, 1024x1024" },
+  { name: "Sleepy Sloth", category: "animal", prompt: "A cute cartoon avatar of a peaceful sloth hanging from branch, sleepy eyes, slow smile, fuzzy fur, relaxed pose, simple flat design, calm colors, transparent background, 1024x1024" },
+  { name: "Brave Lion", category: "animal", prompt: "A cute cartoon avatar of a regal lion with magnificent mane, confident expression, noble pose, simple flat design, warm majestic colors, transparent background, 1024x1024" },
+  { name: "Wise Turtle", category: "animal", prompt: "A cute cartoon avatar of an ancient wise turtle with patterned shell, calm eyes, gentle smile, patient expression, simple flat design, serene colors, transparent background, 1024x1024" },
+  { name: "Cheerful Monkey", category: "animal", prompt: "A cute cartoon avatar of a playful monkey holding banana, big smile, swinging pose, energetic expression, simple flat design, fun-loving colors, transparent background, 1024x1024" },
+  { name: "Elegant Swan", category: "animal", prompt: "A cute cartoon avatar of a graceful swan with long curved neck, white feathers, serene expression, beautiful pose, simple flat design, elegant colors, transparent background, 1024x1024" },
+  { name: "Busy Bee", category: "animal", prompt: "A cute cartoon avatar of a hardworking bee with yellow and black stripes, tiny wings, carrying pollen, happy expression, simple flat design, buzzing energy, transparent background, 1024x1024" },
+  { name: "Gentle Deer", category: "animal", prompt: "A cute cartoon avatar of a gentle deer with small antlers, soft eyes, forest vibe, peaceful expression, spots pattern, simple flat design, nature colors, transparent background, 1024x1024" },
+  
+  // More Animals (8)
+  { name: "Playful Otter", category: "animal", prompt: "A cute cartoon avatar of a joyful otter swimming, holding fish, playful expression, water splashes, whiskers, simple flat design, fun-loving colors, transparent background, 1024x1024" },
+  { name: "Noble Eagle", category: "animal", prompt: "A cute cartoon avatar of a majestic eagle with spread wings, sharp eyes, proud expression, flying pose, simple flat design, powerful colors, transparent background, 1024x1024" },
+  { name: "Funny Llama", category: "animal", prompt: "A cute cartoon avatar of a quirky llama with fluffy fur, funny expression, colorful blanket on back, silly smile, simple flat design, unique colors, transparent background, 1024x1024" },
+  { name: "Smart Dolphin", category: "animal", prompt: "A cute cartoon avatar of an intelligent dolphin jumping out of water, friendly smile, playful expression, ocean waves, simple flat design, joyful colors, transparent background, 1024x1024" },
+  { name: "Cozy Hamster", category: "animal", prompt: "A cute cartoon avatar of a chubby hamster with full cheeks, tiny paws, adorable expression, fluffy fur, simple flat design, cute colors, transparent background, 1024x1024" },
+  { name: "Elegant Peacock", category: "animal", prompt: "A cute cartoon avatar of a proud peacock with colorful tail feathers spread, beautiful patterns, regal pose, simple flat design, vibrant colors, transparent background, 1024x1024" },
+  { name: "Loyal Wolf", category: "animal", prompt: "A cute cartoon avatar of a strong wolf with pack leader vibe, protective expression, noble stance, grey fur, simple flat design, trustworthy colors, transparent background, 1024x1024" },
+  { name: "Silly Goat", category: "animal", prompt: "A cute cartoon avatar of a mischievous goat with small horns, funny face, playful expression, eating something, simple flat design, quirky colors, transparent background, 1024x1024" },
+  
+  // Robots & Tech - Diverse Styles (8)
+  { name: "Pixel Bot", category: "robot", prompt: "A cute cartoon avatar of a retro pixel robot in 8-bit style, blocky design, gaming vibe, colorful pixels, simple flat design, nostalgic colors, transparent background, 1024x1024" },
+  { name: "Steampunk Robot", category: "robot", prompt: "A cute cartoon avatar of a Victorian steampunk robot with brass gears, copper pipes, vintage style, clockwork elements, simple flat design, industrial colors, transparent background, 1024x1024" },
+  { name: "Cyber Guardian", category: "robot", prompt: "A cute cartoon avatar of a futuristic cyber guardian with neon blue lines, protective stance, shield, digital armor, simple flat design, high-tech colors, transparent background, 1024x1024" },
+  { name: "Mini Drone", category: "robot", prompt: "A cute cartoon avatar of a small flying drone with propellers, camera lens, hovering pose, surveillance tech, simple flat design, modern colors, transparent background, 1024x1024" },
+  { name: "Digital Assistant", category: "robot", prompt: "A cute cartoon avatar of a helpful digital assistant with holographic interface, floating screens, AI elements, simple flat design, modern tech colors, transparent background, 1024x1024" },
+  { name: "Mech Warrior", category: "robot", prompt: "A cute cartoon avatar of a powerful mech warrior with heavy armor, battle-ready pose, strong build, simple flat design, military tech colors, transparent background, 1024x1024" },
+  { name: "Companion Bot", category: "robot", prompt: "A cute cartoon avatar of a friendly companion bot with round body, expressive LED face, helpful arms, simple flat design, warm adorable colors, transparent background, 1024x1024" },
+  { name: "Quantum Bot", category: "robot", prompt: "A cute cartoon avatar of an advanced quantum bot with glowing particles, scientific symbols, floating elements, mysterious energy, simple flat design, futuristic colors, transparent background, 1024x1024" },
+  
+  // Fantasy & Magical - Mythical Beings (10)
+  { name: "Mermaid", category: "fantasy", prompt: "A cute cartoon avatar of a friendly mermaid with colorful scales, flowing hair, ocean waves, seashells, simple flat design, magical underwater colors, transparent background, 1024x1024" },
+  { name: "Griffin", category: "fantasy", prompt: "A cute cartoon avatar of a majestic griffin with eagle head, lion body, wings spread, powerful pose, simple flat design, mythical colors, transparent background, 1024x1024" },
+  { name: "Pegasus", category: "fantasy", prompt: "A cute cartoon avatar of a beautiful pegasus with white coat, angel wings, flying pose, magical aura, clouds, simple flat design, dreamy colors, transparent background, 1024x1024" },
+  { name: "Garden Gnome", category: "fantasy", prompt: "A cute cartoon avatar of a cheerful garden gnome with pointy red hat, white beard, mushrooms, flowers, holding lantern, simple flat design, whimsical colors, transparent background, 1024x1024" },
+  { name: "Elf Archer", category: "fantasy", prompt: "A cute cartoon avatar of a skilled elf archer with pointed ears, bow and arrow, forest guardian outfit, focused expression, simple flat design, nature colors, transparent background, 1024x1024" },
+  { name: "Friendly Witch", category: "fantasy", prompt: "A cute cartoon avatar of a kind witch with magical hat, broomstick, black cat companion, spell book, stars and moon, simple flat design, magical colors, transparent background, 1024x1024" },
+  { name: "Cute Vampire", category: "fantasy", prompt: "A cute cartoon avatar of a friendly vampire with small fangs, dark cape, nighttime theme, moon and stars, playful not scary, simple flat design, charming colors, transparent background, 1024x1024" },
+  { name: "Werewolf", category: "fantasy", prompt: "A cute cartoon avatar of a friendly werewolf with fluffy fur, howling at full moon, wolf ears, playful expression, simple flat design, nighttime colors, transparent background, 1024x1024" },
+  { name: "Guardian Angel", category: "fantasy", prompt: "A cute cartoon avatar of a protective guardian angel with white wings, glowing halo, peaceful expression, flowing robes, simple flat design, heavenly colors, transparent background, 1024x1024" },
+  { name: "Fire Demon", category: "fantasy", prompt: "A cute cartoon avatar of a playful fire demon with small horns, flame patterns, mischievous smile, red and orange colors, friendly not scary, simple flat design, transparent background, 1024x1024" },
 ];
 
 export default function AvatarGenerator() {
