@@ -137,6 +137,44 @@ export default function AvatarGenerator() {
   const [progress, setProgress] = useState(0);
   const [generatedAvatars, setGeneratedAvatars] = useState<any[]>([]);
   const [currentAvatar, setCurrentAvatar] = useState("");
+  const [clearing, setClearing] = useState(false);
+
+  const clearOldAvatars = async () => {
+    setClearing(true);
+    try {
+      // Delete all from database
+      const { error: dbError } = await supabase
+        .from('default_avatars')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      if (dbError) throw dbError;
+
+      // List all files in the avatars bucket
+      const { data: files, error: listError } = await supabase.storage
+        .from('avatars')
+        .list();
+
+      if (listError) throw listError;
+
+      // Delete all files from storage
+      if (files && files.length > 0) {
+        const filePaths = files.map(file => file.name);
+        const { error: deleteError } = await supabase.storage
+          .from('avatars')
+          .remove(filePaths);
+
+        if (deleteError) throw deleteError;
+      }
+
+      toast.success(`Cleared ${files?.length || 0} old avatars`);
+    } catch (error) {
+      console.error('Error clearing avatars:', error);
+      toast.error('Failed to clear old avatars');
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const generateAllAvatars = async () => {
     setGenerating(true);
@@ -145,33 +183,32 @@ export default function AvatarGenerator() {
 
     const total = avatarPrompts.length;
     
-    // DiceBear styles for variety
-    const styles = ['avataaars', 'bottts', 'fun-emoji', 'lorelei', 'notionists', 'pixel-art', 'adventurer', 'big-ears', 'croodles'];
-    
     for (let i = 0; i < avatarPrompts.length; i++) {
       const avatar = avatarPrompts[i];
       setCurrentAvatar(avatar.name);
 
       try {
-        // Generate unique seed based on avatar name
-        const seed = avatar.name.toLowerCase().replace(/\s+/g, '-');
-        const styleIndex = i % styles.length;
-        const style = styles[styleIndex];
+        console.log(`🎨 Generating ${avatar.name} with Gemini 2.5 Flash Image...`);
         
-        // Use DiceBear API to get avatar as PNG (completely free!)
-        const dicebearUrl = `https://api.dicebear.com/9.x/${style}/png?seed=${seed}&size=512&backgroundColor=transparent`;
-        
-        console.log(`Generating ${avatar.name} with DiceBear...`);
-        
-        // Fetch the image
-        const response = await fetch(dicebearUrl);
-        if (!response.ok) throw new Error('Failed to fetch avatar from DiceBear');
-        
+        // Call the edge function to generate image with Gemini
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('generate-avatar', {
+          body: { 
+            prompt: avatar.prompt,
+            name: avatar.name,
+            category: avatar.category
+          }
+        });
+
+        if (functionError) throw functionError;
+        if (!functionData?.imageUrl) throw new Error('No image returned from function');
+
+        // Convert data URL to blob
+        const response = await fetch(functionData.imageUrl);
         const blob = await response.blob();
 
         // Upload to storage
-        const fileName = `dicebear-${avatar.category}-${seed}-${Date.now()}.png`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const fileName = `gemini-${avatar.category}-${avatar.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`;
+        const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, blob, {
             contentType: 'image/png',
@@ -199,20 +236,20 @@ export default function AvatarGenerator() {
         setGeneratedAvatars(prev => [...prev, { ...avatar, url: publicUrl }]);
         setProgress(((i + 1) / total) * 100);
 
-        toast.success(`Generated ${avatar.name}`);
+        toast.success(`✨ Generated ${avatar.name}`);
 
-        // Small delay to be nice to DiceBear's free API
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Small delay between generations
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error) {
-        console.error(`Error generating ${avatar.name}:`, error);
+        console.error(`❌ Error generating ${avatar.name}:`, error);
         toast.error(`Failed to generate ${avatar.name}`);
       }
     }
 
     setGenerating(false);
     setCurrentAvatar("");
-    toast.success("All avatars generated successfully!");
+    toast.success("🎉 All avatars generated with Gemini 2.5 Flash Image!");
   };
 
   return (
@@ -220,7 +257,7 @@ export default function AvatarGenerator() {
       <div>
         <h1 className="text-3xl font-bold">Avatar Generator</h1>
         <p className="text-muted-foreground">
-          Generate 100 unique cartoon avatars using DiceBear (completely free!)
+          Generate 100 unique high-quality avatars using Gemini 2.5 Flash Image
         </p>
       </div>
 
@@ -228,28 +265,45 @@ export default function AvatarGenerator() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Generate Avatar Set</h2>
+              <h2 className="text-xl font-semibold">Generate Avatar Set with Gemini 2.5 Flash Image</h2>
               <p className="text-sm text-muted-foreground">
-                This will generate {avatarPrompts.length} unique cartoon avatars using AI
+                Generate {avatarPrompts.length} unique, high-quality cartoon avatars using Google's Gemini AI
               </p>
             </div>
-            <Button 
-              onClick={generateAllAvatars} 
-              disabled={generating}
-              size="lg"
-            >
-              {generating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Generate All Avatars
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={clearOldAvatars} 
+                disabled={clearing || generating}
+                variant="destructive"
+                size="lg"
+              >
+                {clearing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Clearing...
+                  </>
+                ) : (
+                  'Clear Old Avatars'
+                )}
+              </Button>
+              <Button 
+                onClick={generateAllAvatars} 
+                disabled={generating || clearing}
+                size="lg"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate All Avatars
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           {generating && (
