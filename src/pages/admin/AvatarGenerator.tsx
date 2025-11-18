@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, CheckCircle2, Trash2 } from "lucide-react";
+import { Loader2, Upload, X, CheckCircle2, Trash2, Sparkles } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
 
 interface AvatarFile {
   file: File;
@@ -29,6 +31,14 @@ export default function AvatarGenerator() {
   const [clearing, setClearing] = useState(false);
   const [uploadedAvatars, setUploadedAvatars] = useState<any[]>([]);
   const [progress, setProgress] = useState(0);
+  
+  // AI Generation state
+  const [generating, setGenerating] = useState(false);
+  const [aiCount, setAiCount] = useState(5);
+  const [aiPrompt, setAiPrompt] = useState("professional avatar portrait");
+  const [aiCategory, setAiCategory] = useState("human");
+  const [aiStyle, setAiStyle] = useState("realistic");
+  const [generatedAvatars, setGeneratedAvatars] = useState<any[]>([]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -66,6 +76,98 @@ export default function AvatarGenerator() {
       updated[index].category = category;
       return updated;
     });
+  };
+
+  const generateAvatars = async () => {
+    if (aiCount < 1 || aiCount > 20) {
+      toast.error("Please select between 1 and 20 avatars");
+      return;
+    }
+
+    if (!aiPrompt.trim()) {
+      toast.error("Please provide a base prompt");
+      return;
+    }
+
+    setGenerating(true);
+    setProgress(0);
+    setGeneratedAvatars([]);
+    const results: any[] = [];
+
+    try {
+      for (let i = 0; i < aiCount; i++) {
+        const seed = Math.floor(Math.random() * 10000);
+        const prompt = `${aiPrompt}, ${aiStyle} style, seed ${seed}, high quality avatar portrait`;
+        const name = `${aiCategory}_avatar_${seed}`;
+
+        console.log(`Generating ${i + 1}/${aiCount}: ${name}`);
+
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-avatar', {
+            body: { prompt, name, category: aiCategory }
+          });
+
+          if (error) throw error;
+
+          if (data?.imageUrl) {
+            // Convert base64 to blob
+            const base64Response = await fetch(data.imageUrl);
+            const blob = await base64Response.blob();
+            
+            // Upload to storage
+            const fileName = `${Date.now()}_${name}.png`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('avatars')
+              .upload(fileName, blob, {
+                contentType: 'image/png',
+                cacheControl: '3600',
+              });
+
+            if (uploadError) throw uploadError;
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('avatars')
+              .getPublicUrl(fileName);
+
+            // Save to database
+            const { data: dbData, error: dbError } = await supabase
+              .from('default_avatars')
+              .insert({
+                name,
+                image_url: publicUrl,
+                category: aiCategory,
+              })
+              .select()
+              .single();
+
+            if (dbError) throw dbError;
+
+            results.push(dbData);
+            setGeneratedAvatars(prev => [...prev, dbData]);
+            console.log(`✅ Saved: ${name}`);
+          }
+        } catch (err) {
+          console.error(`Failed to generate ${name}:`, err);
+          toast.error(`Failed to generate avatar ${i + 1}`);
+        }
+
+        setProgress(((i + 1) / aiCount) * 100);
+        
+        // Add delay to avoid rate limiting
+        if (i < aiCount - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      toast.success(`Successfully generated ${results.length} avatars!`);
+    } catch (error) {
+      console.error('Error generating avatars:', error);
+      toast.error('Failed to generate avatars');
+    } finally {
+      setGenerating(false);
+      setProgress(0);
+    }
   };
 
   const clearOldAvatars = async () => {

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { HfInference } from "https://esm.sh/@huggingface/inference@2.8.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,74 +18,28 @@ serve(async (req) => {
       throw new Error("Prompt is required");
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const HUGGING_FACE_ACCESS_TOKEN = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
+    if (!HUGGING_FACE_ACCESS_TOKEN) {
+      throw new Error("HUGGING_FACE_ACCESS_TOKEN is not configured");
     }
 
-    console.log(`🎨 Using Lovable AI Gemini 2.5 Flash Image model for: ${name} (${category})`);
+    console.log(`🎨 Using Hugging Face FLUX.1-schnell model for: ${name} (${category})`);
     console.log(`📝 Prompt: ${prompt.substring(0, 100)}...`);
 
     const startTime = Date.now();
 
-    // Call Lovable AI gateway using Gemini 2.5 Flash Image model
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          modalities: ["image", "text"],
-        }),
-      },
-    );
+    const hf = new HfInference(HUGGING_FACE_ACCESS_TOKEN);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Lovable AI image API error:", response.status, errorText);
+    // Generate image using FLUX.1-schnell model
+    const image = await hf.textToImage({
+      inputs: prompt,
+      model: "black-forest-labs/FLUX.1-schnell",
+    });
 
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Avatar generation is temporarily rate-limited. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: "Avatar generation is not authorized. Please contact support." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      if (response.status === 403) {
-        return new Response(
-          JSON.stringify({ error: "Avatar generation is currently unavailable for this project." }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-
-      throw new Error(`Lovable AI image API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    // Lovable AI returns data URL for the generated image at choices[0].message.images[0].image_url.url
-    const imageUrl: string | undefined =
-      data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    if (!imageUrl) {
-      console.error("❌ No image URL in response:", JSON.stringify(data));
-      throw new Error("No image generated");
-    }
+    // Convert the blob to a base64 string
+    const arrayBuffer = await image.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const imageUrl = `data:image/png;base64,${base64}`;
 
     const elapsedTime = Date.now() - startTime;
     console.log(`✅ Successfully generated avatar: ${name} in ${elapsedTime}ms`);
@@ -96,6 +51,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("💥 Error in generate-avatar function:", error);
+    
+    // Handle rate limiting
+    if (error instanceof Error && error.message.includes("429")) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
