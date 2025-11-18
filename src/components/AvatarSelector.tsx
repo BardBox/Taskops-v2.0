@@ -34,7 +34,12 @@ export function AvatarSelector({ selectedAvatarUrl, onAvatarSelect }: AvatarSele
         .order('category', { ascending: true })
         .order('name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching avatars:", error);
+        throw error;
+      }
+      
+      console.log('Fetched avatars:', data?.length, 'avatars');
       setAvatars(data || []);
     } catch (error) {
       console.error("Error fetching avatars:", error);
@@ -47,6 +52,14 @@ export function AvatarSelector({ selectedAvatarUrl, onAvatarSelect }: AvatarSele
   const filteredAvatars = selectedCategory === "all" 
     ? avatars 
     : avatars.filter(a => a.category === selectedCategory);
+  
+  console.log('AvatarSelector render:', {
+    totalAvatars: avatars.length,
+    filteredAvatars: filteredAvatars.length,
+    categories,
+    selectedCategory,
+    loading
+  });
 
   if (loading) {
     return (
