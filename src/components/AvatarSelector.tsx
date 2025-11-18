@@ -68,14 +68,17 @@ export function AvatarSelector({ selectedAvatarUrl, onAvatarSelect }: AvatarSele
   return (
     <div className="space-y-4">
       <div>
-        <Label>Choose Avatar</Label>
-        <div className="flex gap-2 mt-2 flex-wrap">
+        <Label className="text-base font-semibold">Choose Avatar</Label>
+        <p className="text-sm text-muted-foreground mt-1 mb-3">
+          Select from {avatars.length} available avatars
+        </p>
+        <div className="flex gap-2 flex-wrap">
           {categories.map(category => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
               className={cn(
-                "px-3 py-1 rounded-full text-sm capitalize transition-colors",
+                "px-3 py-1.5 rounded-full text-sm capitalize transition-colors font-medium",
                 selectedCategory === category
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -87,21 +90,21 @@ export function AvatarSelector({ selectedAvatarUrl, onAvatarSelect }: AvatarSele
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 max-h-[300px] overflow-y-auto p-2">
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3 max-h-[400px] overflow-y-auto p-2 border rounded-lg bg-accent/20">
         {filteredAvatars.map(avatar => (
           <button
             key={avatar.id}
             onClick={() => onAvatarSelect(avatar.image_url)}
             className={cn(
-              "flex flex-col items-center gap-2 p-2 rounded-lg transition-all hover:bg-accent",
-              selectedAvatarUrl === avatar.image_url && "bg-accent ring-2 ring-primary"
+              "flex flex-col items-center gap-2 p-3 rounded-lg transition-all hover:bg-background border-2 border-transparent",
+              selectedAvatarUrl === avatar.image_url && "bg-background ring-2 ring-primary border-primary"
             )}
           >
-            <Avatar className="w-16 h-16">
+            <Avatar className="w-14 h-14">
               <AvatarImage src={avatar.image_url} alt={avatar.name} />
-              <AvatarFallback>{avatar.name[0]}</AvatarFallback>
+              <AvatarFallback className="text-xs">{avatar.name[0]}</AvatarFallback>
             </Avatar>
-            <span className="text-xs text-center line-clamp-2">{avatar.name}</span>
+            <span className="text-xs text-center line-clamp-2 font-medium">{avatar.name}</span>
           </button>
         ))}
       </div>
