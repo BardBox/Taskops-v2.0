@@ -145,35 +145,32 @@ export default function AvatarGenerator() {
 
     const total = avatarPrompts.length;
     
+    // DiceBear styles for variety
+    const styles = ['avataaars', 'bottts', 'fun-emoji', 'lorelei', 'notionists', 'pixel-art', 'adventurer', 'big-ears', 'croodles'];
+    
     for (let i = 0; i < avatarPrompts.length; i++) {
       const avatar = avatarPrompts[i];
       setCurrentAvatar(avatar.name);
 
       try {
-        // Generate image using edge function
-        const { data: functionData, error: functionError } = await supabase.functions.invoke('generate-avatar', {
-          body: { 
-            prompt: avatar.prompt,
-            name: avatar.name,
-            category: avatar.category
-          }
-        });
-
-        if (functionError) throw functionError;
-        if (!functionData?.imageUrl) throw new Error("No image generated");
-
-        // Convert base64 to blob
-        const base64Data = functionData.imageUrl.split(',')[1];
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let j = 0; j < byteCharacters.length; j++) {
-          byteNumbers[j] = byteCharacters.charCodeAt(j);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'image/png' });
+        // Generate unique seed based on avatar name
+        const seed = avatar.name.toLowerCase().replace(/\s+/g, '-');
+        const styleIndex = i % styles.length;
+        const style = styles[styleIndex];
+        
+        // Use DiceBear API to get avatar as PNG (completely free!)
+        const dicebearUrl = `https://api.dicebear.com/9.x/${style}/png?seed=${seed}&size=512&backgroundColor=transparent`;
+        
+        console.log(`Generating ${avatar.name} with DiceBear...`);
+        
+        // Fetch the image
+        const response = await fetch(dicebearUrl);
+        if (!response.ok) throw new Error('Failed to fetch avatar from DiceBear');
+        
+        const blob = await response.blob();
 
         // Upload to storage
-        const fileName = `default-${avatar.category}-${Date.now()}-${i}.png`;
+        const fileName = `dicebear-${avatar.category}-${seed}-${Date.now()}.png`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, blob, {
@@ -204,8 +201,8 @@ export default function AvatarGenerator() {
 
         toast.success(`Generated ${avatar.name}`);
 
-        // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Small delay to be nice to DiceBear's free API
+        await new Promise(resolve => setTimeout(resolve, 300));
 
       } catch (error) {
         console.error(`Error generating ${avatar.name}:`, error);
@@ -215,7 +212,7 @@ export default function AvatarGenerator() {
 
     setGenerating(false);
     setCurrentAvatar("");
-    toast.success("All avatars generated!");
+    toast.success("All avatars generated successfully!");
   };
 
   return (
@@ -223,7 +220,7 @@ export default function AvatarGenerator() {
       <div>
         <h1 className="text-3xl font-bold">Avatar Generator</h1>
         <p className="text-muted-foreground">
-          Generate 20 unique cartoon character avatars for users
+          Generate 100 unique cartoon avatars using DiceBear (completely free!)
         </p>
       </div>
 
