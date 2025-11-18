@@ -1,110 +1,101 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, CheckCircle2, Trash2, Sparkles } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
+import { Loader2, Trash2, Sparkles, CheckCircle2 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-interface AvatarFile {
-  file: File;
-  preview: string;
-  name: string;
-  category: string;
-}
-
-const AVATAR_CATEGORIES = [
-  { value: "human", label: "Human" },
-  { value: "animal", label: "Animal" },
-  { value: "robot", label: "Robot" },
-  { value: "fantasy", label: "Fantasy" },
+// 50 diverse avatar prompts with distinct personalities
+const AVATAR_LIBRARY = [
+  // Professional & Business (10)
+  { name: "Executive Emma", prompt: "professional businesswoman with glasses, confident smile, corporate attire", category: "human" },
+  { name: "Tech Guru Tom", prompt: "tech professional with headphones, casual hoodie, friendly demeanor", category: "human" },
+  { name: "Doctor Diana", prompt: "medical professional in scrubs, warm smile, stethoscope", category: "human" },
+  { name: "Professor Paul", prompt: "academic with bow tie, scholarly appearance, wise expression", category: "human" },
+  { name: "Chef Carlos", prompt: "cheerful chef with chef's hat, culinary professional", category: "human" },
+  { name: "Artist Aria", prompt: "creative artist with paint splashes, colorful aesthetic", category: "human" },
+  { name: "Engineer Eric", prompt: "engineer with hard hat, blueprints, determined look", category: "human" },
+  { name: "Designer Dina", prompt: "fashion designer with stylish outfit, creative flair", category: "human" },
+  { name: "Pilot Pete", prompt: "airline pilot in uniform, aviator sunglasses, professional", category: "human" },
+  { name: "Scientist Sara", prompt: "lab scientist with safety goggles, enthusiastic researcher", category: "human" },
+  
+  // Fantasy & Mystical (10)
+  { name: "Wizard Waldo", prompt: "wise wizard with long beard, pointed hat, mystical aura", category: "fantasy" },
+  { name: "Fairy Flora", prompt: "delicate fairy with wings, flower crown, magical glow", category: "fantasy" },
+  { name: "Knight Kevin", prompt: "brave knight in shining armor, heroic stance", category: "fantasy" },
+  { name: "Elf Elara", prompt: "elegant elf with pointed ears, forest guardian", category: "fantasy" },
+  { name: "Dragon Drake", prompt: "friendly dragon with scales, wise eyes, mythical", category: "fantasy" },
+  { name: "Mermaid Marina", prompt: "ocean mermaid with seashell accessories, underwater vibe", category: "fantasy" },
+  { name: "Phoenix Phoebe", prompt: "majestic phoenix with fiery feathers, rebirth symbol", category: "fantasy" },
+  { name: "Unicorn Una", prompt: "magical unicorn with rainbow mane, pure white coat", category: "fantasy" },
+  { name: "Gnome Gideon", prompt: "garden gnome with pointy hat, jovial expression", category: "fantasy" },
+  { name: "Vampire Victor", prompt: "elegant vampire with cape, mysterious charm", category: "fantasy" },
+  
+  // Animals & Creatures (15)
+  { name: "Lion Leo", prompt: "majestic lion with golden mane, regal presence", category: "animal" },
+  { name: "Panda Po", prompt: "cute panda eating bamboo, friendly expression", category: "animal" },
+  { name: "Fox Finn", prompt: "clever fox with bushy tail, mischievous smile", category: "animal" },
+  { name: "Owl Olivia", prompt: "wise owl with big eyes, perched on branch", category: "animal" },
+  { name: "Penguin Percy", prompt: "adorable penguin with bow tie, waddling charm", category: "animal" },
+  { name: "Cat Chloe", prompt: "elegant cat with green eyes, mysterious aura", category: "animal" },
+  { name: "Dog Duke", prompt: "loyal golden retriever, happy and energetic", category: "animal" },
+  { name: "Rabbit Ruby", prompt: "cute rabbit with floppy ears, soft and fluffy", category: "animal" },
+  { name: "Bear Bruno", prompt: "friendly teddy bear, warm and huggable", category: "animal" },
+  { name: "Dolphin Dolly", prompt: "playful dolphin jumping through waves", category: "animal" },
+  { name: "Koala Ken", prompt: "sleepy koala hugging eucalyptus branch", category: "animal" },
+  { name: "Tiger Tina", prompt: "powerful tiger with stripes, fierce yet noble", category: "animal" },
+  { name: "Elephant Ella", prompt: "wise elephant with large ears, gentle giant", category: "animal" },
+  { name: "Monkey Max", prompt: "playful monkey swinging, energetic and fun", category: "animal" },
+  { name: "Turtle Theo", prompt: "peaceful sea turtle, calm and patient", category: "animal" },
+  
+  // Robots & Futuristic (15)
+  { name: "Robo Ray", prompt: "friendly robot with LED eyes, helpful assistant", category: "robot" },
+  { name: "Cyber Cece", prompt: "futuristic android with sleek design, neon accents", category: "robot" },
+  { name: "Droid Dave", prompt: "maintenance droid with tools, hardworking bot", category: "robot" },
+  { name: "Bot Betty", prompt: "cute robot with antenna, expressive digital face", category: "robot" },
+  { name: "Mech Mike", prompt: "mechanical warrior robot, strong and protective", category: "robot" },
+  { name: "AI Alice", prompt: "holographic AI assistant, glowing interface", category: "robot" },
+  { name: "Circuit Chris", prompt: "tech robot with circuit patterns, electric vibe", category: "robot" },
+  { name: "Nano Nina", prompt: "tiny nanobot with microscopic details, advanced tech", category: "robot" },
+  { name: "Quantum Quinn", prompt: "quantum computer robot, glowing particles", category: "robot" },
+  { name: "Steam Sam", prompt: "steampunk robot with brass gears, vintage mech", category: "robot" },
+  { name: "Pixel Pete", prompt: "retro 8-bit robot, pixelated charm, nostalgic", category: "robot" },
+  { name: "Space Stella", prompt: "astronaut robot for space missions, cosmic explorer", category: "robot" },
+  { name: "Solar Sol", prompt: "solar-powered robot with panels, eco-friendly", category: "robot" },
+  { name: "Binary Ben", prompt: "code-themed robot with binary numbers, programmer bot", category: "robot" },
+  { name: "Gadget Gina", prompt: "multi-tool robot with gadgets, inventive design", category: "robot" },
 ];
 
 export default function AvatarGenerator() {
-  const [selectedFiles, setSelectedFiles] = useState<AvatarFile[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [clearing, setClearing] = useState(false);
-  const [uploadedAvatars, setUploadedAvatars] = useState<any[]>([]);
-  const [progress, setProgress] = useState(0);
-  
-  // AI Generation state
   const [generating, setGenerating] = useState(false);
-  const [aiCount, setAiCount] = useState(5);
-  const [aiPrompt, setAiPrompt] = useState("professional avatar portrait");
-  const [aiCategory, setAiCategory] = useState("human");
-  const [aiStyle, setAiStyle] = useState("realistic");
-  const [generatedAvatars, setGeneratedAvatars] = useState<any[]>([]);
+  const [clearing, setClearing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentAvatar, setCurrentAvatar] = useState<string>("");
+  const [generatedCount, setGeneratedCount] = useState(0);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    
-    const newAvatarFiles: AvatarFile[] = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
-      category: "human", // Default category
-    }));
-
-    setSelectedFiles((prev) => [...prev, ...newAvatarFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setSelectedFiles((prev) => {
-      const updated = [...prev];
-      URL.revokeObjectURL(updated[index].preview);
-      updated.splice(index, 1);
-      return updated;
-    });
-  };
-
-  const updateFileName = (index: number, name: string) => {
-    setSelectedFiles((prev) => {
-      const updated = [...prev];
-      updated[index].name = name;
-      return updated;
-    });
-  };
-
-  const updateFileCategory = (index: number, category: string) => {
-    setSelectedFiles((prev) => {
-      const updated = [...prev];
-      updated[index].category = category;
-      return updated;
-    });
-  };
-
-  const generateAvatars = async () => {
-    if (aiCount < 1 || aiCount > 20) {
-      toast.error("Please select between 1 and 20 avatars");
-      return;
-    }
-
-    if (!aiPrompt.trim()) {
-      toast.error("Please provide a base prompt");
-      return;
-    }
-
+  const generateDefaultLibrary = async () => {
     setGenerating(true);
     setProgress(0);
-    setGeneratedAvatars([]);
-    const results: any[] = [];
+    setGeneratedCount(0);
+    const total = AVATAR_LIBRARY.length;
+    let successCount = 0;
 
     try {
-      for (let i = 0; i < aiCount; i++) {
-        const seed = Math.floor(Math.random() * 10000);
-        const prompt = `${aiPrompt}, ${aiStyle} style, seed ${seed}, high quality avatar portrait`;
-        const name = `${aiCategory}_avatar_${seed}`;
-
-        console.log(`Generating ${i + 1}/${aiCount}: ${name}`);
+      for (let i = 0; i < total; i++) {
+        const avatarData = AVATAR_LIBRARY[i];
+        const fullPrompt = `${avatarData.prompt}, high quality avatar portrait, professional digital art`;
+        
+        setCurrentAvatar(avatarData.name);
+        console.log(`Generating ${i + 1}/${total}: ${avatarData.name}`);
 
         try {
           const { data, error } = await supabase.functions.invoke('generate-avatar', {
-            body: { prompt, name, category: aiCategory }
+            body: { 
+              prompt: fullPrompt, 
+              name: avatarData.name, 
+              category: avatarData.category 
+            }
           });
 
           if (error) throw error;
@@ -115,8 +106,8 @@ export default function AvatarGenerator() {
             const blob = await base64Response.blob();
             
             // Upload to storage
-            const fileName = `${Date.now()}_${name}.png`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const fileName = `${Date.now()}_${avatarData.name.toLowerCase().replace(/\s+/g, '_')}.png`;
+            const { error: uploadError } = await supabase.storage
               .from('avatars')
               .upload(fileName, blob, {
                 contentType: 'image/png',
@@ -131,53 +122,52 @@ export default function AvatarGenerator() {
               .getPublicUrl(fileName);
 
             // Save to database
-            const { data: dbData, error: dbError } = await supabase
+            const { error: dbError } = await supabase
               .from('default_avatars')
               .insert({
-                name,
+                name: avatarData.name,
                 image_url: publicUrl,
-                category: aiCategory,
-              })
-              .select()
-              .single();
+                category: avatarData.category,
+              });
 
             if (dbError) throw dbError;
 
-            results.push(dbData);
-            setGeneratedAvatars(prev => [...prev, dbData]);
-            console.log(`✅ Saved: ${name}`);
+            successCount++;
+            setGeneratedCount(successCount);
+            console.log(`✅ Saved: ${avatarData.name}`);
           }
         } catch (err) {
-          console.error(`Failed to generate ${name}:`, err);
-          toast.error(`Failed to generate avatar ${i + 1}`);
+          console.error(`Failed to generate ${avatarData.name}:`, err);
+          toast.error(`Failed to generate ${avatarData.name}`);
         }
 
-        setProgress(((i + 1) / aiCount) * 100);
+        setProgress(((i + 1) / total) * 100);
         
         // Add delay to avoid rate limiting
-        if (i < aiCount - 1) {
+        if (i < total - 1) {
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
 
-      toast.success(`Successfully generated ${results.length} avatars!`);
+      toast.success(`Successfully generated ${successCount} out of ${total} avatars!`);
     } catch (error) {
-      console.error('Error generating avatars:', error);
-      toast.error('Failed to generate avatars');
+      console.error('Error generating avatar library:', error);
+      toast.error('Failed to generate avatar library');
     } finally {
       setGenerating(false);
       setProgress(0);
+      setCurrentAvatar("");
     }
   };
 
-  const clearOldAvatars = async () => {
+  const clearAllAvatars = async () => {
     setClearing(true);
     try {
       // Delete all from database
       const { error: dbError } = await supabase
         .from('default_avatars')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
       if (dbError) throw dbError;
 
@@ -198,282 +188,140 @@ export default function AvatarGenerator() {
         if (deleteError) throw deleteError;
       }
 
-      toast.success(`Cleared ${files?.length || 0} old avatars`);
+      toast.success(`Cleared ${files?.length || 0} avatars`);
+      setGeneratedCount(0);
     } catch (error) {
       console.error('Error clearing avatars:', error);
-      toast.error('Failed to clear old avatars');
+      toast.error('Failed to clear avatars');
     } finally {
       setClearing(false);
     }
   };
 
-  const uploadAllAvatars = async () => {
-    if (selectedFiles.length === 0) {
-      toast.error("Please select at least one file");
-      return;
-    }
-
-    // Validate all files have names
-    const missingNames = selectedFiles.some(f => !f.name.trim());
-    if (missingNames) {
-      toast.error("Please provide names for all avatars");
-      return;
-    }
-
-    setUploading(true);
-    setProgress(0);
-    setUploadedAvatars([]);
-
-    const total = selectedFiles.length;
-
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const avatarFile = selectedFiles[i];
-      
-      try {
-        console.log(`📤 Uploading ${avatarFile.name}...`);
-
-        // Generate unique filename
-        const fileExtension = avatarFile.file.name.split('.').pop();
-        const fileName = `${avatarFile.category}-${avatarFile.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.${fileExtension}`;
-
-        // Upload to storage
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, avatarFile.file, {
-            contentType: avatarFile.file.type,
-            upsert: false
-          });
-
-        if (uploadError) throw uploadError;
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-
-        // Save to database
-        const { error: dbError } = await supabase
-          .from('default_avatars')
-          .insert({
-            name: avatarFile.name,
-            image_url: publicUrl,
-            category: avatarFile.category
-          });
-
-        if (dbError) throw dbError;
-
-        setUploadedAvatars(prev => [...prev, { 
-          name: avatarFile.name, 
-          category: avatarFile.category, 
-          url: publicUrl 
-        }]);
-
-        setProgress(((i + 1) / total) * 100);
-        toast.success(`✅ Uploaded ${avatarFile.name}`);
-
-      } catch (error) {
-        console.error(`❌ Error uploading ${avatarFile.name}:`, error);
-        toast.error(`Failed to upload ${avatarFile.name}`);
-      }
-    }
-
-    setUploading(false);
-    
-    // Clean up preview URLs
-    selectedFiles.forEach(f => URL.revokeObjectURL(f.preview));
-    setSelectedFiles([]);
-    
-    toast.success("🎉 All avatars uploaded successfully!");
-  };
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Avatar Manager</h1>
-        <p className="text-muted-foreground">
-          Upload and manage avatar images for user profiles
-        </p>
+    <div className="container mx-auto py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Avatar Library Manager</h1>
+          <p className="text-muted-foreground mt-2">
+            Generate the default avatar library for users to choose from
+          </p>
+        </div>
+        <Button 
+          variant="destructive" 
+          onClick={clearAllAvatars}
+          disabled={clearing || generating}
+        >
+          {clearing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Clearing...
+            </>
+          ) : (
+            <>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear All
+            </>
+          )}
+        </Button>
       </div>
 
       <Card className="p-6">
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-2">Upload Avatars</h2>
+            <h2 className="text-xl font-semibold mb-2">Generate Default Library</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Select multiple image files to upload as avatars
+              Generate 50 diverse, fun avatars across different categories for users to choose from.
+              This includes professionals, fantasy creatures, animals, and robots with distinct personalities.
             </p>
+            <p className="text-sm text-amber-600 dark:text-amber-400 mb-6">
+              ⚠️ This will take approximately 2-3 minutes to complete. Each avatar is generated individually
+              with a 2-second delay to respect rate limits.
+            </p>
+          </div>
 
-            <div className="flex gap-2">
-              <Label htmlFor="file-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-                  <Upload className="h-4 w-4" />
-                  <span>Select Files</span>
-                </div>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  disabled={uploading}
-                />
-              </Label>
-
-              <Button 
-                onClick={clearOldAvatars} 
-                disabled={clearing || uploading}
-                variant="destructive"
-              >
-                {clearing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Clearing...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Clear All Avatars
-                  </>
-                )}
-              </Button>
+          <div className="grid md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">50</div>
+              <div className="text-sm text-muted-foreground">Total Avatars</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">10</div>
+              <div className="text-sm text-muted-foreground">Professionals</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">10</div>
+              <div className="text-sm text-muted-foreground">Fantasy</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">15</div>
+              <div className="text-sm text-muted-foreground">Animals</div>
+            </div>
+            <div className="text-center md:col-start-2">
+              <div className="text-2xl font-bold text-orange-600">15</div>
+              <div className="text-sm text-muted-foreground">Robots</div>
             </div>
           </div>
 
-          {selectedFiles.length > 0 && (
-            <>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">
-                    Selected Files ({selectedFiles.length})
-                  </h3>
-                  <Button 
-                    onClick={uploadAllAvatars} 
-                    disabled={uploading}
-                    size="lg"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload All ({selectedFiles.length})
-                      </>
-                    )}
-                  </Button>
-                </div>
+          <Button 
+            onClick={generateDefaultLibrary}
+            disabled={generating}
+            className="w-full"
+            size="lg"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Generating... {Math.round(progress)}%
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-5 w-5" />
+                Generate 50 Avatar Library
+              </>
+            )}
+          </Button>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {selectedFiles.map((avatarFile, index) => (
-                    <Card key={index} className="p-4">
-                      <div className="space-y-3">
-                        <div className="relative">
-                          <img 
-                            src={avatarFile.preview} 
-                            alt={avatarFile.name}
-                            className="w-full h-32 object-cover rounded-md"
-                          />
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            className="absolute top-2 right-2 h-6 w-6"
-                            onClick={() => removeFile(index)}
-                            disabled={uploading}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div>
-                            <Label htmlFor={`name-${index}`} className="text-xs">
-                              Avatar Name
-                            </Label>
-                            <Input
-                              id={`name-${index}`}
-                              value={avatarFile.name}
-                              onChange={(e) => updateFileName(index, e.target.value)}
-                              disabled={uploading}
-                              className="h-8"
-                            />
-                          </div>
-
-                          <div>
-                            <Label htmlFor={`category-${index}`} className="text-xs">
-                              Category
-                            </Label>
-                            <Select
-                              value={avatarFile.category}
-                              onValueChange={(value) => updateFileCategory(index, value)}
-                              disabled={uploading}
-                            >
-                              <SelectTrigger id={`category-${index}`} className="h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {AVATAR_CATEGORIES.map((cat) => (
-                                  <SelectItem key={cat.value} value={cat.value}>
-                                    {cat.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+          {generating && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span>Generating {currentAvatar}...</span>
+                <span className="font-medium">{generatedCount} / 50</span>
               </div>
+              <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
 
-              {uploading && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Uploading avatars...
-                    </span>
-                    <span className="font-medium">{Math.round(progress)}%</span>
-                  </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
+          {generatedCount > 0 && !generating && (
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">Successfully generated {generatedCount} avatars!</span>
+            </div>
           )}
         </div>
       </Card>
 
-      {uploadedAvatars.length > 0 && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Recently Uploaded ({uploadedAvatars.length})
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {uploadedAvatars.map((avatar, index) => (
-              <div key={index} className="space-y-2">
-                <Avatar className="w-20 h-20 mx-auto">
-                  <AvatarImage src={avatar.url} alt={avatar.name} />
-                  <AvatarFallback>{avatar.name[0]}</AvatarFallback>
-                </Avatar>
-                <div className="text-center">
-                  <p className="text-sm font-medium">{avatar.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {avatar.category}
-                  </p>
-                  <CheckCircle2 className="w-4 h-4 text-green-500 mx-auto mt-1" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      <Card className="p-6 bg-muted/30">
+        <h3 className="text-lg font-semibold mb-3">Preview Sample Avatars</h3>
+        <div className="grid grid-cols-5 md:grid-cols-10 gap-3">
+          {AVATAR_LIBRARY.slice(0, 10).map((avatar, index) => (
+            <div key={index} className="flex flex-col items-center gap-1">
+              <Avatar className="h-12 w-12 bg-secondary border-2">
+                <AvatarFallback className="text-xs">{avatar.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-center line-clamp-2">{avatar.name}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-3 text-center">
+          Showing 10 of 50 avatars that will be generated
+        </p>
+      </Card>
     </div>
   );
 }
