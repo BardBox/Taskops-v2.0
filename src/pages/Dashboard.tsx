@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { useLocation } from "react-router-dom";
@@ -172,17 +172,10 @@ const Dashboard = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
                 <Avatar className="h-12 w-12">
-                  {userProfile?.avatar_url ? (
-                    <img 
-                      src={`${userProfile.avatar_url}?t=${Date.now()}`}
-                      alt={userProfile.full_name} 
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                      {userProfile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  )}
+                  <AvatarImage src={userProfile?.avatar_url || undefined} alt={userProfile?.full_name} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                    {userProfile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="hidden sm:inline font-bold">{userProfile?.full_name || user?.email}</span>
               </Button>

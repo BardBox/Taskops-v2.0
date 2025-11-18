@@ -41,8 +41,8 @@ interface Task {
   revision_requested_by: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
-  assignee: { full_name: string } | null;
-  assigned_by: { full_name: string } | null;
+  assignee: { full_name: string; avatar_url: string | null } | null;
+  assigned_by: { full_name: string; avatar_url: string | null } | null;
   task_comments?: Array<{ message: string; created_at: string }>;
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
@@ -187,8 +187,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         *,
         clients(name),
         projects(name),
-        assignee:profiles!tasks_assignee_id_fkey(full_name),
-        assigned_by:profiles!tasks_assigned_by_id_fkey(full_name),
+        assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url),
+        assigned_by:profiles!tasks_assigned_by_id_fkey(full_name, avatar_url),
         task_comments(message, created_at),
         task_collaborators(user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url))
       `);
@@ -984,12 +984,12 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           }
           onUrgencyChange={userRole !== "team_member" ? handleUrgencyChange : () => {}}
           onAppreciationToggle={toggleAppreciation}
-          onSubmit={(task) => {
-            setSelectedTaskForSubmit(task);
+          onSubmit={() => {
+            setSelectedTaskForSubmit(task as any);
             setSubmitDialogOpen(true);
           }}
-          onNotesClick={(task) => {
-            setSelectedTask(task);
+          onNotesClick={() => {
+            setSelectedTask(task as any);
             setNotesDialogOpen(true);
           }}
         />

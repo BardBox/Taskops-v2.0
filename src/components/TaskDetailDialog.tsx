@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -56,7 +56,7 @@ interface Comment {
   is_pinned?: boolean;
   pinned_at?: string | null;
   pinned_by_id?: string | null;
-  profiles?: { full_name: string };
+  profiles?: { full_name: string; avatar_url: string | null };
   reactions?: Reaction[];
   read_receipts?: ReadReceipt[];
 }
@@ -420,11 +420,11 @@ export function TaskDetailDialog({
       const userIds = [...new Set(commentsData?.map(c => c.user_id) || [])];
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, avatar_url")
         .in("id", userIds);
 
-      const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
-      setUserProfiles(profilesMap);
+      const profilesMap = new Map(profilesData?.map(p => [p.id, { full_name: p.full_name, avatar_url: p.avatar_url }]));
+      setUserProfiles(new Map(profilesData?.map(p => [p.id, p.full_name || "Unknown"])));
 
       const commentIds = commentsData?.map(c => c.id) || [];
       
@@ -449,13 +449,13 @@ export function TaskDetailDialog({
         const existing = receiptsMap.get(r.comment_id) || [];
         receiptsMap.set(r.comment_id, [...existing, {
           ...r,
-          user_name: profilesMap.get(r.user_id) || "Unknown User"
+          user_name: userProfiles.get(r.user_id) || "Unknown User"
         }]);
       });
 
       const enrichedComments = commentsData?.map(c => ({
         ...c,
-        profiles: { full_name: profilesMap.get(c.user_id) || "Unknown" },
+        profiles: profilesMap.get(c.user_id) || { full_name: "Unknown", avatar_url: null },
         reactions: reactionsMap.get(c.id) || [],
         read_receipts: receiptsMap.get(c.id) || [],
       })) || [];
@@ -1168,6 +1168,7 @@ export function TaskDetailDialog({
               {comments.map((comment, index) => (
               <div key={comment.id} className={`flex gap-3 p-3 rounded-lg ${index % 2 === 0 ? 'bg-background' : 'bg-muted/5'}`}>
                 <Avatar className="h-8 w-8">
+                  <AvatarImage src={comment.profiles?.avatar_url || undefined} alt={comment.profiles?.full_name} />
                   <AvatarFallback className={`text-white font-semibold ${getUserAvatarColor(comment.user_id)}`}>
                     {comment.profiles?.full_name?.[0] || "U"}
                   </AvatarFallback>
