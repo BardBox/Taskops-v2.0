@@ -305,9 +305,18 @@ export const TaskCard = ({
         </div>
 
         {/* Assigned By */}
-        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-          <User className="h-4 w-4 text-primary/60" />
-          <span className="truncate">{task.assigned_by?.full_name || "Unknown"}</span>
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6 border-2 border-muted">
+            <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
+            <AvatarFallback className="text-xs bg-muted text-muted-foreground">
+              {task.assigned_by ? getInitials(task.assigned_by.full_name) : "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-muted-foreground truncate">
+              PM: {task.assigned_by?.full_name || "Unknown"}
+            </span>
+          </div>
         </div>
       </div>
 

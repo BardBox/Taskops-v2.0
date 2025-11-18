@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Star, Edit, FileText, Upload, Calendar, User, Lock } from "lucide-react";
@@ -38,8 +39,8 @@ interface Task {
   revision_requested_by: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
-  assignee: { full_name: string } | null;
-  assigned_by: { full_name: string } | null;
+  assignee: { full_name: string; avatar_url: string | null } | null;
+  assigned_by: { full_name: string; avatar_url: string | null } | null;
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
 
@@ -256,7 +257,12 @@ const SortableTaskCard = ({
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             {task.assignee && (
               <div className="flex items-center gap-1">
-            <User className="h-3 w-3" />
+            <Avatar className="h-5 w-5 border border-border">
+              <AvatarImage src={task.assignee.avatar_url || undefined} alt={task.assignee.full_name} />
+              <AvatarFallback className="text-[8px]">
+                {task.assignee.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
             <span>{task.assignee.full_name}</span>
           </div>
             )}
