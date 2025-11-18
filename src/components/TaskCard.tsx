@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Edit2, ExternalLink, FileText, Star, Calendar, Clock, User, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
@@ -31,8 +31,8 @@ interface Task {
   reference_link_3: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
-  assignee: { full_name: string } | null;
-  assigned_by: { full_name: string } | null;
+  assignee: { full_name: string; avatar_url: string | null } | null;
+  assigned_by: { full_name: string; avatar_url: string | null } | null;
   task_comments?: Array<{ message: string; created_at: string }>;
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
@@ -192,6 +192,7 @@ export const TaskCard = ({
                       <TooltipTrigger>
                         <div className="flex items-center gap-1">
                           <Avatar className="h-5 w-5 border border-background">
+                            <AvatarImage src={collab.profiles.avatar_url || undefined} alt={collab.profiles.full_name} />
                             <AvatarFallback className="text-[8px]">
                               {getInitials(collab.profiles.full_name)}
                             </AvatarFallback>
@@ -306,6 +307,7 @@ export const TaskCard = ({
         {/* Task Owner */}
         <div className="flex items-center gap-2">
           <Avatar className="h-6 w-6 border-2 border-primary/20">
+            <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
             <AvatarFallback className="text-xs bg-primary/10 text-primary">
               {task.assignee ? getInitials(task.assignee.full_name) : "?"}
             </AvatarFallback>

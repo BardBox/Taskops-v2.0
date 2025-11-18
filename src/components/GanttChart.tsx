@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, differenceInDays, isWithinInterval } from "date-fns";
 import { Calendar } from "lucide-react";
@@ -212,6 +212,7 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
                             <Tooltip>
                               <TooltipTrigger>
                                 <Avatar className="h-5 w-5 border-2 border-background">
+                                  <AvatarImage src={collab.profiles.avatar_url || undefined} alt={collab.profiles.full_name} />
                                   <AvatarFallback className="text-[8px]">
                                     {getInitials(collab.profiles.full_name)}
                                   </AvatarFallback>
