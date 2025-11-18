@@ -9,8 +9,6 @@ import { BadgeDropdown } from "@/components/BadgeDropdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { RoleBadge } from "@/components/RoleBadge";
-import { getUserRoles } from "@/utils/roleHelpers";
 
 interface Task {
   id: string;
@@ -73,7 +71,6 @@ export const TaskCard = ({
   const [isCollaborator, setIsCollaborator] = useState(false);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [roles, setRoles] = useState<Map<string, string>>(new Map());
   
   const statusConfig = statuses.find((s) => s.label === task.status);
   const urgencyConfig = urgencies.find((u) => u.label === task.urgency);
@@ -101,16 +98,6 @@ export const TaskCard = ({
         .eq("task_id", task.id);
       
       setCollaborators(allCollabs || []);
-      
-      // Fetch roles for all relevant users
-      const userIds = [
-        task.assignee_id,
-        task.assigned_by_id,
-        ...(allCollabs || []).map(c => c.user_id)
-      ].filter(Boolean);
-      
-      const rolesMap = await getUserRoles(userIds);
-      setRoles(rolesMap);
     };
     
     fetchCollaboratorInfo();
@@ -197,13 +184,11 @@ export const TaskCard = ({
                               {getInitials(collab.profiles.full_name)}
                             </AvatarFallback>
                           </Avatar>
-                          <RoleBadge role={roles.get(collab.user_id) as any} size="sm" showIcon={false} />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <div className="flex items-center gap-1">
                           {collab.profiles.full_name}
-                          <RoleBadge role={roles.get(collab.user_id) as any} size="sm" />
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -316,7 +301,6 @@ export const TaskCard = ({
             <span className="text-sm text-muted-foreground truncate">
               {task.assignee?.full_name || "Unassigned"}
             </span>
-            <RoleBadge role={roles.get(task.assignee_id) as any} size="sm" />
           </div>
         </div>
 
@@ -324,7 +308,6 @@ export const TaskCard = ({
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <User className="h-4 w-4 text-primary/60" />
           <span className="truncate">{task.assigned_by?.full_name || "Unknown"}</span>
-          <RoleBadge role={roles.get(task.assigned_by_id) as any} size="sm" />
         </div>
       </div>
 
