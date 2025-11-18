@@ -739,7 +739,6 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     Urgency {sortField === "urgency" && <ArrowUpDown className="h-4 w-4" />}
                   </div>
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -767,13 +766,71 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
+                      <div className="relative flex items-center gap-2 group/name">
                         <span>{task.task_name}</span>
                         {task.revision_count > 0 && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                             Rev {task.revision_count}
                           </Badge>
                         )}
+                        
+                        {/* Floating Action Buttons - appear on hover */}
+                        <div 
+                          className="absolute left-full ml-2 flex items-center gap-1 opacity-0 group-hover/name:opacity-100 transition-all duration-200 z-10 bg-background/95 backdrop-blur-sm px-2 py-1 rounded-md shadow-md border"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {userRole !== "project_manager" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => toggleAppreciation(task.id, e)}
+                              className="h-7 w-7 p-0"
+                              title="Appreciate"
+                            >
+                              <Star className={`h-3.5 w-3.5 ${taskAppreciations.get(task.id) ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                            </Button>
+                          )}
+                          {canEdit(task) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditTask(task);
+                              }}
+                              className="h-7 w-7 p-0"
+                              title="Edit Task"
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenNotesDialog(task);
+                            }}
+                            className="h-7 w-7 p-0"
+                            title="View Notes"
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                          </Button>
+                          {task.assignee_id === userId && task.status !== "Approved" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenSubmitDialog(task);
+                              }}
+                              className="h-7 w-7 p-0"
+                              title="Submit Task"
+                            >
+                              <Upload className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{task.clients?.name || "-"}</TableCell>
@@ -828,57 +885,6 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                           disabled={!canEdit(task)}
                         />
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity slide-in-actions">
-                        {userRole !== "project_manager" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => toggleAppreciation(task.id, e)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Star className={`h-4 w-4 ${taskAppreciations.get(task.id) ? "fill-yellow-400 text-yellow-400" : ""}`} />
-                          </Button>
-                        )}
-                        {canEdit(task) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditTask(task);
-                            }}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenNotesDialog(task);
-                          }}
-                          className="h-8 w-8 p-0"
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                        {task.assignee_id === userId && task.status !== "Approved" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenSubmitDialog(task);
-                            }}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Upload className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
                     </TableCell>
                   </TableRow>
                 );
