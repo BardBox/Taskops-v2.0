@@ -17,77 +17,77 @@ serve(async (req) => {
       throw new Error("Prompt is required");
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log(`🎨 Using Gemini 2.5 Flash Image model for: ${name} (${category})`);
+    console.log(`🎨 Using Lovable AI Gemini 2.5 Flash Image model for: ${name} (${category})`);
     console.log(`📝 Prompt: ${prompt.substring(0, 100)}...`);
 
     const startTime = Date.now();
 
-    // Call Google Gemini API to generate image using gemini-2.5-flash-image
+    // Call Lovable AI gateway using Gemini 2.5 Flash Image model
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
         method: "POST",
         headers: {
-          "x-goog-api-key": GEMINI_API_KEY,
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt }
-            ]
-          }]
-        })
-      }
+          model: "google/gemini-2.5-flash-image-preview",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          modalities: ["image", "text"],
+        }),
+      },
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ Gemini API error:", response.status, errorText);
-      
+      console.error("❌ Lovable AI image API error:", response.status, errorText);
+
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Avatar generation is temporarily rate-limited. Please try again in a moment." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
       if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: "Invalid Gemini API key. Please check your configuration." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Avatar generation is not authorized. Please contact support." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
       if (response.status === 403) {
         return new Response(
-          JSON.stringify({ error: "API key doesn't have permission for image generation." }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Avatar generation is currently unavailable for this project." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+
+      throw new Error(`Lovable AI image API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    
-    // Gemini returns base64 encoded images in candidates[0].content.parts[0].inlineData.data
-    const imageBase64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    
-    if (!imageBase64) {
-      console.error("❌ No image data in response:", JSON.stringify(data));
+
+    // Lovable AI returns data URL for the generated image at choices[0].message.images[0].image_url.url
+    const imageUrl: string | undefined =
+      data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageUrl) {
+      console.error("❌ No image URL in response:", JSON.stringify(data));
       throw new Error("No image generated");
     }
 
-    // Convert to data URL format
-    const imageUrl = `data:image/png;base64,${imageBase64}`;
-
     const elapsedTime = Date.now() - startTime;
     console.log(`✅ Successfully generated avatar: ${name} in ${elapsedTime}ms`);
-    console.log(`📊 Image size: ~${Math.round(imageBase64.length / 1024)}KB`);
 
     return new Response(
       JSON.stringify({ imageUrl, name, category }),
