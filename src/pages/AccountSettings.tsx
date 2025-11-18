@@ -7,19 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { AvatarSelector } from "@/components/AvatarSelector";
 
 const AccountSettings = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -54,60 +54,6 @@ const AccountSettings = () => {
     }
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("File size must be less than 2MB");
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      if (avatarUrl) {
-        const oldPath = avatarUrl.split("/").pop();
-        if (oldPath) {
-          await supabase.storage.from("avatars").remove([`${user.id}/${oldPath}`]);
-        }
-      }
-
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl } as any)
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(publicUrl);
-      toast.success("Avatar updated successfully");
-    } catch (error) {
-      console.error("Error uploading avatar:", error);
-      toast.error("Failed to upload avatar");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -117,7 +63,7 @@ const AccountSettings = () => {
     try {
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ full_name: fullName })
+        .update({ full_name: fullName, avatar_url: avatarUrl } as any)
         .eq("id", user.id);
 
       if (profileError) throw profileError;
@@ -205,31 +151,23 @@ const AccountSettings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 mb-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={avatarUrl} alt={fullName} />
+                <AvatarImage src={avatarUrl || ""} alt={fullName} />
                 <AvatarFallback>{fullName.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <Label htmlFor="avatar" className="cursor-pointer">
-                  <div className="flex items-center gap-2 text-sm text-primary hover:text-primary/80">
-                    <Upload className="h-4 w-4" />
-                    {uploading ? "Uploading..." : "Change Avatar"}
-                  </div>
-                </Label>
-                <Input
-                  id="avatar"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                  disabled={uploading}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  JPG, PNG or GIF. Max 2MB.
+                <p className="text-sm font-medium">Profile Avatar</p>
+                <p className="text-xs text-muted-foreground">
+                  Choose from our collection of avatars below
                 </p>
               </div>
             </div>
+
+            <AvatarSelector
+              selectedAvatarUrl={avatarUrl}
+              onAvatarSelect={(url) => setAvatarUrl(url)}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
