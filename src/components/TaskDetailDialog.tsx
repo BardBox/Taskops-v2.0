@@ -19,9 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency, getUserRoles } from "@/utils/roleHelpers";
+import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency } from "@/utils/roleHelpers";
 import { TaskRevisions } from "@/components/TaskRevisions";
-import { RoleBadge } from "@/components/RoleBadge";
 
 interface Task {
   id: string;
@@ -111,7 +110,6 @@ export function TaskDetailDialog({
   const [editHistory, setEditHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isCollaborator, setIsCollaborator] = useState(false);
-  const [roles, setRoles] = useState<Map<string, string>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -363,16 +361,6 @@ export function TaskDetailDialog({
         .eq("task_id", taskId);
       
       setCollaborators(collabData || []);
-      
-      // Fetch roles for all relevant users
-      const userIds = [
-        taskData.assignee_id,
-        taskData.assigned_by_id,
-        ...(collabData || []).map(c => c.user_id)
-      ].filter(Boolean);
-      
-      const rolesMap = await getUserRoles(userIds);
-      setRoles(rolesMap);
     } catch (error: any) {
       toast.error("Failed to fetch task details");
     }
@@ -858,7 +846,6 @@ export function TaskDetailDialog({
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Task Owner</Label>
                   <div className="flex items-center gap-1 mt-1">
                     <p className="text-sm font-medium">{assigneeName}</p>
-                    <RoleBadge role={roles.get(task.assignee_id) as any} size="sm" />
                   </div>
                 </div>
                 
@@ -868,15 +855,14 @@ export function TaskDetailDialog({
                     <Label className="text-xs text-muted-foreground uppercase tracking-wide">Collaborators</Label>
                     <div className="flex gap-2 mt-1 flex-wrap">
                       {collaborators.map((collab: any) => (
-                        <div key={collab.user_id} className="flex items-center gap-1.5 text-sm font-medium">
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                              {(collab.profiles?.full_name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{collab.profiles?.full_name || "Unknown"}</span>
-                          <RoleBadge role={roles.get(collab.user_id) as any} size="sm" />
-                        </div>
+                      <div key={collab.user_id} className="flex items-center gap-1.5 text-sm font-medium">
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                            {(collab.profiles?.full_name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{collab.profiles?.full_name || "Unknown"}</span>
+                      </div>
                       ))}
                     </div>
                   </div>
@@ -886,7 +872,6 @@ export function TaskDetailDialog({
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project Manager</Label>
                   <div className="flex items-center gap-1 mt-1">
                     <p className="text-sm font-medium">{assignedByName}</p>
-                    <RoleBadge role={roles.get(task.assigned_by_id) as any} size="sm" />
                   </div>
                 </div>
                 <div>

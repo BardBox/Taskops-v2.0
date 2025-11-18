@@ -16,8 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
-import { canTeamMemberChangeStatus, getUserRoles } from "@/utils/roleHelpers";
-import { RoleBadge } from "@/components/RoleBadge";
+import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 
 interface Task {
   id: string;
@@ -68,7 +67,6 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">("table");
   const [notifiedTaskIds, setNotifiedTaskIds] = useState<Set<string>>(new Set());
-  const [userRoles, setUserRoles] = useState<Map<string, string>>(new Map());
   
   const { statuses, urgencies } = useStatusUrgency();
 
@@ -234,11 +232,6 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         if (c.user_id) userIds.add(c.user_id);
       });
     });
-
-    if (userIds.size > 0) {
-      const rolesMap = await getUserRoles(Array.from(userIds));
-      setUserRoles(rolesMap);
-    }
 
     setTasks(tasksWithSortedComments);
   };
@@ -786,20 +779,10 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     <TableCell>{task.clients?.name || "-"}</TableCell>
                     <TableCell>{task.projects?.name || "-"}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <span>{task.assignee?.full_name || "-"}</span>
-                        {task.assignee && (
-                          <RoleBadge role={userRoles.get(task.assignee_id) as any} size="sm" showIcon={false} />
-                        )}
-                      </div>
+                      <span>{task.assignee?.full_name || "-"}</span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <span>{task.assigned_by?.full_name || "-"}</span>
-                        {task.assigned_by && (
-                          <RoleBadge role={userRoles.get(task.assigned_by_id) as any} size="sm" showIcon={false} />
-                        )}
-                      </div>
+                      <span>{task.assigned_by?.full_name || "-"}</span>
                     </TableCell>
                     <TableCell>
                       {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}

@@ -24,8 +24,6 @@ import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { RoleBadge } from "@/components/RoleBadge";
-import { getUserRoles } from "@/utils/roleHelpers";
 
 interface TaskDialogProps {
   open: boolean;
@@ -60,7 +58,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [existingImageUrl, setExistingImageUrl] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("");
   const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
-  const [userRoles, setUserRoles] = useState<Map<string, string>>(new Map());
   
   const { statuses, urgencies, isLoading: isLoadingSettings} = useStatusUrgency();
   
@@ -257,15 +254,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
     
     if (data) {
       setUsers(data);
-      
-      // Extract roles into a Map for easy lookup
-      const rolesMap = new Map<string, string>();
-      data.forEach(user => {
-        if (user.user_roles && user.user_roles.length > 0) {
-          rolesMap.set(user.id, user.user_roles[0].role);
-        }
-      });
-      setUserRoles(rolesMap);
     }
   };
 
@@ -557,10 +545,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 <SelectContent>
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{user.full_name}</span>
-                        <RoleBadge role={userRoles.get(user.id) as any} size="sm" showIcon={false} />
-                      </div>
+                      <span>{user.full_name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -590,10 +575,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                     .filter(u => u.id !== formData.assignee_id && !selectedCollaborators.includes(u.id))
                     .map(user => (
                       <SelectItem key={user.id} value={user.id}>
-                        <div className="flex items-center gap-2">
-                          <span>{user.full_name}</span>
-                          <RoleBadge role={userRoles.get(user.id) as any} size="sm" showIcon={false} />
-                        </div>
+                        <span>{user.full_name}</span>
                       </SelectItem>
                     ))
                   }
@@ -608,7 +590,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                     return (
                       <Badge key={collabId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
                         {collab?.full_name}
-                        <RoleBadge role={userRoles.get(collabId) as any} size="sm" showIcon={false} />
                         <Button
                           size="sm"
                           variant="ghost"

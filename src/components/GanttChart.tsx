@@ -6,8 +6,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, differenceInDays, isWithinInterval } from "date-fns";
 import { Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getUserRoles } from "@/utils/roleHelpers";
-import { RoleBadge } from "@/components/RoleBadge";
 
 interface Task {
   id: string;
@@ -40,20 +38,15 @@ interface GanttChartProps {
 }
 
 export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) => {
-  const [roles, setRoles] = useState<Map<string, string>>(new Map());
   const [taskCollaborators, setTaskCollaborators] = useState<Map<string, any[]>>(new Map());
 
-  // Fetch collaborators and roles
+  // Fetch collaborators
   useEffect(() => {
-    const fetchCollaboratorsAndRoles = async () => {
+    const fetchCollaborators = async () => {
       const collabMap = new Map<string, any[]>();
-      const userIds = new Set<string>();
       
       // Fetch collaborators for all tasks
       for (const task of tasks) {
-        userIds.add(task.assignee_id);
-        userIds.add(task.assigned_by_id);
-        
         const { data } = await supabase
           .from("task_collaborators")
           .select("user_id, profiles(full_name, avatar_url)")
@@ -61,18 +54,13 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
         
         if (data) {
           collabMap.set(task.id, data);
-          data.forEach(c => userIds.add(c.user_id));
         }
       }
       
       setTaskCollaborators(collabMap);
-      
-      // Fetch roles
-      const rolesMap = await getUserRoles(Array.from(userIds));
-      setRoles(rolesMap);
     };
     
-    fetchCollaboratorsAndRoles();
+    fetchCollaborators();
   }, [tasks]);
 
   const getInitials = (name: string) => {
@@ -201,7 +189,6 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
                       <Badge variant="secondary" className="text-xs">
                         {task.assignee?.full_name}
                       </Badge>
-                      <RoleBadge role={roles.get(task.assignee_id) as any} size="sm" showIcon={false} />
                     </div>
                     
                     {/* Show collaborator avatars */}
@@ -221,7 +208,6 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
                               <TooltipContent>
                                 <div className="flex items-center gap-1">
                                   {collab.profiles.full_name}
-                                  <RoleBadge role={roles.get(collab.user_id) as any} size="sm" />
                                 </div>
                               </TooltipContent>
                             </Tooltip>
