@@ -26,8 +26,8 @@ interface Task {
   reference_link_3: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
-  assignee: { full_name: string } | null;
-  assigned_by: { full_name: string } | null;
+  assignee: { full_name: string; avatar_url: string | null } | null;
+  assigned_by: { full_name: string; avatar_url: string | null } | null;
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
 
@@ -185,10 +185,14 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
                     {task.task_name}
                   </div>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <div className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-xs">
-                        {task.assignee?.full_name}
-                      </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Avatar className="h-5 w-5 border border-border">
+                        <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                        <AvatarFallback className="text-[8px]">
+                          {task.assignee ? getInitials(task.assignee.full_name) : "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-medium">{task.assignee?.full_name}</span>
                     </div>
                     
                     {/* Show collaborator avatars */}

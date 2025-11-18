@@ -96,7 +96,9 @@ export function TaskDetailDialog({
   const [clientName, setClientName] = useState("");
   const [projectName, setProjectName] = useState("");
   const [assigneeName, setAssigneeName] = useState("");
+  const [assigneeAvatar, setAssigneeAvatar] = useState("");
   const [assignedByName, setAssignedByName] = useState("");
+  const [assignedByAvatar, setAssignedByAvatar] = useState("");
   const [editingAssetLink, setEditingAssetLink] = useState(false);
   const [assetLinkValue, setAssetLinkValue] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
@@ -332,17 +334,19 @@ export function TaskDetailDialog({
 
       const { data: assigneeData } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, avatar_url")
         .eq("id", taskData.assignee_id)
         .single();
       setAssigneeName(assigneeData?.full_name || "");
+      setAssigneeAvatar(assigneeData?.avatar_url || "");
 
       const { data: assignedByData } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, avatar_url")
         .eq("id", taskData.assigned_by_id)
         .single();
       setAssignedByName(assignedByData?.full_name || "");
+      setAssignedByAvatar(assignedByData?.avatar_url || "");
 
       // Check if user is a collaborator
       const { data: collabCheck } = await supabase
@@ -844,7 +848,13 @@ export function TaskDetailDialog({
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Task Owner</Label>
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-2 mt-1">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={assigneeAvatar || undefined} alt={assigneeName} />
+                      <AvatarFallback className="text-xs">
+                        {assigneeName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
                     <p className="text-sm font-medium">{assigneeName}</p>
                   </div>
                 </div>
@@ -870,7 +880,13 @@ export function TaskDetailDialog({
                 
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project Manager</Label>
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-2 mt-1">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={assignedByAvatar || undefined} alt={assignedByName} />
+                      <AvatarFallback className="text-xs">
+                        {assignedByName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
                     <p className="text-sm font-medium">{assignedByName}</p>
                   </div>
                 </div>

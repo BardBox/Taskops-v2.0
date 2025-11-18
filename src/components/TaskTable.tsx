@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FilterState } from "@/components/GlobalFilters";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskDialog } from "./TaskDialog";
 import { TaskDetailDialog } from "./TaskDetailDialog";
@@ -836,10 +837,26 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     <TableCell>{task.clients?.name || "-"}</TableCell>
                     <TableCell>{task.projects?.name || "-"}</TableCell>
                     <TableCell>
-                      <span>{task.assignee?.full_name || "-"}</span>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                          <AvatarFallback className="text-xs">
+                            {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{task.assignee?.full_name || "-"}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <span>{task.assigned_by?.full_name || "-"}</span>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
+                          <AvatarFallback className="text-xs">
+                            {task.assigned_by?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{task.assigned_by?.full_name || "-"}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}
