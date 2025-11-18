@@ -984,12 +984,12 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
           }
           onUrgencyChange={userRole !== "team_member" ? handleUrgencyChange : () => {}}
           onAppreciationToggle={toggleAppreciation}
-          onSubmit={() => {
-            setSelectedTaskForSubmit(task as any);
+          onSubmit={(taskData: any) => {
+            setSelectedTaskForSubmit(taskData);
             setSubmitDialogOpen(true);
           }}
-          onNotesClick={() => {
-            setSelectedTask(task as any);
+          onNotesClick={(taskData: any) => {
+            setSelectedTask(taskData);
             setNotesDialogOpen(true);
           }}
         />
