@@ -88,6 +88,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         ]);
 
         if (task) {
+          // Fetch projects FIRST before setting form data
+          if (task.client_id) {
+            await fetchProjects(task.client_id);
+          }
+          
           // Fetch existing collaborators
           const { data: collabData } = await supabase
             .from("task_collaborators")
@@ -98,7 +103,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
             setSelectedCollaborators(collabData.map(c => c.user_id));
           }
 
-          // Set form data AFTER options are loaded
+          // Set form data AFTER projects are loaded
           setFormData({
             task_name: task.task_name || "",
             client_id: task.client_id || "",
@@ -115,10 +120,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           
           setExistingImageUrl(task.reference_image || "");
           setImagePreview(task.reference_image || "");
-          
-          if (task.client_id) {
-            await fetchProjects(task.client_id);
-          }
         } else {
           // Creating new task - set default values
           const tomorrow = new Date();
