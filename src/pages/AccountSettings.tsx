@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { Separator } from "@/components/ui/separator";
 
 const AccountSettings = () => {
   const navigate = useNavigate();
@@ -23,6 +24,10 @@ const AccountSettings = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Custom avatar generation
+  const [customAvatarPrompt, setCustomAvatarPrompt] = useState("");
+  const [generatingCustom, setGeneratingCustom] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -55,6 +60,63 @@ const AccountSettings = () => {
     }
   };
 
+  const handleGenerateCustomAvatar = async () => {
+    if (!user) return;
+    
+    if (!customAvatarPrompt.trim()) {
+      toast.error("Please describe your avatar");
+      return;
+    }
+
+    setGeneratingCustom(true);
+
+    try {
+      const fullPrompt = `${customAvatarPrompt}, high quality avatar portrait, professional digital art`;
+      
+      const { data, error } = await supabase.functions.invoke('generate-avatar', {
+        body: { 
+          prompt: fullPrompt, 
+          name: `custom_${user.id.substring(0, 8)}`, 
+          category: "human" 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        // Convert base64 to blob
+        const base64Response = await fetch(data.imageUrl);
+        const blob = await base64Response.blob();
+        
+        // Upload to storage with user-specific path
+        const fileName = `custom_${user.id}_${Date.now()}.png`;
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, blob, {
+            contentType: 'image/png',
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        // Update avatar URL
+        setAvatarUrl(publicUrl);
+        setCustomAvatarPrompt("");
+        toast.success("Custom avatar generated successfully!");
+      }
+    } catch (error: any) {
+      console.error('Error generating custom avatar:', error);
+      toast.error(error.message || 'Failed to generate avatar');
+    } finally {
+      setGeneratingCustom(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -150,7 +212,7 @@ const AccountSettings = () => {
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>
-              Update your personal information
+              Update your personal information and avatar
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -162,7 +224,7 @@ const AccountSettings = () => {
               <div className="flex-1">
                 <p className="text-sm font-medium">Profile Avatar</p>
                 <p className="text-xs text-muted-foreground">
-                  Choose from our collection of avatars below
+                  Choose from our library or create your own custom avatar
                 </p>
               </div>
             </div>
@@ -171,6 +233,53 @@ const AccountSettings = () => {
               selectedAvatarUrl={avatarUrl}
               onAvatarSelect={(url) => setAvatarUrl(url)}
             />
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div>
+                <Label className="text-base font-semibold">Create Custom Avatar</Label>
+                <p className="text-sm text-muted-foreground mt-1 mb-3">
+                  Describe your ideal avatar in a word or sentence, and AI will generate it for you
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Input
+                  value={customAvatarPrompt}
+                  onChange={(e) => setCustomAvatarPrompt(e.target.value)}
+                  placeholder="e.g., 'friendly person with curly hair and glasses'"
+                  disabled={generatingCustom}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !generatingCustom) {
+                      handleGenerateCustomAvatar();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleGenerateCustomAvatar}
+                  disabled={generatingCustom || !customAvatarPrompt.trim()}
+                  className="shrink-0"
+                >
+                  {generatingCustom ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Examples: "cheerful person with red hair", "professional in suit", "creative artist with colorful style"
+              </p>
+            </div>
+
+            <Separator />
 
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
@@ -232,19 +341,23 @@ const AccountSettings = () => {
               <Input
                 id="confirm-password"
                 type="password"
-                placeholder="Confirm new password"
+                placeholder="Confirm your new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
-            <Button onClick={handleChangePassword} disabled={changingPassword} className="w-full">
+            <Button 
+              onClick={handleChangePassword} 
+              disabled={changingPassword || !newPassword || !confirmPassword}
+              className="w-full"
+            >
               {changingPassword ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Updating...
                 </>
               ) : (
-                "Update Password"
+                "Change Password"
               )}
             </Button>
           </CardContent>
