@@ -663,7 +663,7 @@ export default function AdminUsers() {
       </Dialog>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
@@ -723,8 +723,8 @@ export default function AdminUsers() {
             </div>
           )}
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <div className="flex gap-2 sm:mr-auto">
+          <DialogFooter className="flex flex-col gap-3 sm:gap-2">
+            <div className="flex flex-wrap gap-2">
               {isOwner && (
                 <Button 
                   variant="outline" 
@@ -732,6 +732,7 @@ export default function AdminUsers() {
                     setEditDialogOpen(false);
                     setChangePasswordDialogOpen(true);
                   }}
+                  className="flex-1 sm:flex-initial"
                 >
                   <KeyRound className="h-4 w-4 mr-2" />
                   Change Password
@@ -740,16 +741,17 @@ export default function AdminUsers() {
               <Button 
                 variant="outline" 
                 onClick={() => editingUser && handleResetPassword(editingUser.id)}
+                className="flex-1 sm:flex-initial"
               >
                 <KeyRound className="h-4 w-4 mr-2" />
                 Reset Password
               </Button>
             </div>
-            <div className="flex gap-2 sm:ml-auto">
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={handleUpdateUser}>Update User</Button>
+              <Button onClick={handleUpdateUser} className="flex-1">Update User</Button>
             </div>
           </DialogFooter>
         </DialogContent>
