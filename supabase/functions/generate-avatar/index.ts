@@ -17,34 +17,38 @@ serve(async (req) => {
       throw new Error("Prompt is required");
     }
 
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
-    console.log(`Generating avatar: ${name} (${category})`);
+    console.log(`🎨 Using Gemini 2.5 Flash Image model for: ${name} (${category})`);
+    console.log(`📝 Prompt: ${prompt.substring(0, 100)}...`);
 
-    // Call OpenAI API to generate image using gpt-image-1
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024",
-        background: "transparent",
-        output_format: "png",
-        quality: "high"
-      })
-    });
+    const startTime = Date.now();
+
+    // Call Google Gemini API to generate image using gemini-2.5-flash-image
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": GEMINI_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt }
+            ]
+          }]
+        })
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
+      console.error("❌ Gemini API error:", response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -54,27 +58,36 @@ serve(async (req) => {
       }
       if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: "Invalid OpenAI API key. Please check your configuration." }),
+          JSON.stringify({ error: "Invalid Gemini API key. Please check your configuration." }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      if (response.status === 403) {
+        return new Response(
+          JSON.stringify({ error: "API key doesn't have permission for image generation." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
     
-    // gpt-image-1 returns base64 encoded images
-    const imageBase64 = data.data?.[0]?.b64_json;
+    // Gemini returns base64 encoded images in candidates[0].content.parts[0].inlineData.data
+    const imageBase64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     
     if (!imageBase64) {
+      console.error("❌ No image data in response:", JSON.stringify(data));
       throw new Error("No image generated");
     }
 
     // Convert to data URL format
     const imageUrl = `data:image/png;base64,${imageBase64}`;
 
-    console.log(`Successfully generated avatar: ${name}`);
+    const elapsedTime = Date.now() - startTime;
+    console.log(`✅ Successfully generated avatar: ${name} in ${elapsedTime}ms`);
+    console.log(`📊 Image size: ~${Math.round(imageBase64.length / 1024)}KB`);
 
     return new Response(
       JSON.stringify({ imageUrl, name, category }),
@@ -82,7 +95,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Error in generate-avatar function:", error);
+    console.error("💥 Error in generate-avatar function:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
