@@ -28,6 +28,7 @@ const AccountSettings = () => {
   // Custom avatar generation
   const [customAvatarPrompt, setCustomAvatarPrompt] = useState("");
   const [generatingCustom, setGeneratingCustom] = useState(false);
+  const [avatarRefreshTrigger, setAvatarRefreshTrigger] = useState(0);
 
   useEffect(() => {
     checkAuth();
@@ -60,6 +61,24 @@ const AccountSettings = () => {
     }
   };
 
+  // Detect category from prompt keywords
+  const detectCategory = (prompt: string): string => {
+    const lowerPrompt = prompt.toLowerCase();
+    if (lowerPrompt.includes('dragon') || lowerPrompt.includes('elf') || lowerPrompt.includes('wizard') || 
+        lowerPrompt.includes('fairy') || lowerPrompt.includes('fantasy') || lowerPrompt.includes('mythical')) {
+      return 'fantasy';
+    }
+    if (lowerPrompt.includes('cat') || lowerPrompt.includes('dog') || lowerPrompt.includes('bird') || 
+        lowerPrompt.includes('lion') || lowerPrompt.includes('animal') || lowerPrompt.includes('wolf')) {
+      return 'animals';
+    }
+    if (lowerPrompt.includes('abstract') || lowerPrompt.includes('geometric') || lowerPrompt.includes('pattern') ||
+        lowerPrompt.includes('colorful') || lowerPrompt.includes('artistic')) {
+      return 'abstract';
+    }
+    return 'human';
+  };
+
   const handleGenerateCustomAvatar = async () => {
     if (!user) return;
     
@@ -72,12 +91,13 @@ const AccountSettings = () => {
 
     try {
       const fullPrompt = `${customAvatarPrompt}, high quality avatar portrait, professional digital art`;
+      const detectedCategory = detectCategory(customAvatarPrompt);
       
       const { data, error } = await supabase.functions.invoke('generate-avatar', {
         body: { 
           prompt: fullPrompt, 
           name: `custom_${user.id.substring(0, 8)}`, 
-          category: "human" 
+          category: detectedCategory 
         }
       });
 
@@ -105,10 +125,28 @@ const AccountSettings = () => {
           .from('avatars')
           .getPublicUrl(fileName);
 
+        // Save to default_avatars table - twice (Custom + detected category)
+        const avatarName = `Custom: ${customAvatarPrompt.slice(0, 30)}${customAvatarPrompt.length > 30 ? '...' : ''}`;
+        
+        // Save with "Custom" category
+        await supabase.from('default_avatars').insert({
+          name: avatarName,
+          image_url: publicUrl,
+          category: 'custom'
+        });
+
+        // Save with detected category
+        await supabase.from('default_avatars').insert({
+          name: avatarName,
+          image_url: publicUrl,
+          category: detectedCategory
+        });
+
         // Update avatar URL
         setAvatarUrl(publicUrl);
         setCustomAvatarPrompt("");
-        toast.success("Custom avatar generated successfully!");
+        setAvatarRefreshTrigger(prev => prev + 1); // Trigger avatar list refresh
+        toast.success("Custom avatar generated and saved for everyone to use!");
       }
     } catch (error: any) {
       console.error('Error generating custom avatar:', error);
@@ -232,6 +270,7 @@ const AccountSettings = () => {
             <AvatarSelector
               selectedAvatarUrl={avatarUrl}
               onAvatarSelect={(url) => setAvatarUrl(url)}
+              refreshTrigger={avatarRefreshTrigger}
             />
 
             <Separator />
