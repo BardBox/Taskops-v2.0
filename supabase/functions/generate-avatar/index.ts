@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,64 +18,27 @@ serve(async (req) => {
       throw new Error("Prompt is required");
     }
 
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+    const HUGGING_FACE_ACCESS_TOKEN = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
+    if (!HUGGING_FACE_ACCESS_TOKEN) {
+      throw new Error("HUGGING_FACE_ACCESS_TOKEN is not configured");
     }
 
-    console.log(`🎨 Using Lovable AI image generation for: ${name} (${category})`);
+    console.log(`🎨 Using Hugging Face image generation for: ${name} (${category})`);
     console.log(`📝 Prompt: ${prompt.substring(0, 100)}...`);
 
     const startTime = Date.now();
 
-    // Use OpenAI gpt-image-1 for image generation
-    const response = await fetch(
-      "https://api.openai.com/v1/images/generations",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-image-1",
-          prompt,
-          n: 1,
-          size: "1024x1024",
-        }),
-      }
-    );
+    // Use Hugging Face FLUX.1-schnell for fast, high-quality image generation
+    const hf = new HfInference(HUGGING_FACE_ACCESS_TOKEN);
+    
+    const image = await hf.textToImage({
+      inputs: prompt,
+      model: 'black-forest-labs/FLUX.1-schnell',
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API Error: ${response.status} - ${errorText}`);
-
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({
-            error: "Image generation failed due to OpenAI billing or quota limits. Please check your OpenAI account.",
-          }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      throw new Error(`OpenAI Images API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const base64 = data?.data?.[0]?.b64_json;
-
-    if (!base64) {
-      throw new Error("No image returned from OpenAI");
-    }
-
+    // Convert the blob to a base64 string
+    const arrayBuffer = await image.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
     const imageUrl = `data:image/png;base64,${base64}`;
 
     const elapsedTime = Date.now() - startTime;
@@ -88,14 +52,6 @@ serve(async (req) => {
   } catch (error) {
     console.error("💥 Error in generate-avatar function:", error);
     
-    // Handle rate limiting
-    if (error instanceof Error && error.message.includes("429")) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
