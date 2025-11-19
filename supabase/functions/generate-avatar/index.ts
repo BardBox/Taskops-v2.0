@@ -17,27 +17,34 @@ serve(async (req) => {
       throw new Error("Prompt is required");
     }
 
-    const HUGGING_FACE_ACCESS_TOKEN = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
-    if (!HUGGING_FACE_ACCESS_TOKEN) {
-      throw new Error("HUGGING_FACE_ACCESS_TOKEN is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log(`🎨 Using Hugging Face FLUX.1-schnell model for: ${name} (${category})`);
+    console.log(`🎨 Using Lovable AI image generation for: ${name} (${category})`);
     console.log(`📝 Prompt: ${prompt.substring(0, 100)}...`);
 
     const startTime = Date.now();
 
-    // Use the new Hugging Face endpoint directly
+    // Use Lovable AI Gateway for image generation
     const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${HUGGING_FACE_ACCESS_TOKEN}`,
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inputs: prompt,
+          model: "google/gemini-2.5-flash-image-preview",
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          modalities: ["image", "text"]
         }),
       }
     );
@@ -46,7 +53,6 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error(`API Error: ${response.status} - ${errorText}`);
 
-      // Surface specific provider errors instead of masking them as 500s
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
@@ -57,28 +63,21 @@ serve(async (req) => {
       if (response.status === 402) {
         return new Response(
           JSON.stringify({
-            error:
-              "Image generation credits have been exhausted for the configured Hugging Face account. Please update your Hugging Face plan or try again later.",
+            error: "Image generation credits exhausted. Please add credits in Settings → Usage.",
           }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      throw new Error(`Hugging Face API error: ${response.status}`);
+      throw new Error(`Lovable AI API error: ${response.status}`);
     }
 
-    // Get the image blob
-    const imageBlob = await response.blob();
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    // Convert blob to base64 without blowing the call stack on large buffers
-    const arrayBuffer = await imageBlob.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    if (!imageUrl) {
+      throw new Error("No image returned from AI");
     }
-    const base64 = btoa(binary);
-    const imageUrl = `data:image/png;base64,${base64}`;
 
     const elapsedTime = Date.now() - startTime;
     console.log(`✅ Successfully generated avatar: ${name} in ${elapsedTime}ms`);
