@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Award, TrendingUp, Trophy, Medal, BarChart3, Star, Calendar } from "lucide-react";
+import { Award, TrendingUp, Trophy, Medal, BarChart3, Star, Calendar, Download } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,25 +18,6 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { IndividualPerformance } from "@/components/IndividualPerformance";
 import { format } from "date-fns";
 import { exportToPDF } from "@/utils/pdfExport";
-import { Download } from "lucide-react";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { IndividualPerformance } from "@/components/IndividualPerformance";
-import { format } from "date-fns";
-import { exportToPDF } from "@/utils/pdfExport";
-import { Download } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -397,69 +378,8 @@ const Analytics = () => {
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/bardbox-logo.png" 
-              alt="BardBox" 
-              className="h-10 w-auto object-contain"
-            />
-            <div>
-              <h1 className="text-xl font-bold">Performance Metrics</h1>
-              <p className="text-sm text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationCenter userId={user?.id || ""} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar>
-                    <AvatarFallback className="bg-secondary text-secondary-foreground">
-                      {user?.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <Home className="mr-2 h-4 w-4" />
-                  Dashboard
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/analytics")}>
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Performance Metrics
-                </DropdownMenuItem>
-                {hasAdminAccess && (
-                  <DropdownMenuItem onClick={() => navigate("/admin")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Admin Panel
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => navigate("/account-settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Account Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/preferences")}>
-                  <Sliders className="mr-2 h-4 w-4" />
-                  Preferences
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
         <Breadcrumbs />
         
         {/* Show Individual Performance or Overview */}
@@ -756,8 +676,8 @@ const Analytics = () => {
             </div>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

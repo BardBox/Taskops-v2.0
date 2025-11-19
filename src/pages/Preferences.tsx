@@ -157,18 +157,11 @@ const Preferences = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <h1 className="text-xl font-bold">Preferences</h1>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 max-w-2xl space-y-6">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
+        <Breadcrumbs />
+        
+        <div className="max-w-2xl mx-auto space-y-6">
         {/* Dashboard View */}
         <Card>
           <CardHeader>
@@ -581,8 +574,9 @@ const Preferences = () => {
             )}
           </Button>
         </div>
-      </main>
-    </div>
+        </div>
+      </div>
+    </MainLayout>
   );
 };
 
