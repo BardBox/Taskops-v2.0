@@ -125,7 +125,8 @@ const AccountSettings = () => {
     try {
       const fullPrompt = `${customAvatarPrompt}, high quality avatar portrait, professional digital art`;
       const detectedCategory = detectCategory(customAvatarPrompt);
-      const smartName = generateSmartName(customAvatarPrompt);
+      const firstName = fullName.split(' ')[0] || 'User';
+      const smartName = `${generateSmartName(customAvatarPrompt)} - ${firstName}`;
       
       const { data, error } = await supabase.functions.invoke('generate-avatar', {
         body: { 
