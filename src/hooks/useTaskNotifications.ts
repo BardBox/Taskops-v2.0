@@ -182,9 +182,9 @@ export const useTaskNotifications = (userId: string | undefined) => {
             let description = `"${newTask.task_name}" has been updated`;
             
             if (oldTask.status !== newTask.status) {
-              description = `Status changed to "${newTask.status}"`;
+              description = `"${newTask.task_name}" status changed to "${newTask.status}"`;
             } else if (oldTask.urgency !== newTask.urgency) {
-              description = `Urgency changed to "${newTask.urgency}"`;
+              description = `"${newTask.task_name}" urgency changed to "${newTask.urgency}"`;
             }
 
             // Store notification in database
