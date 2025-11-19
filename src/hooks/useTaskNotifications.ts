@@ -25,6 +25,38 @@ interface UserPreferences {
   notifications_sound_type: string;
 }
 
+// Helper function to get all PO and PM user IDs
+const getManagerUserIds = async (): Promise<string[]> => {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("user_id")
+    .in("role", ["project_owner", "project_manager"]);
+  
+  return data?.map(r => r.user_id) || [];
+};
+
+// Helper function to create notifications for managers and assignee
+const createNotifications = async (
+  assigneeId: string,
+  title: string,
+  message: string,
+  taskId: string,
+  type: string = "info"
+) => {
+  const managerIds = await getManagerUserIds();
+  const recipientIds = [...new Set([assigneeId, ...managerIds])]; // Deduplicate in case assignee is also a manager
+  
+  const notifications = recipientIds.map(recipientId => ({
+    user_id: recipientId,
+    title,
+    message,
+    type,
+    task_id: taskId,
+  }));
+  
+  await supabase.from("notifications" as any).insert(notifications);
+};
+
 export const useTaskNotifications = (userId: string | undefined) => {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
@@ -88,14 +120,14 @@ export const useTaskNotifications = (userId: string | undefined) => {
 
             const assignorName = assignorProfile?.full_name || "Someone";
 
-            // Store notification in database
-            await supabase.from("notifications" as any).insert({
-              user_id: userId,
-              title: "New Task Assigned",
-              message: `${assignorName} assigned you "${newTask.task_name}"`,
-              type: "info",
-              task_id: newTask.id,
-            });
+            // Store notification in database for assignee and all managers
+            await createNotifications(
+              newTask.assignee_id,
+              "New Task Assigned",
+              `${assignorName} assigned you "${newTask.task_name}"`,
+              newTask.id,
+              "info"
+            );
 
             // Show toast notification
             toast.info(`New Task Assigned`, {
@@ -133,44 +165,44 @@ export const useTaskNotifications = (userId: string | undefined) => {
           const oldTask = payload.old as Task;
           const newTask = payload.new as Task;
 
-          // Only notify if task belongs to current user
-          if (newTask.assignee_id !== userId) return;
-
-          // Check if status changed to completed
+          // Check if status changed to completed - notify assignee and managers
           if (
             oldTask.status !== "Approved" &&
             newTask.status === "Approved" &&
             preferences.notifications_task_completed
           ) {
-            // Store notification in database
-            await supabase.from("notifications" as any).insert({
-              user_id: userId,
-              title: "Task Completed",
-              message: `"${newTask.task_name}" has been approved`,
-              type: "success",
-              task_id: newTask.id,
-            });
+            // Store notification in database for assignee and all managers
+            await createNotifications(
+              newTask.assignee_id,
+              "Task Completed",
+              `"${newTask.task_name}" has been approved`,
+              newTask.id,
+              "success"
+            );
 
-            toast.success(`Task Completed`, {
-              description: `"${newTask.task_name}" has been approved`,
-              duration: 5000,
-            });
-
-            // Show browser notification
-            if (getNotificationPermission() === "granted") {
-              showBrowserNotification({
-                title: "Task Completed",
-                body: `"${newTask.task_name}" has been approved`,
-                tag: `task-${newTask.id}`,
+            // Show toast/browser notifications only to current user if they're the assignee
+            if (newTask.assignee_id === userId) {
+              toast.success(`Task Completed`, {
+                description: `"${newTask.task_name}" has been approved`,
+                duration: 5000,
               });
-            }
 
-            // Play notification sound
-            if (preferences.notifications_sound_enabled) {
-              playNotificationSound(
-                preferences.notifications_sound_type as any,
-                preferences.notifications_sound_volume
-              );
+              // Show browser notification
+              if (getNotificationPermission() === "granted") {
+                showBrowserNotification({
+                  title: "Task Completed",
+                  body: `"${newTask.task_name}" has been approved`,
+                  tag: `task-${newTask.id}`,
+                });
+              }
+
+              // Play notification sound
+              if (preferences.notifications_sound_enabled) {
+                playNotificationSound(
+                  preferences.notifications_sound_type as any,
+                  preferences.notifications_sound_volume
+                );
+              }
             }
           }
           // Check for other updates
@@ -187,14 +219,14 @@ export const useTaskNotifications = (userId: string | undefined) => {
               description = `"${newTask.task_name}" urgency changed to "${newTask.urgency}"`;
             }
 
-            // Store notification in database
-            await supabase.from("notifications" as any).insert({
-              user_id: userId,
-              title: "Task Updated",
-              message: description,
-              type: "info",
-              task_id: newTask.id,
-            });
+            // Store notification in database for assignee and all managers
+            await createNotifications(
+              newTask.assignee_id,
+              "Task Updated",
+              description,
+              newTask.id,
+              "info"
+            );
 
             // Also notify collaborators
             const { data: collabs } = await supabase
@@ -213,26 +245,34 @@ export const useTaskNotifications = (userId: string | undefined) => {
               await supabase.from("notifications").insert(collabNotifications);
             }
 
-            toast.info(`Task Updated`, {
-              description,
-              duration: 5000,
-            });
+            // Show toast/browser notifications only to current user if they're involved
+            const managerIds = await getManagerUserIds();
+            const isInvolved = newTask.assignee_id === userId || 
+                               collabs?.some(c => c.user_id === userId) ||
+                               managerIds.includes(userId);
 
-            // Show browser notification
-            if (getNotificationPermission() === "granted") {
-              showBrowserNotification({
-                title: "Task Updated",
-                body: description,
-                tag: `task-${newTask.id}`,
+            if (isInvolved) {
+              toast.info(`Task Updated`, {
+                description,
+                duration: 5000,
               });
-            }
 
-            // Play notification sound
-            if (preferences.notifications_sound_enabled) {
-              playNotificationSound(
-                preferences.notifications_sound_type as any,
-                preferences.notifications_sound_volume
-              );
+              // Show browser notification
+              if (getNotificationPermission() === "granted") {
+                showBrowserNotification({
+                  title: "Task Updated",
+                  body: description,
+                  tag: `task-${newTask.id}`,
+                });
+              }
+
+              // Play notification sound
+              if (preferences.notifications_sound_enabled) {
+                playNotificationSound(
+                  preferences.notifications_sound_type as any,
+                  preferences.notifications_sound_volume
+                );
+              }
             }
           }
         }
