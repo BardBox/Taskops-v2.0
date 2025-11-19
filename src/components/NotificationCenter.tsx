@@ -12,6 +12,8 @@ import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { TaskDetailDialog } from "@/components/TaskDetailDialog";
+import { cn } from "@/lib/utils";
 
 interface Notification {
   id: string;
@@ -31,9 +33,13 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string>("");
 
   useEffect(() => {
     fetchNotifications();
+    fetchUserRole();
 
     // Set up realtime subscription for new notifications
     const channel = supabase
@@ -92,6 +98,32 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
       console.error("Error fetching notifications:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserRole = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      setUserRole(data?.role || "team_member");
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      setUserRole("team_member");
+    }
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (notification.task_id) {
+      setSelectedTaskId(notification.task_id);
+      setTaskDialogOpen(true);
+      if (!notification.is_read) {
+        markAsRead(notification.id);
+      }
     }
   };
 
@@ -169,7 +201,8 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   };
 
   return (
-    <DropdownMenu>
+    <>
+      <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-primary">
@@ -216,9 +249,12 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 hover:bg-muted/50 transition-colors ${
-                    !notification.is_read ? "bg-muted/30" : ""
-                  }`}
+                  className={cn(
+                    "p-4 transition-colors",
+                    !notification.is_read ? "bg-muted/30" : "",
+                    notification.task_id ? "hover:bg-muted/50 cursor-pointer" : "hover:bg-muted/30"
+                  )}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 space-y-1">
@@ -250,7 +286,10 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => markAsRead(notification.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification.id);
+                          }}
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -259,7 +298,10 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        onClick={() => deleteNotification(notification.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -272,5 +314,14 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
         </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
+
+      <TaskDetailDialog
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        taskId={selectedTaskId}
+        userRole={userRole}
+        userId={userId}
+      />
+    </>
   );
 };
