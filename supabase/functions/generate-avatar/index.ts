@@ -45,15 +45,39 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API Error: ${response.status} - ${errorText}`);
+
+      // Surface specific provider errors instead of masking them as 500s
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Image generation credits have been exhausted for the configured Hugging Face account. Please update your Hugging Face plan or try again later.",
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       throw new Error(`Hugging Face API error: ${response.status}`);
     }
 
     // Get the image blob
     const imageBlob = await response.blob();
-    
-    // Convert blob to base64
+
+    // Convert blob to base64 without blowing the call stack on large buffers
     const arrayBuffer = await imageBlob.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
     const imageUrl = `data:image/png;base64,${base64}`;
 
     const elapsedTime = Date.now() - startTime;
