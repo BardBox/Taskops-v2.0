@@ -27,18 +27,20 @@ serve(async (req) => {
 
     const startTime = Date.now();
 
-    // Use Hugging Face FLUX.1-schnell with the new API endpoint
-    const response = await fetch('https://router.huggingface.co/hf-inference/text-to-image', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HUGGING_FACE_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'black-forest-labs/FLUX.1-schnell',
-        inputs: prompt,
-      }),
-    });
+    // Use Hugging Face Inference API with FLUX.1-schnell model
+    const response = await fetch(
+      'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HUGGING_FACE_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
