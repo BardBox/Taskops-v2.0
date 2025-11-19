@@ -126,13 +126,30 @@ const AccountSettings = () => {
       const fullPrompt = `${customAvatarPrompt}, high quality avatar portrait, professional digital art`;
       const detectedCategory = detectCategory(customAvatarPrompt);
       const firstName = fullName.split(' ')[0] || 'User';
-      const smartName = `${generateSmartName(customAvatarPrompt)} - ${firstName}`;
+      
+      // Generate intelligent name using AI
+      let smartName = generateSmartName(customAvatarPrompt); // Fallback
+      try {
+        const { data: nameData, error: nameError } = await supabase.functions.invoke('generate-avatar-name', {
+          body: { prompt: customAvatarPrompt }
+        });
+        
+        if (!nameError && nameData?.name) {
+          smartName = nameData.name;
+          console.log("🎨 AI-generated name:", smartName);
+        }
+      } catch (nameErr) {
+        console.warn("Failed to generate AI name, using fallback:", nameErr);
+      }
+      
+      // Append user's first name
+      const finalName = `${smartName} - ${firstName}`;
       
       const { data, error } = await supabase.functions.invoke('generate-avatar', {
         body: { 
-          prompt: fullPrompt, 
-          name: smartName, 
-          category: detectedCategory 
+          prompt: fullPrompt,
+          name: finalName,
+          category: detectedCategory
         }
       });
 
