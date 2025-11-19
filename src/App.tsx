@@ -24,6 +24,7 @@ import AdminSettings from "./pages/admin/Settings";
 import AvatarGenerator from "./pages/admin/AvatarGenerator";
 import PMPerformance from "./pages/analytics/PMPerformance";
 import ClientPerformance from "./pages/analytics/ClientPerformance";
+import About from "./pages/About";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="/analytics/client" element={<ClientPerformance />} />
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="/preferences" element={<Preferences />} />
+          <Route path="/about" element={<About />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
