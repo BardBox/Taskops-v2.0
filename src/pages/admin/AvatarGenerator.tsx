@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Trash2, Sparkles, CheckCircle2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // 100 diverse avatar prompts across 8 distinct categories
@@ -125,12 +126,65 @@ const AVATAR_LIBRARY = [
   { name: "Volcanic Fire", prompt: "active volcano, lava flow, natural power", category: "nature" },
 ];
 
+// Personality templates for generating unique avatars per category
+const PERSONALITY_TEMPLATES = {
+  human: [
+    "professional", "casual", "elegant", "sporty", "artistic", 
+    "intellectual", "cheerful", "serious", "friendly", "confident",
+    "creative", "wise", "energetic", "calm", "bold",
+    "gentle", "determined", "curious", "warm", "sophisticated"
+  ],
+  animal: [
+    "playful", "wise", "fierce", "gentle", "curious",
+    "loyal", "mischievous", "noble", "friendly", "mysterious",
+    "energetic", "calm", "brave", "silly", "majestic",
+    "clever", "strong", "swift", "cunning", "graceful"
+  ],
+  fantasy: [
+    "mystical", "ancient", "powerful", "ethereal", "wise",
+    "magical", "enchanted", "legendary", "divine", "mythical",
+    "arcane", "celestial", "mysterious", "noble", "fierce",
+    "benevolent", "dark", "radiant", "shadowy", "transcendent"
+  ],
+  superhero: [
+    "brave", "mighty", "swift", "vigilant", "noble",
+    "fearless", "powerful", "heroic", "determined", "righteous",
+    "protective", "valiant", "legendary", "unstoppable", "brilliant",
+    "inspiring", "steadfast", "invincible", "champion", "guardian"
+  ],
+  supervillain: [
+    "cunning", "menacing", "mysterious", "powerful", "calculating",
+    "ruthless", "sinister", "dark", "chaotic", "enigmatic",
+    "scheming", "formidable", "treacherous", "malevolent", "devious",
+    "ambitious", "twisted", "notorious", "vengeful", "shadowy"
+  ],
+  droid: [
+    "advanced", "efficient", "loyal", "intelligent", "precise",
+    "helpful", "analytical", "protective", "tactical", "swift",
+    "combat-ready", "stealth", "diplomatic", "engineering", "reconnaissance",
+    "medical", "repair", "security", "navigation", "protocol"
+  ],
+  abstract: [
+    "vibrant", "geometric", "fluid", "cosmic", "kaleidoscopic",
+    "minimalist", "surreal", "psychedelic", "dynamic", "ethereal",
+    "fractal", "gradient", "crystalline", "nebulous", "prismatic",
+    "holographic", "mosaic", "radiant", "morphing", "luminous"
+  ],
+  nature: [
+    "serene", "majestic", "wild", "tranquil", "powerful",
+    "pristine", "vibrant", "ancient", "dramatic", "peaceful",
+    "rugged", "lush", "mystical", "untamed", "breathtaking",
+    "seasonal", "tropical", "arctic", "volcanic", "coastal"
+  ]
+};
+
 export default function AvatarGenerator() {
   const [generating, setGenerating] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentAvatar, setCurrentAvatar] = useState<string>("");
   const [generatedCount, setGeneratedCount] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>("human");
 
   const generateDefaultLibrary = async () => {
     setGenerating(true);
@@ -218,6 +272,130 @@ export default function AvatarGenerator() {
     }
   };
 
+  const generateCategoryAvatars = async () => {
+    if (!selectedCategory) {
+      toast.error("Please select a category");
+      return;
+    }
+
+    setGenerating(true);
+    setProgress(0);
+    setGeneratedCount(0);
+    const personalities = PERSONALITY_TEMPLATES[selectedCategory as keyof typeof PERSONALITY_TEMPLATES];
+    const total = 20;
+    let successCount = 0;
+
+    try {
+      for (let i = 0; i < total; i++) {
+        const personality = personalities[i];
+        const categoryName = selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1);
+        const avatarName = `${personality.charAt(0).toUpperCase() + personality.slice(1)} ${categoryName}`;
+        
+        // Create detailed prompts based on category
+        let basePrompt = "";
+        switch(selectedCategory) {
+          case "human":
+            basePrompt = `${personality} person, diverse ethnicity, professional portrait`;
+            break;
+          case "animal":
+            basePrompt = `${personality} animal character, anthropomorphic style, expressive features`;
+            break;
+          case "fantasy":
+            basePrompt = `${personality} fantasy creature, magical aura, enchanted appearance`;
+            break;
+          case "superhero":
+            basePrompt = `${personality} superhero character, heroic pose, iconic costume`;
+            break;
+          case "supervillain":
+            basePrompt = `${personality} villain character, intimidating presence, dramatic appearance`;
+            break;
+          case "droid":
+            basePrompt = `${personality} robot or droid, futuristic design, mechanical details`;
+            break;
+          case "abstract":
+            basePrompt = `${personality} abstract art, unique patterns, creative composition`;
+            break;
+          case "nature":
+            basePrompt = `${personality} natural landscape, scenic view, beautiful environment`;
+            break;
+        }
+
+        const fullPrompt = `${basePrompt}, high quality avatar portrait, professional digital art`;
+        
+        setCurrentAvatar(avatarName);
+        console.log(`Generating ${i + 1}/${total}: ${avatarName}`);
+
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-avatar', {
+            body: { 
+              prompt: fullPrompt, 
+              name: avatarName, 
+              category: selectedCategory 
+            }
+          });
+
+          if (error) throw error;
+
+          if (data?.imageUrl) {
+            // Convert base64 to blob
+            const base64Response = await fetch(data.imageUrl);
+            const blob = await base64Response.blob();
+            
+            // Upload to storage
+            const fileName = `${Date.now()}_${avatarName.toLowerCase().replace(/\s+/g, '_')}.png`;
+            const { error: uploadError } = await supabase.storage
+              .from('avatars')
+              .upload(fileName, blob, {
+                contentType: 'image/png',
+                cacheControl: '3600',
+              });
+
+            if (uploadError) throw uploadError;
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('avatars')
+              .getPublicUrl(fileName);
+
+            // Save to database
+            const { error: dbError } = await supabase
+              .from('default_avatars')
+              .insert({
+                name: avatarName,
+                image_url: publicUrl,
+                category: selectedCategory,
+              });
+
+            if (dbError) throw dbError;
+
+            successCount++;
+            setGeneratedCount(successCount);
+            console.log(`✅ Saved: ${avatarName}`);
+          }
+        } catch (err) {
+          console.error(`Failed to generate ${avatarName}:`, err);
+          toast.error(`Failed to generate ${avatarName}`);
+        }
+
+        setProgress(((i + 1) / total) * 100);
+        
+        // Add delay to avoid rate limiting
+        if (i < total - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      toast.success(`Successfully generated ${successCount} out of ${total} ${selectedCategory} avatars!`);
+    } catch (error) {
+      console.error('Error generating category avatars:', error);
+      toast.error('Failed to generate category avatars');
+    } finally {
+      setGenerating(false);
+      setProgress(0);
+      setCurrentAvatar("");
+    }
+  };
+
   const clearAllAvatars = async () => {
     setClearing(true);
     try {
@@ -287,7 +465,59 @@ export default function AvatarGenerator() {
       <Card className="p-6">
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-2">Generate Default Library</h2>
+            <h2 className="text-xl font-semibold mb-2">Generate Category Avatars</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Generate 20 unique avatars with distinct personalities for a selected category.
+            </p>
+            <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
+              ⚠️ This will take approximately 1 minute to complete. Each avatar is generated with a 2-second delay.
+            </p>
+            
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Select Category</label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={generating}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="human">Human (20 personalities)</SelectItem>
+                    <SelectItem value="animal">Animal (20 personalities)</SelectItem>
+                    <SelectItem value="fantasy">Fantasy (20 personalities)</SelectItem>
+                    <SelectItem value="superhero">Superhero (20 personalities)</SelectItem>
+                    <SelectItem value="supervillain">Supervillain (20 personalities)</SelectItem>
+                    <SelectItem value="droid">Droid (20 personalities)</SelectItem>
+                    <SelectItem value="abstract">Abstract (20 styles)</SelectItem>
+                    <SelectItem value="nature">Nature (20 scenes)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={generateCategoryAvatars}
+                disabled={generating || !selectedCategory}
+                size="lg"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate 20 Avatars
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Generate Full Default Library</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Generate 100 diverse, fun avatars across 8 distinct categories for users to choose from.
               This includes humans, superheroes, supervillains, animals, fantasy creatures, droids, abstract art, and nature scenes.
