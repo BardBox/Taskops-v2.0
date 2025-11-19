@@ -17,9 +17,9 @@ serve(async (req) => {
       throw new Error("Prompt is required");
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
     console.log(`🎨 Using Lovable AI image generation for: ${name} (${category})`);
@@ -27,24 +27,20 @@ serve(async (req) => {
 
     const startTime = Date.now();
 
-    // Use Lovable AI Gateway for image generation
+    // Use OpenAI gpt-image-1 for image generation
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      "https://api.openai.com/v1/images/generations",
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          modalities: ["image", "text"]
+          model: "gpt-image-1",
+          prompt,
+          n: 1,
+          size: "1024x1024",
         }),
       }
     );
@@ -63,21 +59,23 @@ serve(async (req) => {
       if (response.status === 402) {
         return new Response(
           JSON.stringify({
-            error: "Image generation credits exhausted. Please add credits in Settings → Usage.",
+            error: "Image generation failed due to OpenAI billing or quota limits. Please check your OpenAI account.",
           }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      throw new Error(`Lovable AI API error: ${response.status}`);
+      throw new Error(`OpenAI Images API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const base64 = data?.data?.[0]?.b64_json;
 
-    if (!imageUrl) {
-      throw new Error("No image returned from AI");
+    if (!base64) {
+      throw new Error("No image returned from OpenAI");
     }
+
+    const imageUrl = `data:image/png;base64,${base64}`;
 
     const elapsedTime = Date.now() - startTime;
     console.log(`✅ Successfully generated avatar: ${name} in ${elapsedTime}ms`);
