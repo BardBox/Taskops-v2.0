@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,16 +27,29 @@ serve(async (req) => {
 
     const startTime = Date.now();
 
-    // Use Hugging Face FLUX.1-schnell for fast, high-quality image generation
-    const hf = new HfInference(HUGGING_FACE_ACCESS_TOKEN);
-    
-    const image = await hf.textToImage({
-      inputs: prompt,
-      model: 'black-forest-labs/FLUX.1-schnell',
+    // Use Hugging Face FLUX.1-schnell with the new API endpoint
+    const response = await fetch('https://router.huggingface.co/hf-inference/text-to-image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${HUGGING_FACE_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'black-forest-labs/FLUX.1-schnell',
+        inputs: prompt,
+      }),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Hugging Face API error: ${response.status} - ${errorText}`);
+      throw new Error(`Image generation failed: ${response.status}`);
+    }
+
+    const imageBlob = await response.blob();
+
     // Convert the blob to a base64 string
-    const arrayBuffer = await image.arrayBuffer();
+    const arrayBuffer = await imageBlob.arrayBuffer();
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
     const imageUrl = `data:image/png;base64,${base64}`;
 
