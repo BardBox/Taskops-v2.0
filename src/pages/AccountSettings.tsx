@@ -69,14 +69,47 @@ const AccountSettings = () => {
       return 'fantasy';
     }
     if (lowerPrompt.includes('cat') || lowerPrompt.includes('dog') || lowerPrompt.includes('bird') || 
-        lowerPrompt.includes('lion') || lowerPrompt.includes('animal') || lowerPrompt.includes('wolf')) {
-      return 'animals';
+        lowerPrompt.includes('lion') || lowerPrompt.includes('animal') || lowerPrompt.includes('wolf') ||
+        lowerPrompt.includes('panda') || lowerPrompt.includes('fox') || lowerPrompt.includes('bear') ||
+        lowerPrompt.includes('tiger') || lowerPrompt.includes('elephant') || lowerPrompt.includes('bull')) {
+      return 'animal';
     }
     if (lowerPrompt.includes('abstract') || lowerPrompt.includes('geometric') || lowerPrompt.includes('pattern') ||
         lowerPrompt.includes('colorful') || lowerPrompt.includes('artistic')) {
       return 'abstract';
     }
+    if (lowerPrompt.includes('robot') || lowerPrompt.includes('droid') || lowerPrompt.includes('cyborg') ||
+        lowerPrompt.includes('android') || lowerPrompt.includes('machine')) {
+      return 'droid';
+    }
+    if (lowerPrompt.includes('hero') || lowerPrompt.includes('superhero') || lowerPrompt.includes('super hero')) {
+      return 'superhero';
+    }
+    if (lowerPrompt.includes('villain') || lowerPrompt.includes('supervillain') || lowerPrompt.includes('super villain')) {
+      return 'supervillain';
+    }
+    if (lowerPrompt.includes('nature') || lowerPrompt.includes('landscape') || lowerPrompt.includes('mountain') ||
+        lowerPrompt.includes('ocean') || lowerPrompt.includes('forest') || lowerPrompt.includes('tree')) {
+      return 'nature';
+    }
     return 'human';
+  };
+
+  // Generate a smart name from the prompt
+  const generateSmartName = (prompt: string): string => {
+    // Extract key nouns/adjectives from the prompt
+    const words = prompt.toLowerCase()
+      .replace(/[^a-z\s]/g, '') // Remove special chars
+      .split(/\s+/)
+      .filter(w => w.length > 3) // Filter short words
+      .slice(0, 3); // Take first 3 meaningful words
+    
+    if (words.length === 0) return "Avatar";
+    
+    // Capitalize first letter of each word
+    return words
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
   };
 
   const handleGenerateCustomAvatar = async () => {
@@ -92,11 +125,12 @@ const AccountSettings = () => {
     try {
       const fullPrompt = `${customAvatarPrompt}, high quality avatar portrait, professional digital art`;
       const detectedCategory = detectCategory(customAvatarPrompt);
+      const smartName = generateSmartName(customAvatarPrompt);
       
       const { data, error } = await supabase.functions.invoke('generate-avatar', {
         body: { 
           prompt: fullPrompt, 
-          name: `custom_${user.id.substring(0, 8)}`, 
+          name: smartName, 
           category: detectedCategory 
         }
       });
@@ -125,19 +159,18 @@ const AccountSettings = () => {
           .from('avatars')
           .getPublicUrl(fileName);
 
-        // Save to default_avatars table - twice (Custom + detected category)
-        const avatarName = `Custom: ${customAvatarPrompt.slice(0, 30)}${customAvatarPrompt.length > 30 ? '...' : ''}`;
+        // Save to default_avatars table - twice (custom + detected category)
         
-        // Save with "Custom" category
+        // Save with "custom" category
         await supabase.from('default_avatars').insert({
-          name: avatarName,
+          name: smartName,
           image_url: publicUrl,
           category: 'custom'
         });
 
         // Save with detected category
         await supabase.from('default_avatars').insert({
-          name: avatarName,
+          name: smartName,
           image_url: publicUrl,
           category: detectedCategory
         });
