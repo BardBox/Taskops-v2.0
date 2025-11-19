@@ -15,16 +15,17 @@ interface DefaultAvatar {
 interface AvatarSelectorProps {
   selectedAvatarUrl: string | null;
   onAvatarSelect: (url: string) => void;
+  refreshTrigger?: number;
 }
 
-export function AvatarSelector({ selectedAvatarUrl, onAvatarSelect }: AvatarSelectorProps) {
+export function AvatarSelector({ selectedAvatarUrl, onAvatarSelect, refreshTrigger }: AvatarSelectorProps) {
   const [avatars, setAvatars] = useState<DefaultAvatar[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
     fetchAvatars();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchAvatars = async () => {
     try {
