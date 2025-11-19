@@ -7,11 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Separator } from "@/components/ui/separator";
+import { MainLayout } from "@/components/MainLayout";
 
 const AccountSettings = () => {
   const navigate = useNavigate();
@@ -277,27 +278,19 @@ const AccountSettings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <Breadcrumbs />
-        
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Breadcrumbs />
+          
           <div>
             <h1 className="text-3xl font-bold">Account Settings</h1>
             <p className="text-muted-foreground">
               Manage your account settings and profile
             </p>
           </div>
-        </div>
 
-        <Card>
+          <Card>
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>
@@ -452,8 +445,9 @@ const AccountSettings = () => {
             </Button>
           </CardContent>
         </Card>
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
