@@ -27,9 +27,9 @@ serve(async (req) => {
 
     const startTime = Date.now();
 
-    // Use Hugging Face Inference API with FLUX.1-schnell model
+    // Use Hugging Face router endpoint with FLUX.1-schnell model
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+      'https://router.huggingface.co/hf-inference/text-to-image',
       {
         method: 'POST',
         headers: {
@@ -37,6 +37,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          model: 'black-forest-labs/FLUX.1-schnell',
           inputs: prompt,
         }),
       }
@@ -45,7 +46,8 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Hugging Face API error: ${response.status} - ${errorText}`);
-      throw new Error(`Image generation failed: ${response.status}`);
+      console.error(`Request details - Model: FLUX.1-schnell, Prompt length: ${prompt.length}`);
+      throw new Error(`Image generation failed: ${response.status} - ${errorText.substring(0, 100)}`);
     }
 
     const imageBlob = await response.blob();
