@@ -3,13 +3,14 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { AppHeader } from "@/components/AppHeader";
 import { toast } from "sonner";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,17 +48,24 @@ export default function AdminLayout() {
       }
 
       setUserRole(roleData.role);
+
+      // Get user profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profileData) {
+        setUserName(profileData.full_name);
+        setAvatarUrl(profileData.avatar_url || "");
+      }
     } catch (error) {
       console.error("Auth check error:", error);
       navigate("/auth");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
   };
 
   if (loading) {
@@ -70,26 +78,20 @@ export default function AdminLayout() {
         <AdminSidebar />
         
         <div className="flex-1 flex flex-col">
-          <header className="sticky top-0 z-50 h-14 border-b bg-background shadow-sm flex items-center justify-between px-4">
-            <div className="flex items-center gap-2">
+          <div className="sticky top-0 z-50 flex items-center border-b bg-background shadow-sm">
+            <div className="flex items-center px-4 h-14">
               <SidebarTrigger />
-              <img 
-                src="/bardbox-logo.png" 
-                alt="BardBox" 
-                className="h-8 w-auto object-contain"
-              />
-              <div className="flex items-center gap-2">
-                <h1 className="text-base font-semibold">
-                  TaskOPS<sup className="text-xs">™</sup>
-                </h1>
-                <span className="text-sm text-muted-foreground">Admin</span>
-              </div>
+              <span className="ml-2 text-sm text-muted-foreground">Admin</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </header>
+            <div className="flex-1">
+              <AppHeader 
+                userRole={userRole || undefined} 
+                userName={userName} 
+                avatarUrl={avatarUrl}
+                showRoleBadge={false}
+              />
+            </div>
+          </div>
 
           <main className="flex-1 p-6 overflow-auto">
             <Outlet context={{ userRole }} />

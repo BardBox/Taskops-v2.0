@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, Monitor, Moon, Sun, Volume2, VolumeX, MonitorCheck, RotateCcw } from "lucide-react";
+import { Loader2, Monitor, Moon, Sun, Volume2, VolumeX, MonitorCheck, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/ThemeProvider";
 import { Slider } from "@/components/ui/slider";
@@ -19,6 +19,8 @@ import {
   isNotificationSupported, 
   getNotificationPermission 
 } from "@/utils/browserNotifications";
+import { MainLayout } from "@/components/MainLayout";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 interface UserPreferences {
   dashboard_view: string;
