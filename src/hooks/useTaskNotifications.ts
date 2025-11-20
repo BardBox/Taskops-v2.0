@@ -41,8 +41,16 @@ const createNotifications = async (
   title: string,
   message: string,
   taskId: string,
+  actorId: string,
   type: string = "info"
 ) => {
+  // Fetch actor information
+  const { data: actorProfile } = await supabase
+    .from("profiles")
+    .select("full_name, avatar_url")
+    .eq("id", actorId)
+    .maybeSingle();
+
   const managerIds = await getManagerUserIds();
   const recipientIds = [...new Set([assigneeId, ...managerIds])]; // Deduplicate in case assignee is also a manager
   
@@ -52,6 +60,9 @@ const createNotifications = async (
     message,
     type,
     task_id: taskId,
+    actor_id: actorId,
+    actor_name: actorProfile?.full_name || "Unknown User",
+    actor_avatar_url: actorProfile?.avatar_url || null,
   }));
   
   await supabase.from("notifications" as any).insert(notifications);
@@ -126,6 +137,7 @@ export const useTaskNotifications = (userId: string | undefined) => {
               "New Task Assigned",
               `${assignorName} assigned you "${newTask.task_name}"`,
               newTask.id,
+              newTask.assigned_by_id,
               "info"
             );
 
@@ -173,10 +185,11 @@ export const useTaskNotifications = (userId: string | undefined) => {
           ) {
             // Store notification in database for assignee and all managers
             await createNotifications(
-              newTask.assignee_id,
+              oldTask.assignee_id,
               "Task Completed",
-              `"${newTask.task_name}" has been approved`,
-              newTask.id,
+              `"${oldTask.task_name}" has been approved`,
+              oldTask.id,
+              newTask.assignee_id, // The assignee completed their own task
               "success"
             );
 
@@ -225,6 +238,7 @@ export const useTaskNotifications = (userId: string | undefined) => {
               "Task Updated",
               description,
               newTask.id,
+              newTask.assignee_id, // The assignee updated their task
               "info"
             );
 

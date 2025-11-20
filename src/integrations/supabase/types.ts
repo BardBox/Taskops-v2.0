@@ -172,6 +172,9 @@ export type Database = {
       }
       notifications: {
         Row: {
+          actor_avatar_url: string | null
+          actor_id: string | null
+          actor_name: string | null
           created_at: string | null
           id: string
           is_read: boolean | null
@@ -183,6 +186,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actor_avatar_url?: string | null
+          actor_id?: string | null
+          actor_name?: string | null
           created_at?: string | null
           id?: string
           is_read?: boolean | null
@@ -194,6 +200,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actor_avatar_url?: string | null
+          actor_id?: string | null
+          actor_name?: string | null
           created_at?: string | null
           id?: string
           is_read?: boolean | null
@@ -205,6 +214,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_task_id_fkey"
             columns: ["task_id"]

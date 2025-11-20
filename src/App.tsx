@@ -25,6 +25,7 @@ import AvatarGenerator from "./pages/admin/AvatarGenerator";
 import PMPerformance from "./pages/analytics/PMPerformance";
 import ClientPerformance from "./pages/analytics/ClientPerformance";
 import About from "./pages/About";
+import NotificationCenter from "./pages/NotificationCenter";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => {
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/about" element={<About />} />
+          <Route path="/notifications" element={<NotificationCenter />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>

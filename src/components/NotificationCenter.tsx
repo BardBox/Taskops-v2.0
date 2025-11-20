@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2, ListTodo } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +25,9 @@ interface Notification {
   task_id: string | null;
   is_read: boolean;
   created_at: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  actor_avatar_url: string | null;
 }
 
 interface NotificationCenterProps {
@@ -36,6 +41,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchNotifications();
@@ -187,19 +193,6 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "success":
-        return "text-notification-success";
-      case "warning":
-        return "text-notification-warning";
-      case "error":
-        return "text-notification-error";
-      default:
-        return "text-notification-info";
-    }
-  };
-
   return (
     <>
       <DropdownMenu>
@@ -220,7 +213,17 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-96">
         <div className="flex items-center justify-between p-4">
-          <h3 className="font-semibold">Notifications</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold">Notifications</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => navigate("/notifications")}
+            >
+              <ListTodo className="h-4 w-4" />
+            </Button>
+          </div>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -250,61 +253,65 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
                 <div
                   key={notification.id}
                   className={cn(
-                    "p-4 transition-colors",
-                    !notification.is_read ? "bg-muted/30" : "",
-                    notification.task_id ? "hover:bg-muted/50 cursor-pointer" : "hover:bg-muted/30"
+                    "flex items-start gap-3 p-3 hover:bg-accent/50 cursor-pointer transition-colors",
+                    !notification.is_read && "bg-accent/20"
                   )}
                   onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`h-2 w-2 rounded-full ${getNotificationIcon(
-                            notification.type
-                          )}`}
-                        />
-                        <p className="text-sm font-medium">{notification.title}</p>
-                        {!notification.is_read && (
-                          <Badge variant="secondary" className="h-5 text-xs">
-                            New
-                          </Badge>
-                        )}
+                  <Avatar className="h-8 w-8 mt-1">
+                    <AvatarImage src={notification.actor_avatar_url || ""} />
+                    <AvatarFallback className="text-xs">
+                      {notification.actor_name?.split(" ").map(n => n[0]).join("") || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">
+                          {notification.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {notification.message}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-muted-foreground">
+                            by {notification.actor_name || "System"}
+                          </p>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(
+                              new Date(notification.created_at),
+                              { addSuffix: true }
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(notification.created_at), {
-                          addSuffix: true,
-                        })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {!notification.is_read && (
+                      <div className="flex gap-1 flex-shrink-0">
+                        {!notification.is_read && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notification.id);
+                            }}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={(e) => {
                             e.stopPropagation();
-                            markAsRead(notification.id);
+                            deleteNotification(notification.id);
                           }}
                         >
-                          <Check className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(notification.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
