@@ -2,13 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit2, ExternalLink, FileText, Star, Calendar, Clock, User, MessageSquare } from "lucide-react";
+import { Edit2, Paperclip, FileText, Star, Calendar, Clock, User, MessageSquare, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Task {
   id: string;
@@ -169,27 +169,25 @@ export const TaskCard = ({
               )}
             </div>
             
-            {/* Collaborators */}
+            {/* Collaborators Section - Below Task Owner */}
             {!isCollaborator && collaborators.length > 0 && (
-              <div className="flex items-center gap-1 flex-wrap">
-                <span className="text-xs text-muted-foreground">Collaborators:</span>
+              <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border/50">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Collaborators:</span>
                 {collaborators.map((collab, idx) => (
                   <TooltipProvider key={idx}>
                     <Tooltip>
-                      <TooltipTrigger>
-                        <div className="flex items-center gap-1">
-                          <Avatar className="h-5 w-5 border border-background">
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1.5 group/collab cursor-help">
+                          <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-border transition-all hover:ring-primary">
                             <AvatarImage src={collab.profiles.avatar_url || undefined} alt={collab.profiles.full_name} />
-                            <AvatarFallback className="text-[8px]">
+                            <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
                               {getInitials(collab.profiles.full_name)}
                             </AvatarFallback>
                           </Avatar>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <div className="flex items-center gap-1">
-                          {collab.profiles.full_name}
-                        </div>
+                        <p className="font-medium">{collab.profiles.full_name}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -349,20 +347,20 @@ export const TaskCard = ({
 
       {/* Action Buttons Footer */}
       <div className="flex items-center gap-2 pt-4 border-t border-border/50">
-        {task.asset_link && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(task.asset_link!, "_blank");
-            }}
-            className="h-8 text-xs"
-          >
-            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-            Asset
-          </Button>
-        )}
+          {task.asset_link && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(task.asset_link!, "_blank");
+              }}
+              className="h-8 text-xs"
+            >
+              <Paperclip className="h-3.5 w-3.5 mr-1.5" />
+              Asset
+            </Button>
+          )}
         {onNotesClick && (
           <Button
             variant="outline"

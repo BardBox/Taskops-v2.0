@@ -195,33 +195,34 @@ export const GanttChart = ({ tasks, statuses, onTaskClick }: GanttChartProps) =>
                       <span className="text-xs font-medium">{task.assignee?.full_name}</span>
                     </div>
                     
-                    {/* Show collaborator avatars */}
-                    {taskCollaborators.get(task.id)?.length > 0 && (
-                      <div className="flex -space-x-2">
-                        {taskCollaborators.get(task.id)?.slice(0, 2).map((collab, idx) => (
-                          <TooltipProvider key={idx}>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Avatar className="h-5 w-5 border-2 border-background">
-                                  <AvatarImage src={collab.profiles.avatar_url || undefined} alt={collab.profiles.full_name} />
-                                  <AvatarFallback className="text-[8px]">
-                                    {getInitials(collab.profiles.full_name)}
-                                  </AvatarFallback>
-                                </Avatar>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div className="flex items-center gap-1">
-                                  {collab.profiles.full_name}
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ))}
-                        {taskCollaborators.get(task.id)?.length > 2 && (
-                          <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[8px]">
-                            +{taskCollaborators.get(task.id).length - 2}
-                          </div>
-                        )}
+                    {/* Show collaborator avatars with + indicator */}
+                    {taskCollaborators.get(task.id) && taskCollaborators.get(task.id)!.length > 0 && (
+                      <div className="flex items-center gap-0.5">
+                        <span className="text-[10px] text-muted-foreground font-semibold mr-0.5">+</span>
+                        <div className="flex -space-x-2">
+                          {taskCollaborators.get(task.id)?.slice(0, 2).map((collab, idx) => (
+                            <TooltipProvider key={idx}>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Avatar className="h-5 w-5 border-2 border-background ring-1 ring-primary/30">
+                                    <AvatarImage src={collab.avatar_url || undefined} alt={collab.full_name} />
+                                    <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                                      {getInitials(collab.full_name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="font-medium">{collab.full_name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ))}
+                          {taskCollaborators.get(task.id)!.length > 2 && (
+                            <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[8px]">
+                              +{taskCollaborators.get(task.id)!.length - 2}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                     

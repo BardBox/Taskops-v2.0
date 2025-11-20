@@ -253,33 +253,57 @@ const SortableTaskCard = ({
             </div>
           </div>
 
-          {/* Details */}
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {task.assignee && (
-              <div className="flex items-center gap-1">
-            <Avatar className="h-5 w-5 border border-border">
-              <AvatarImage src={task.assignee.avatar_url || undefined} alt={task.assignee.full_name} />
-              <AvatarFallback className="text-[8px]">
-                {task.assignee.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <span>{task.assignee.full_name}</span>
-          </div>
-            )}
-            {/* Show collaborators in Kanban */}
-            {task.collaborators && task.collaborators.length > 0 && (
-              <div className="flex items-center gap-1 text-xs flex-wrap">
-                <span className="text-muted-foreground">+</span>
-                {task.collaborators.map((c: any, idx: number) => (
-                <span key={idx} className="flex items-center gap-0.5">
-                  {c.profiles?.full_name || "?"}
-                  {idx < task.collaborators.length - 1 && <span>,</span>}
-                </span>
-                ))}
+          {/* Details - Role-based display */}
+          <div className="space-y-2">
+            {/* Task Owner (TM) and PM - Always shown for PM/PO */}
+            {(userRole === "project_owner" || userRole === "project_manager") && (
+              <div className="flex flex-col gap-1.5">
+                {task.assignee && (
+                  <div className="flex items-center gap-1.5">
+                    <Avatar className="h-6 w-6 border border-border">
+                      <AvatarImage src={task.assignee.avatar_url || undefined} alt={task.assignee.full_name} />
+                      <AvatarFallback className="text-[10px]">
+                        {task.assignee.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs font-medium">{task.assignee.full_name}</span>
+                    {task.collaborators && task.collaborators.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground">+{task.collaborators.length}</span>
+                    )}
+                  </div>
+                )}
+                {task.assigned_by && (
+                  <div className="flex items-center gap-1.5">
+                    <Avatar className="h-6 w-6 border border-border">
+                      <AvatarImage src={task.assigned_by.avatar_url || undefined} alt={task.assigned_by.full_name} />
+                      <AvatarFallback className="text-[10px]">
+                        {task.assigned_by.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground">PM: {task.assigned_by.full_name}</span>
+                  </div>
+                )}
               </div>
             )}
+            
+            {/* TM View - Only show PM who assigned */}
+            {userRole === "team_member" && task.assigned_by && (
+              <div className="flex items-center gap-1.5">
+                <Avatar className="h-6 w-6 border border-border">
+                  <AvatarImage src={task.assigned_by.avatar_url || undefined} alt={task.assigned_by.full_name} />
+                  <AvatarFallback className="text-[10px]">
+                    {task.assigned_by.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs font-medium">{task.assigned_by.full_name}</span>
+                {task.collaborators && task.collaborators.length > 0 && (
+                  <span className="text-[10px] text-muted-foreground">+{task.collaborators.length}</span>
+                )}
+              </div>
+            )}
+            
             {task.deadline && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 {new Date(task.deadline).toLocaleDateString()}
               </div>
