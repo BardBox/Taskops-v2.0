@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Star, Edit, FileText, Upload, Calendar, User, Lock } from "lucide-react";
 import { BadgeDropdown } from "./BadgeDropdown";
 import { useGamification } from "@/hooks/useGamification";
@@ -268,7 +269,21 @@ const SortableTaskCard = ({
                     </Avatar>
                     <span className="text-xs font-medium">{task.assignee.full_name}</span>
                     {task.collaborators && task.collaborators.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground">+{task.collaborators.length}</span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-[10px] text-muted-foreground cursor-help">+{task.collaborators.length}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="space-y-1">
+                              <p className="text-xs font-semibold mb-1">Collaborators:</p>
+                              {task.collaborators.map((collab: any, idx: number) => (
+                                <p key={idx} className="text-xs">{collab.profiles?.full_name || "Unknown"}</p>
+                              ))}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 )}
@@ -297,7 +312,21 @@ const SortableTaskCard = ({
                 </Avatar>
                 <span className="text-xs font-medium">{task.assigned_by.full_name}</span>
                 {task.collaborators && task.collaborators.length > 0 && (
-                  <span className="text-[10px] text-muted-foreground">+{task.collaborators.length}</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[10px] text-muted-foreground cursor-help">+{task.collaborators.length}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold mb-1">Collaborators:</p>
+                          {task.collaborators.map((collab: any, idx: number) => (
+                            <p key={idx} className="text-xs">{collab.profiles?.full_name || "Unknown"}</p>
+                          ))}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             )}
