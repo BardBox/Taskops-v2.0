@@ -13,6 +13,7 @@ import { KanbanBoard } from "./KanbanBoard";
 import { GanttChart } from "./GanttChart";
 import { BadgeDropdown } from "./BadgeDropdown";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare } from "lucide-react";
 import { toast } from "sonner";
@@ -715,6 +716,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     PM {sortField === "assigned_by" && <ArrowUpDown className="h-4 w-4" />}
                   </div>
                 </TableHead>
+                <TableHead>
+                  <div className="flex items-center gap-2">
+                    Collaborators
+                  </div>
+                </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
                   <div className="flex items-center gap-2">
                     Deadline {sortField === "deadline" && <ArrowUpDown className="h-4 w-4" />}
@@ -857,6 +863,78 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                         </Avatar>
                         <span>{task.assigned_by?.full_name || "-"}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {task.collaborators && task.collaborators.length > 0 ? (
+                        <div className="flex items-center gap-1">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex -space-x-2">
+                                  {task.collaborators.slice(0, 3).map((collab: any, idx: number) => (
+                                    <Avatar key={idx} className="h-6 w-6 border-2 border-background">
+                                      <AvatarImage src={collab.profiles?.avatar_url || undefined} alt={collab.profiles?.full_name} />
+                                      <AvatarFallback className="text-xs">
+                                        {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  ))}
+                                  {task.collaborators.length > 3 && (
+                                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[10px] font-medium">
+                                      +{task.collaborators.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="space-y-1">
+                                  {task.collaborators.map((collab: any, idx: number) => (
+                                    <p key={idx} className="text-xs">{collab.profiles?.full_name || "Unknown"}</p>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {task.collaborators && task.collaborators.length > 0 ? (
+                        <div className="flex items-center gap-1">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex -space-x-2">
+                                  {task.collaborators.slice(0, 3).map((collab: any, idx: number) => (
+                                    <Avatar key={idx} className="h-6 w-6 border-2 border-background">
+                                      <AvatarImage src={collab.profiles?.avatar_url || undefined} alt={collab.profiles?.full_name} />
+                                      <AvatarFallback className="text-xs">
+                                        {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  ))}
+                                  {task.collaborators.length > 3 && (
+                                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[10px] font-medium">
+                                      +{task.collaborators.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="space-y-1">
+                                  {task.collaborators.map((collab: any, idx: number) => (
+                                    <p key={idx} className="text-xs">{collab.profiles?.full_name || "Unknown"}</p>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}

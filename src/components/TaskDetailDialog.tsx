@@ -859,20 +859,21 @@ export function TaskDetailDialog({
                   </div>
                 </div>
                 
-                {/* Collaborators Section */}
+                {/* Collaborators Section - 2x Larger Avatars */}
                 {collaborators.length > 0 && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Collaborators</Label>
-                    <div className="flex gap-2 mt-1 flex-wrap">
+                  <div className="col-span-2">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide mb-3 block">Collaborators</Label>
+                    <div className="flex gap-3 flex-wrap">
                       {collaborators.map((collab: any) => (
-                      <div key={collab.user_id} className="flex items-center gap-1.5 text-sm font-medium">
-                        <Avatar className="h-5 w-5">
-                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                            {(collab.profiles?.full_name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{collab.profiles?.full_name || "Unknown"}</span>
-                      </div>
+                        <div key={collab.user_id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/50 border border-border hover:bg-accent transition-colors">
+                          <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
+                            <AvatarImage src={collab.profiles?.avatar_url || undefined} alt={collab.profiles?.full_name} />
+                            <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                              {(collab.profiles?.full_name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium">{collab.profiles?.full_name || "Unknown"}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
