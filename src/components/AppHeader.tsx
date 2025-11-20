@@ -67,8 +67,17 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {userId && <NotificationCenter userId={userId} />}
+        
+        <div className="hidden md:flex flex-col items-end">
+          <span className="text-sm font-medium">{userName}</span>
+          {userRole && (
+            <span className="text-xs text-muted-foreground capitalize">
+              {userRole.replace(/_/g, " ")}
+            </span>
+          )}
+        </div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
