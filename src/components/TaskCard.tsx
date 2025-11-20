@@ -69,39 +69,25 @@ export const TaskCard = ({
   onNotesClick,
 }: TaskCardProps) => {
   const [isCollaborator, setIsCollaborator] = useState(false);
-  const [collaborators, setCollaborators] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   
   const statusConfig = statuses.find((s) => s.label === task.status);
   const urgencyConfig = urgencies.find((u) => u.label === task.urgency);
 
   useEffect(() => {
-    const fetchCollaboratorInfo = async () => {
+    const checkCollaborator = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
       setCurrentUserId(user.id);
       
       // Check if current user is a collaborator
-      const { data: collabData } = await supabase
-        .from("task_collaborators")
-        .select("user_id")
-        .eq("task_id", task.id)
-        .eq("user_id", user.id);
-      
-      setIsCollaborator(collabData && collabData.length > 0);
-      
-      // Fetch all collaborators for this task
-      const { data: allCollabs } = await supabase
-        .from("task_collaborators")
-        .select("user_id, profiles(full_name, avatar_url)")
-        .eq("task_id", task.id);
-      
-      setCollaborators(allCollabs || []);
+      const isCollab = task.collaborators?.some((c: any) => c.user_id === user.id);
+      setIsCollaborator(isCollab || false);
     };
     
-    fetchCollaboratorInfo();
-  }, [task.id, task.assignee_id, task.assigned_by_id]);
+    checkCollaborator();
+  }, [task.id, task.collaborators]);
   
   const isToday = (date: string | null) => {
     if (!date) return false;
@@ -170,24 +156,24 @@ export const TaskCard = ({
             </div>
             
             {/* Collaborators Section - Below Task Owner */}
-            {!isCollaborator && collaborators.length > 0 && (
+            {!isCollaborator && task.collaborators && task.collaborators.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border/50">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Collaborators:</span>
-                {collaborators.map((collab, idx) => (
+                {task.collaborators.map((collab: any, idx: number) => (
                   <TooltipProvider key={idx}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex items-center gap-1.5 group/collab cursor-help">
                           <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-border transition-all hover:ring-primary">
-                            <AvatarImage src={collab.profiles.avatar_url || undefined} alt={collab.profiles.full_name} />
+                            <AvatarImage src={collab.profiles?.avatar_url || undefined} alt={collab.profiles?.full_name} />
                             <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
-                              {getInitials(collab.profiles.full_name)}
+                              {getInitials(collab.profiles?.full_name || "?")}
                             </AvatarFallback>
                           </Avatar>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="font-medium">{collab.profiles.full_name}</p>
+                        <p className="font-medium">{collab.profiles?.full_name || "Unknown"}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
