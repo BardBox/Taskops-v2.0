@@ -15,7 +15,8 @@ import { BadgeDropdown } from "./BadgeDropdown";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare } from "lucide-react";
+import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
@@ -69,8 +70,22 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">("table");
   const [notifiedTaskIds, setNotifiedTaskIds] = useState<Set<string>>(new Set());
+  const [expandedCollaborators, setExpandedCollaborators] = useState<Set<string>>(new Set());
   
   const { statuses, urgencies } = useStatusUrgency();
+
+  const toggleCollaboratorExpansion = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedCollaborators(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     fetchTasks();
@@ -716,10 +731,17 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     PM {sortField === "assigned_by" && <ArrowUpDown className="h-4 w-4" />}
                   </div>
                 </TableHead>
-                <TableHead>
-                  <div className="flex items-center gap-2">
-                    Collaborators
-                  </div>
+                <TableHead className="w-10 text-center">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center justify-center">
+                          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Collaborators</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
                   <div className="flex items-center gap-2">
@@ -864,40 +886,58 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                         <span>{task.assigned_by?.full_name || "-"}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-0 relative" onClick={(e) => e.stopPropagation()}>
                       {task.collaborators && task.collaborators.length > 0 ? (
-                        <div className="flex items-center gap-1">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex -space-x-2 cursor-help">
-                                  {task.collaborators.slice(0, 3).map((collab: any, idx: number) => (
-                                    <Avatar key={idx} className="h-6 w-6 border-2 border-background">
-                                      <AvatarImage src={collab.profiles?.avatar_url || undefined} alt={collab.profiles?.full_name} />
-                                      <AvatarFallback className="text-xs">
-                                        {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  ))}
-                                  {task.collaborators.length > 3 && (
-                                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[10px] font-medium">
-                                      +{task.collaborators.length - 3}
-                                    </div>
-                                  )}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div className="space-y-1">
+                        <Collapsible
+                          open={expandedCollaborators.has(task.id)}
+                          onOpenChange={() => {}}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-10 flex items-center justify-center border-r">
+                              <CollapsibleTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => toggleCollaboratorExpansion(task.id, e)}
+                                  className="h-8 w-8 p-0 hover:bg-muted"
+                                >
+                                  <div className="relative">
+                                    <Users className="h-3.5 w-3.5" />
+                                    <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-500 text-white text-[8px] flex items-center justify-center font-medium">
+                                      {task.collaborators.length}
+                                    </span>
+                                  </div>
+                                </Button>
+                              </CollapsibleTrigger>
+                            </div>
+                            <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                              <div className="px-3 py-2 min-w-[200px] border-l bg-muted/30">
+                                <div className="flex flex-wrap gap-2">
                                   {task.collaborators.map((collab: any, idx: number) => (
-                                    <p key={idx} className="text-xs">{collab.profiles?.full_name || "Unknown"}</p>
+                                    <div key={idx} className="flex items-center gap-1.5 bg-background rounded-md px-2 py-1 border">
+                                      <Avatar className="h-5 w-5">
+                                        <AvatarImage 
+                                          src={collab.profiles?.avatar_url || undefined} 
+                                          alt={collab.profiles?.full_name} 
+                                        />
+                                        <AvatarFallback className="text-[10px]">
+                                          {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs font-medium">
+                                        {collab.profiles?.full_name || "Unknown"}
+                                      </span>
+                                    </div>
                                   ))}
                                 </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
                       ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
+                        <div className="w-10 flex items-center justify-center">
+                          <span className="text-muted-foreground text-xs">-</span>
+                        </div>
                       )}
                     </TableCell>
                     <TableCell>
