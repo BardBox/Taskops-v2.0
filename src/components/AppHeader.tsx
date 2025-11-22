@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users, Info, Hexagon } from "lucide-react";
+import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users, Info, Hexagon, Activity, Smile } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
@@ -27,16 +32,99 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
   const navigate = useNavigate();
   const location = useLocation();
   const [userId, setUserId] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [mood, setMood] = useState<string | null>(null);
+  const [statuses, setStatuses] = useState<string[]>([
+    "Available", "Busy", "Out of Office", "Do Not Disturb", "On Leave"
+  ]);
+  const [moods, setMoods] = useState<string[]>([
+    "😊 Happy", "😎 Cool", "🤔 Thoughtful", "😴 Tired", "🔥 On Fire",
+    "🎯 Focused", "🎉 Excited", "😌 Relaxed", "💪 Motivated", "🤯 Overwhelmed"
+  ]);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [moodOpen, setMoodOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserId = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUserId(session.user.id);
+        fetchUserProfile(session.user.id);
+        fetchOptions();
       }
     };
     fetchUserId();
   }, []);
+
+  const fetchUserProfile = async (id: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("status, mood")
+      .eq("id", id)
+      .single();
+    
+    if (data) {
+      setStatus(data.status);
+      setMood(data.mood);
+    }
+  };
+
+  const fetchOptions = async () => {
+    const { data: settings } = await supabase
+      .from("system_settings")
+      .select("setting_key, setting_value")
+      .in("setting_key", ["status_options", "mood_options"]);
+
+    if (settings) {
+      settings.forEach((setting) => {
+        if (setting.setting_key === "status_options") {
+          setStatuses(JSON.parse(setting.setting_value));
+        } else if (setting.setting_key === "mood_options") {
+          setMoods(JSON.parse(setting.setting_value));
+        }
+      });
+    }
+  };
+
+  const updateStatus = async (newStatus: string) => {
+    if (!userId) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ status: newStatus })
+      .eq("id", userId);
+
+    if (!error) {
+      setStatus(newStatus);
+      setStatusOpen(false);
+      toast.success(`Status updated to ${newStatus}`);
+    }
+  };
+
+  const updateMood = async (newMood: string) => {
+    if (!userId) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ mood: newMood })
+      .eq("id", userId);
+
+    if (!error) {
+      setMood(newMood);
+      setMoodOpen(false);
+      toast.success("Mood updated");
+    }
+  };
+
+  const getStatusDotColor = (status: string | null) => {
+    if (!status) return "bg-gray-500";
+    switch (status) {
+      case "Available": return "bg-green-500";
+      case "Busy": return "bg-red-500";
+      case "Out of Office": return "bg-orange-500";
+      case "Do Not Disturb": return "bg-purple-500";
+      case "On Leave": return "bg-gray-500";
+      default: return "bg-gray-500";
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -106,13 +194,63 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         </motion.div>
       </div>
 
-      {/* Right Section: Notifications & Burger Menu */}
+      {/* Right Section: Status/Mood, Notifications & Burger Menu */}
       <motion.div 
-        className="flex items-center gap-3"
+        className="flex items-center gap-2"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
       >
+        {/* Status Selector */}
+        <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+              <Activity className="h-4 w-4" />
+              <div className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ${getStatusDotColor(status)}`} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" align="end">
+            <div className="space-y-1">
+              {statuses.map((s) => (
+                <Button
+                  key={s}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={() => updateStatus(s)}
+                >
+                  <div className={`h-2 w-2 rounded-full ${getStatusDotColor(s)}`} />
+                  {s}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Mood Selector */}
+        <Popover open={moodOpen} onOpenChange={setMoodOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              {mood ? <span className="text-base">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4" />}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" align="end">
+            <div className="grid grid-cols-2 gap-1">
+              {moods.map((m) => (
+                <Button
+                  key={m}
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start text-sm h-auto py-2"
+                  onClick={() => updateMood(m)}
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <motion.div
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
