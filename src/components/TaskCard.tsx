@@ -27,6 +27,9 @@ interface Task {
   reference_link_1: string | null;
   reference_link_2: string | null;
   reference_link_3: string | null;
+  is_posted?: boolean;
+  posted_at?: string | null;
+  posted_by?: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
   assignee: { full_name: string; avatar_url: string | null; creative_title?: string | null } | null;
@@ -105,6 +108,26 @@ export const TaskCard = ({
   };
 
   const lastComment = task.task_comments?.[0];
+
+  const isSMOProject = task.projects?.name === "SMO";
+  const isTaskOwner = task.assignee_id === currentUserId;
+
+  const handlePostedChange = async (checked: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          is_posted: checked,
+          posted_at: checked ? new Date().toISOString() : null,
+          posted_by: checked ? currentUserId : null,
+        })
+        .eq("id", task.id);
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating posted status:", error);
+    }
+  };
 
   return (
     <div 
@@ -333,6 +356,18 @@ export const TaskCard = ({
         <div className="mb-5 flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4 text-primary/60" />
           <span>Submitted: {format(new Date(task.actual_delivery), "MMM d, yyyy")}</span>
+        </div>
+      )}
+
+      {/* SMO Posted Checkbox - Only for task owner on SMO projects */}
+      {isSMOProject && isTaskOwner && (
+        <div className="flex items-center gap-2 pb-3 pt-2 border-b border-border/50">
+          <Checkbox
+            checked={task.is_posted || false}
+            onCheckedChange={(checked) => handlePostedChange(checked === true)}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span className="text-sm text-muted-foreground">Posted to Social Media</span>
         </div>
       )}
 

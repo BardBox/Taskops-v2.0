@@ -17,6 +17,7 @@ import { GamificationStats } from "./GamificationStats";
 import { playNotificationSound } from "@/utils/notificationSounds";
 import { canChangeUrgency, canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Task {
   id: string;
@@ -38,6 +39,9 @@ interface Task {
   revision_count: number;
   revision_requested_at: string | null;
   revision_requested_by: string | null;
+  is_posted?: boolean;
+  posted_at?: string | null;
+  posted_by?: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
   assignee: { full_name: string; avatar_url: string | null; creative_title?: string | null } | null;
@@ -365,54 +369,86 @@ const SortableTaskCard = ({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {userRole !== "project_manager" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => onAppreciationToggle(task.id, e)}
-                className="h-7 w-7 p-0"
+          <div className="flex flex-col gap-2">
+            {/* SMO Posted Checkbox - Only for task owner on SMO projects */}
+            {task.projects?.name === "SMO" && task.assignee_id === userId && (
+              <div 
+                className="flex items-center gap-1.5 p-1.5 bg-background/50 rounded border border-border/50"
+                onClick={(e) => e.stopPropagation()}
               >
-                <Star className={`h-3 w-3 ${isAppreciated ? "fill-yellow-400 text-yellow-400" : ""}`} />
-              </Button>
+                <Checkbox
+                  checked={task.is_posted || false}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      const { error } = await supabase
+                        .from("tasks")
+                        .update({
+                          is_posted: checked === true,
+                          posted_at: checked === true ? new Date().toISOString() : null,
+                          posted_by: checked === true ? userId : null,
+                        })
+                        .eq("id", task.id);
+                      
+                      if (error) throw error;
+                    } catch (error) {
+                      console.error("Error updating posted status:", error);
+                    }
+                  }}
+                  className="h-3 w-3"
+                />
+                <span className="text-[10px] text-muted-foreground">Posted</span>
+              </div>
             )}
-            {canEdit && (
+            
+            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {userRole !== "project_manager" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => onAppreciationToggle(task.id, e)}
+                  className="h-7 w-7 p-0"
+                >
+                  <Star className={`h-3 w-3 ${isAppreciated ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                </Button>
+              )}
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(task);
+                  }}
+                  className="h-7 w-7 p-0"
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEdit(task);
+                  onNotesClick(task);
                 }}
                 className="h-7 w-7 p-0"
               >
-                <Edit className="h-3 w-3" />
+                <FileText className="h-3 w-3" />
               </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNotesClick(task);
-              }}
-              className="h-7 w-7 p-0"
-            >
-              <FileText className="h-3 w-3" />
-            </Button>
-            {task.assignee_id === userId && task.status !== "Approved" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSubmit(task);
-                }}
-                className="h-7 w-7 p-0"
-              >
-                <Upload className="h-3 w-3" />
-              </Button>
-            )}
+              {task.assignee_id === userId && task.status !== "Approved" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSubmit(task);
+                  }}
+                  className="h-7 w-7 p-0"
+                >
+                  <Upload className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </Card>
