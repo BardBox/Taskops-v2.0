@@ -20,6 +20,7 @@ interface TeamMember {
   creative_title: string | null;
   user_code: string | null;
   status: string | null;
+  mood: string | null;
   timezone: string | null;
   best_contact_time: string | null;
   tagline: string | null;
@@ -357,12 +358,19 @@ export default function Team() {
                         </p>
                       )}
 
-                      {/* Status */}
-                      {member.status && (
-                        <Badge variant="outline" className={getStatusColor(member.status)}>
-                          {member.status}
-                        </Badge>
-                      )}
+                      {/* Status & Mood */}
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {member.status && (
+                          <Badge variant="outline" className={getStatusColor(member.status)}>
+                            {member.status}
+                          </Badge>
+                        )}
+                        {member.mood && (
+                          <Badge variant="outline" className="text-base">
+                            {member.mood}
+                          </Badge>
+                        )}
+                      </div>
 
                       {/* Additional Info */}
                       <div className="w-full pt-4 border-t space-y-2">
