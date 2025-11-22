@@ -445,7 +445,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Task Essentials Section */}
-          <Card className="border-l-4 border-l-[hsl(var(--section-essentials))] bg-[hsl(var(--section-essentials-bg))] shadow-sm">
+          <Card className="border-l-4 border-l-[hsl(var(--section-essentials))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-essentials))]">
                 <ClipboardList className="h-4 w-4" />
@@ -514,7 +514,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           </Card>
 
           {/* Assignment & Timeline Section */}
-          <Card className="border-l-4 border-l-[hsl(var(--section-assignment))] bg-[hsl(var(--section-assignment-bg))] shadow-sm">
+          <Card className="border-l-4 border-l-[hsl(var(--section-assignment))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-assignment))]">
                 <Users className="h-4 w-4" />
@@ -619,7 +619,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           </Card>
 
           {/* Priority & Status Section */}
-          <Card className="border-l-4 border-l-[hsl(var(--section-priority))] bg-[hsl(var(--section-priority-bg))] shadow-sm">
+          <Card className="border-l-4 border-l-[hsl(var(--section-priority))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-priority))]">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
@@ -665,7 +665,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           </Card>
 
           {/* References & Resources Section */}
-          <Card className="border-l-4 border-l-[hsl(var(--section-references))] bg-[hsl(var(--section-references-bg))] shadow-sm">
+          <Card className="border-l-4 border-l-[hsl(var(--section-references))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-references))]">
                 <Link2 className="h-4 w-4 text-teal-500" />
@@ -749,7 +749,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           </Card>
 
           {/* Additional Context Section */}
-          <Card className="border-l-4 border-l-[hsl(var(--section-context))] bg-[hsl(var(--section-context-bg))] shadow-sm">
+          <Card className="border-l-4 border-l-[hsl(var(--section-context))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-context))]">
                 <StickyNote className="h-4 w-4" />
