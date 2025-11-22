@@ -10,7 +10,6 @@ import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
 import { QuickFilters } from "@/components/QuickFilters";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PostedTasksWidget } from "@/components/PostedTasksWidget";
-import { StatusMoodSelector } from "@/components/StatusMoodSelector";
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
@@ -92,15 +91,6 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8 space-y-6">
         <Breadcrumbs />
         
-        {user && (
-          <StatusMoodSelector
-            userId={user.id}
-            currentStatus={userProfile?.status}
-            currentMood={userProfile?.mood}
-            onUpdate={() => fetchUserProfile(user.id)}
-          />
-        )}
-
         <DashboardMetrics filters={filters} />
 
         <PostedTasksWidget />
