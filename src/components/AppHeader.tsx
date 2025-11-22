@@ -289,14 +289,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          <motion.div
-            whileHover={{ 
-              rotate: [0, -10, 10, -10, 10, 0],
-            }}
-            transition={{ duration: 0.5 }}
-          >
-            {userId && <NotificationCenter userId={userId} />}
-          </motion.div>
+          {userId && <NotificationCenter userId={userId} />}
         </motion.div>
         
         <Sheet>
