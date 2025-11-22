@@ -150,8 +150,8 @@ export const useTaskNotifications = (userId: string | undefined) => {
             // Show browser notification
             if (getNotificationPermission() === "granted") {
               showBrowserNotification({
-                title: "New Task Assigned",
-                body: `${assignorName} assigned you "${newTask.task_name}"`,
+                title: `New Task: ${newTask.task_name}`,
+                body: `${assignorName} assigned you this task`,
                 tag: `task-${newTask.id}`,
               });
             }
@@ -203,8 +203,8 @@ export const useTaskNotifications = (userId: string | undefined) => {
               // Show browser notification
               if (getNotificationPermission() === "granted") {
                 showBrowserNotification({
-                  title: "Task Completed",
-                  body: `"${newTask.task_name}" has been approved`,
+                  title: `Task Approved: ${newTask.task_name}`,
+                  body: `Your task has been approved!`,
                   tag: `task-${newTask.id}`,
                 });
               }
@@ -284,14 +284,14 @@ export const useTaskNotifications = (userId: string | undefined) => {
                 duration: 5000,
               });
 
-              // Show browser notification
-              if (getNotificationPermission() === "granted") {
-                showBrowserNotification({
-                  title: "Task Updated",
-                  body: `${updaterName}: ${description}`,
-                  tag: `task-${newTask.id}`,
-                });
-              }
+            // Show browser notification
+            if (getNotificationPermission() === "granted") {
+              showBrowserNotification({
+                title: `Task Updated: ${newTask.task_name}`,
+                body: `${updaterName}: ${description}`,
+                tag: `task-${newTask.id}`,
+              });
+            }
 
               // Play notification sound
               if (preferences.notifications_sound_enabled) {
