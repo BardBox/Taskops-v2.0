@@ -216,10 +216,11 @@ const Leaderboard = () => {
           {entries.slice(0, 10).map((entry) => (
             <div 
               key={entry.userId}
-              className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+              onClick={() => navigate(`/analytics/personal?userId=${entry.userId}&userName=${entry.userName}`)}
+              className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer ${
                 entry.userId === currentUserId 
-                  ? 'bg-primary/10 border-2 border-primary' 
-                  : 'bg-muted/50 hover:bg-muted'
+                  ? 'bg-primary/10 border-2 border-primary hover:bg-primary/15' 
+                  : 'bg-muted/50 hover:bg-muted hover:shadow-md'
               }`}
             >
               <div className="flex items-center justify-center w-8">

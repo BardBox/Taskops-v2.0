@@ -12,6 +12,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Responsi
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useEnhancedGamification } from "@/hooks/useEnhancedGamification";
 import { ACHIEVEMENTS } from "@/utils/achievements";
+import { TimeRangeFilter } from "@/components/TimeRangeFilter";
 
 interface PersonalStats {
   totalTasks: number;
@@ -33,6 +34,8 @@ const PersonalAnalytics = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [stats, setStats] = useState<PersonalStats>({
     totalTasks: 0,
     completedTasks: 0,
@@ -56,6 +59,12 @@ const PersonalAnalytics = () => {
     checkAuthAndFetchData();
   }, []);
 
+  useEffect(() => {
+    if (userId) {
+      fetchPersonalStats();
+    }
+  }, [dateFrom, dateTo, userId]);
+
   const checkAuthAndFetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -65,16 +74,28 @@ const PersonalAnalytics = () => {
     }
 
     setUserId(user.id);
-    await fetchPersonalAnalytics(user.id);
+    await fetchPersonalStats(user.id);
   };
 
-  const fetchPersonalAnalytics = async (uid: string) => {
+  const fetchPersonalStats = async (uid?: string) => {
+    const targetUserId = uid || userId;
+    if (!targetUserId) return;
+    
     try {
-      // Fetch user's tasks
-      const { data: userTasks, error: userTasksError } = await supabase
+      // Build query with optional date filters
+      let tasksQuery = supabase
         .from('tasks')
         .select('*')
-        .eq('assignee_id', uid);
+        .eq('assignee_id', targetUserId);
+      
+      if (dateFrom) {
+        tasksQuery = tasksQuery.gte('date', dateFrom.toISOString().split('T')[0]);
+      }
+      if (dateTo) {
+        tasksQuery = tasksQuery.lte('date', dateTo.toISOString().split('T')[0]);
+      }
+      
+      const { data: userTasks, error: userTasksError } = await tasksQuery;
 
       if (userTasksError) throw userTasksError;
 
@@ -248,9 +269,17 @@ const PersonalAnalytics = () => {
       <div className="space-y-6">
         <div>
           <Breadcrumbs />
-          <div className="mt-4">
-            <h1 className="text-3xl font-bold tracking-tight">My Performance Dashboard</h1>
-            <p className="text-muted-foreground">Track your progress and improve your skills</p>
+          <div className="mt-4 space-y-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">My Performance Dashboard</h1>
+              <p className="text-muted-foreground">Track your progress and improve your skills</p>
+            </div>
+            <TimeRangeFilter
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              onDateFromChange={setDateFrom}
+              onDateToChange={setDateTo}
+            />
           </div>
         </div>
 
