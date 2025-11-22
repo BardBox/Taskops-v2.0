@@ -52,14 +52,42 @@ interface Task {
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
 
+interface VisibleColumns {
+  date: boolean;
+  client: boolean;
+  project: boolean;
+  taskOwner: boolean;
+  pm: boolean;
+  deadline: boolean;
+  submission: boolean;
+  delay: boolean;
+  collaborators: boolean;
+  status: boolean;
+  urgency: boolean;
+}
+
 interface TaskTableProps {
   userRole: string;
   userId: string;
   filters?: FilterState;
   onDuplicate?: (data: any) => void;
+  visibleColumns?: VisibleColumns;
 }
 
-export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns }: TaskTableProps) => {
+  const columns = visibleColumns ?? {
+    date: true,
+    client: true,
+    project: true,
+    taskOwner: true,
+    pm: true,
+    deadline: true,
+    submission: true,
+    delay: true,
+    collaborators: true,
+    status: true,
+    urgency: true,
+  };
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -726,15 +754,17 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     />
                   </TableHead>
                 )}
-                <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
-                  <div className="flex items-center gap-2">
-                    Date
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "date" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "date" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                {columns.date && (
+                  <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
+                    <div className="flex items-center gap-2">
+                      Date
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "date" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "date" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
+                  </TableHead>
+                )}
                 <TableHead className="min-w-[180px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
                   <div className="flex items-center gap-2">
                     Task
@@ -744,104 +774,124 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
-                  <div className="flex items-center gap-2">
-                    Client
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "client" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "client" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                {columns.client && (
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
+                    <div className="flex items-center gap-2">
+                      Client
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "client" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "client" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
-                  <div className="flex items-center gap-2">
-                    Project
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "project" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "project" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.project && (
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
+                    <div className="flex items-center gap-2">
+                      Project
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "project" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "project" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[130px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
-                  <div className="flex items-center gap-2">
-                    Task Owner
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assignee" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "assignee" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.taskOwner && (
+                  <TableHead className="w-[130px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
+                    <div className="flex items-center gap-2">
+                      Task Owner
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assignee" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "assignee" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
-                  <div className="flex items-center gap-2">
-                    PM
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assigned_by" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "assigned_by" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.pm && (
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
+                    <div className="flex items-center gap-2">
+                      PM
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assigned_by" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "assigned_by" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-10 text-center">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={toggleCollaboratorsColumn}
-                          className="h-8 w-8 p-0 hover:bg-muted"
-                        >
-                          <Users className={`h-3.5 w-3.5 transition-colors ${collaboratorsExpanded ? "text-primary" : "text-muted-foreground"}`} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{collaboratorsExpanded ? "Hide" : "Show"} Collaborators</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-                <TableHead className="w-[95px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
-                  <div className="flex items-center gap-2">
-                    Deadline
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "deadline" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "deadline" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.collaborators && (
+                  <TableHead className="w-10 text-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={toggleCollaboratorsColumn}
+                            className="h-8 w-8 p-0 hover:bg-muted"
+                          >
+                            <Users className={`h-3.5 w-3.5 transition-colors ${collaboratorsExpanded ? "text-primary" : "text-muted-foreground"}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{collaboratorsExpanded ? "Hide" : "Show"} Collaborators</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                )}
+                {columns.deadline && (
+                  <TableHead className="w-[95px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
+                    <div className="flex items-center gap-2">
+                      Deadline
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "deadline" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "deadline" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("submission")}>
-                  <div className="flex items-center gap-2">
-                    Submission
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "submission" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "submission" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.submission && (
+                  <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("submission")}>
+                    <div className="flex items-center gap-2">
+                      Submission
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "submission" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "submission" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[75px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
-                  <div className="flex items-center gap-2">
-                    Delay
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "delay" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "delay" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.delay && (
+                  <TableHead className="w-[75px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
+                    <div className="flex items-center gap-2">
+                      Delay
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "delay" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "delay" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[105px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
-                  <div className="flex items-center gap-2">
-                    Status
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "status" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "status" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.status && (
+                  <TableHead className="w-[105px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
+                    <div className="flex items-center gap-2">
+                      Status
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "status" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "status" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
-                  <div className="flex items-center gap-2">
-                    Urgency
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "urgency" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "urgency" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                  </TableHead>
+                )}
+                {columns.urgency && (
+                  <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
+                    <div className="flex items-center gap-2">
+                      Urgency
+                      <div className="flex flex-col">
+                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "urgency" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                        <ArrowDown className={`h-3 w-3 ${sortField === "urgency" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      </div>
                     </div>
-                  </div>
-                </TableHead>
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -862,12 +912,14 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                         />
                       </TableCell>
                     )}
-                    <TableCell>
-                      <div className="relative">
-                        <div className="status-indicator" style={{ backgroundColor: getStatusColor(task.status).split(' ')[0].replace('bg-[', '').replace(']', '') }} />
-                        {new Date(task.date).toLocaleDateString()}
-                      </div>
-                    </TableCell>
+                    {columns.date && (
+                      <TableCell>
+                        <div className="relative">
+                          <div className="status-indicator" style={{ backgroundColor: getStatusColor(task.status).split(' ')[0].replace('bg-[', '').replace(']', '') }} />
+                          {new Date(task.date).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                    )}
                     <TableCell className="font-medium">
                       <div className="relative flex items-center gap-2 group/name">
                         <span>{task.task_name}</span>
@@ -878,156 +930,172 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{task.clients?.name || "-"}</TableCell>
-                    <TableCell>{task.projects?.name || "-"}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
-                          <AvatarFallback className="text-xs">
-                            {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{task.assignee?.full_name || "-"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
-                          <AvatarFallback className="text-xs">
-                            {task.assigned_by?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{task.assigned_by?.full_name || "-"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="p-0 relative">
-                      {task.collaborators && task.collaborators.length > 0 ? (
-                        <Collapsible
-                          open={collaboratorsExpanded}
-                          onOpenChange={() => {}}
-                        >
-                          <div className="flex items-center">
-                            {!collaboratorsExpanded ? (
-                              <div className="w-10 flex items-center justify-center py-2">
-                                <div className="flex -space-x-2">
-                                  {task.collaborators.slice(0, 2).map((collab: any, idx: number) => (
-                                    <TooltipProvider key={idx}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Avatar className="h-6 w-6 border-2 border-background">
-                                            <AvatarImage 
-                                              src={collab.profiles?.avatar_url || undefined} 
-                                              alt={collab.profiles?.full_name} 
-                                            />
-                                            <AvatarFallback className="text-[10px]">
-                                              {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                            </AvatarFallback>
-                                          </Avatar>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{collab.profiles?.full_name || "Unknown"}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  ))}
-                                  {task.collaborators.length > 2 && (
-                                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                                      <span className="text-[10px] font-medium">+{task.collaborators.length - 2}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-                                <div className="px-2 py-1.5 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex flex-wrap gap-2">
-                                    {task.collaborators.map((collab: any, idx: number) => {
-                                      const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
-                                      return (
-                                        <TooltipProvider key={idx}>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <div className="flex items-center gap-1 cursor-default">
-                                                <Avatar className="h-5 w-5">
-                                                  <AvatarImage 
-                                                    src={collab.profiles?.avatar_url || undefined} 
-                                                    alt={collab.profiles?.full_name} 
-                                                  />
-                                                  <AvatarFallback className="text-[10px]">
-                                                    {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                                  </AvatarFallback>
-                                                </Avatar>
-                                                <span className="text-xs font-medium">
-                                                  {firstName}
-                                                </span>
-                                              </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p>{collab.profiles?.full_name || "Unknown"}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      );
-                                    })}
+                    {columns.client && <TableCell>{task.clients?.name || "-"}</TableCell>}
+                    {columns.project && <TableCell>{task.projects?.name || "-"}</TableCell>}
+                    {columns.taskOwner && (
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                            <AvatarFallback className="text-xs">
+                              {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{task.assignee?.full_name || "-"}</span>
+                        </div>
+                      </TableCell>
+                    )}
+                    {columns.pm && (
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
+                            <AvatarFallback className="text-xs">
+                              {task.assigned_by?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{task.assigned_by?.full_name || "-"}</span>
+                        </div>
+                      </TableCell>
+                    )}
+                    {columns.collaborators && (
+                      <TableCell className="p-0 relative">
+                        {task.collaborators && task.collaborators.length > 0 ? (
+                          <Collapsible
+                            open={collaboratorsExpanded}
+                            onOpenChange={() => {}}
+                          >
+                            <div className="flex items-center">
+                              {!collaboratorsExpanded ? (
+                                <div className="w-10 flex items-center justify-center py-2">
+                                  <div className="flex -space-x-2">
+                                    {task.collaborators.slice(0, 2).map((collab: any, idx: number) => (
+                                      <TooltipProvider key={idx}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Avatar className="h-6 w-6 border-2 border-background">
+                                              <AvatarImage 
+                                                src={collab.profiles?.avatar_url || undefined} 
+                                                alt={collab.profiles?.full_name} 
+                                              />
+                                              <AvatarFallback className="text-xs">
+                                                {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                              </AvatarFallback>
+                                            </Avatar>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    ))}
+                                    {task.collaborators.length > 2 && (
+                                      <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                                        <span className="text-[10px] font-medium">+{task.collaborators.length - 2}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              </CollapsibleContent>
-                            )}
+                              ) : (
+                                <CollapsibleContent className="w-full">
+                                  <div className="px-2 py-2 w-full min-w-[200px]">
+                                    <div className="flex flex-wrap gap-2">
+                                      {task.collaborators.map((collab: any, idx: number) => {
+                                        const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
+                                        return (
+                                          <TooltipProvider key={idx}>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors">
+                                                  <Avatar className="h-5 w-5">
+                                                    <AvatarImage 
+                                                      src={collab.profiles?.avatar_url || undefined} 
+                                                      alt={collab.profiles?.full_name} 
+                                                    />
+                                                    <AvatarFallback className="text-[10px]">
+                                                      {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                                    </AvatarFallback>
+                                                  </Avatar>
+                                                  <span className="text-xs font-medium">
+                                                    {firstName}
+                                                  </span>
+                                                </div>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </CollapsibleContent>
+                              )}
+                            </div>
+                          </Collapsible>
+                        ) : (
+                          <div className="w-10 flex items-center justify-center">
+                            <span className="text-muted-foreground text-xs">-</span>
                           </div>
-                        </Collapsible>
-                      ) : (
-                        <div className="w-10 flex items-center justify-center">
-                          <span className="text-muted-foreground text-xs">-</span>
-                        </div>
+                        )}
+                      </TableCell>
+                    )}
+                    {columns.deadline && (
+                      <TableCell>
+                        {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}
+                      </TableCell>
+                    )}
+                    {columns.submission && (
+                      <TableCell>
+                        {task.actual_delivery ? new Date(task.actual_delivery).toLocaleDateString() : "-"}
+                      </TableCell>
+                    )}
+                    {columns.delay && (
+                      <TableCell>
+                        {delayDays !== null ? (
+                          <span className={delayDays > 0 ? "text-destructive font-medium" : delayDays < 0 ? "text-green-600 font-medium" : ""}>
+                            {delayDays > 0 ? `+${delayDays}d` : delayDays < 0 ? `${delayDays}d` : "On time"}
+                          </span>
+                        ) : "-"}
+                      </TableCell>
+                    )}
+                    {columns.status && (
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
+                          <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
+                            {task.status}
+                          </Badge>
+                        ) : (
+                          <BadgeDropdown
+                            value={task.status}
+                            options={
+                              userRole === "team_member"
+                                ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
+                                : statuses
+                            }
+                            onChange={(value) => handleStatusChange(task.id, value)}
+                            disabled={!canEdit(task)}
+                          />
+                        )}
+                      </TableCell>
+                    )}
+                      {columns.urgency && (
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          {userRole === "team_member" ? (
+                            <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
+                              {task.urgency}
+                            </Badge>
+                          ) : (
+                            <BadgeDropdown
+                              value={task.urgency}
+                              options={urgencies}
+                              onChange={(value) => handleUrgencyChange(task.id, value)}
+                              disabled={!canEdit(task)}
+                            />
+                          )}
+                        </TableCell>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {task.actual_delivery ? new Date(task.actual_delivery).toLocaleDateString() : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {delayDays !== null ? (
-                        <span className={delayDays > 0 ? "text-destructive font-medium" : delayDays < 0 ? "text-green-600 font-medium" : ""}>
-                          {delayDays > 0 ? `+${delayDays}d` : delayDays < 0 ? `${delayDays}d` : "On time"}
-                        </span>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
-                        <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
-                          {task.status}
-                        </Badge>
-                      ) : (
-                        <BadgeDropdown
-                          value={task.status}
-                          options={
-                            userRole === "team_member"
-                              ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
-                              : statuses
-                          }
-                          onChange={(value) => handleStatusChange(task.id, value)}
-                          disabled={!canEdit(task)}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      {userRole === "team_member" ? (
-                        <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
-                          {task.urgency}
-                        </Badge>
-                      ) : (
-                        <BadgeDropdown
-                          value={task.urgency}
-                          options={urgencies}
-                          onChange={(value) => handleUrgencyChange(task.id, value)}
-                          disabled={!canEdit(task)}
-                        />
-                      )}
-                    </TableCell>
                   </TableRow>
                 );
               })}
