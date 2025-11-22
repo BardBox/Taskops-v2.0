@@ -858,61 +858,29 @@ export function TaskDetailDialog({
         isFullscreen ? "max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] animate-fade-in" : "max-w-4xl w-4xl max-h-[90vh] h-[90vh]"
       )}>
         <div className="p-6 pb-4 border-b flex-shrink-0 relative">
-          <div className="absolute top-6 right-6 flex items-center gap-1 z-10">
-            {(userRole === 'project_manager' || userRole === 'project_owner') && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (onDuplicate && task) {
-                      onDuplicate({
-                        task_name: task.task_name,
-                        client_id: task.client_id,
-                        project_id: task.project_id,
-                        assignee_id: task.assignee_id,
-                        urgency: task.urgency,
-                        reference_link_1: task.reference_link_1,
-                        reference_link_2: task.reference_link_2,
-                        reference_link_3: task.reference_link_3,
-                        reference_image: task.reference_image,
-                        notes: task.notes,
-                      });
-                    }
-                  }}
-                  title="Duplicate task"
-                  className="h-9 w-9"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowEditDialog(true)}
-                  title="Edit task"
-                  className="h-9 w-9"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+          <div className="absolute top-6 left-6 flex items-center gap-2 z-10">
+            <DialogClose asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-600 p-0 border-0 transition-colors" 
+                title="Close"
+              >
+                <span className="sr-only">Close</span>
+              </Button>
+            </DialogClose>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsFullscreen(!isFullscreen)}
               title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              className="h-9 w-9"
+              className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-600 p-0 border-0 transition-colors"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              <span className="sr-only">{isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}</span>
             </Button>
-            <DialogClose asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9" title="Close">
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
           </div>
           
-          <div className="flex items-start gap-3 pr-48">
+          <div className="flex items-start gap-3 pl-16 pr-4">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full flex-shrink-0`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -937,8 +905,8 @@ export function TaskDetailDialog({
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <div className="px-6 border-b flex-shrink-0 bg-background">
-            <TabsList className="w-full justify-start bg-transparent">
+          <div className="px-6 border-b flex-shrink-0 bg-background flex items-center justify-between">
+            <TabsList className="bg-transparent">
               <TabsTrigger value="details" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Details
@@ -961,6 +929,46 @@ export function TaskDetailDialog({
                 History
               </TabsTrigger>
             </TabsList>
+            
+            {(userRole === 'project_manager' || userRole === 'project_owner') && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (onDuplicate && task) {
+                      onDuplicate({
+                        task_name: task.task_name,
+                        client_id: task.client_id,
+                        project_id: task.project_id,
+                        assignee_id: task.assignee_id,
+                        urgency: task.urgency,
+                        reference_link_1: task.reference_link_1,
+                        reference_link_2: task.reference_link_2,
+                        reference_link_3: task.reference_link_3,
+                        reference_image: task.reference_image,
+                        notes: task.notes,
+                      });
+                    }
+                  }}
+                  title="Duplicate task"
+                  className="gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Duplicate
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEditDialog(true)}
+                  title="Edit task"
+                  className="gap-2"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  Edit
+                </Button>
+              </div>
+            )}
           </div>
 
           <TabsContent value="details" className="flex-1 overflow-y-auto m-0">
