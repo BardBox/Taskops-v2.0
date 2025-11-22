@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
+import Profile from "./pages/Profile";
 import AccountSettings from "./pages/AccountSettings";
 import Preferences from "./pages/Preferences";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/analytics/pm" element={<PMPerformance />} />
           <Route path="/analytics/client" element={<ClientPerformance />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/about" element={<About />} />

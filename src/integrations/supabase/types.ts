@@ -170,6 +170,88 @@ export type Database = {
         }
         Relationships: []
       }
+      link_boards: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_boards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      link_items: {
+        Row: {
+          board_id: string
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_items_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "link_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_avatar_url: string | null
@@ -240,25 +322,46 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          best_contact_time: string | null
           created_at: string
           full_name: string
+          hobbies: string[] | null
           id: string
+          kryptonite: string | null
+          status: string | null
+          superpower: string | null
+          tagline: string | null
+          timezone: string | null
           updated_at: string
           user_code: string | null
         }
         Insert: {
           avatar_url?: string | null
+          best_contact_time?: string | null
           created_at?: string
           full_name: string
+          hobbies?: string[] | null
           id: string
+          kryptonite?: string | null
+          status?: string | null
+          superpower?: string | null
+          tagline?: string | null
+          timezone?: string | null
           updated_at?: string
           user_code?: string | null
         }
         Update: {
           avatar_url?: string | null
+          best_contact_time?: string | null
           created_at?: string
           full_name?: string
+          hobbies?: string[] | null
           id?: string
+          kryptonite?: string | null
+          status?: string | null
+          superpower?: string | null
+          tagline?: string | null
+          timezone?: string | null
           updated_at?: string
           user_code?: string | null
         }

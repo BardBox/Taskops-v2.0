@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Sliders, Home, Shield } from "lucide-react";
+import { LogOut, Settings, Sliders, Home, Shield, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,6 +103,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             <DropdownMenuItem onClick={() => navigate("/dashboard")}>
               <Home className="mr-2 h-4 w-4" />
               Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/profile")}>
+              <User className="mr-2 h-4 w-4" />
+              My Profile
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/analytics")}>
               <Shield className="mr-2 h-4 w-4" />
