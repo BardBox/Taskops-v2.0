@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Camera } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -44,6 +45,7 @@ export function EditProfileDrawer({
   const [status, setStatus] = useState("Available");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -188,16 +190,33 @@ export function EditProfileDrawer({
 
             <TabsContent value="profile" className="space-y-4 mt-4">
               <div className="flex flex-col items-center gap-4">
-                <Avatar className="h-24 w-24">
+                <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
                   <AvatarImage src={avatarUrl || undefined} alt={fullName} />
                   <AvatarFallback className="text-2xl">
                     {getInitials(fullName)}
                   </AvatarFallback>
                 </Avatar>
-                <AvatarSelector
-                  selectedAvatarUrl={avatarUrl}
-                  onAvatarSelect={(url) => setAvatarUrl(url)}
-                />
+                
+                <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <Camera className="h-4 w-4" />
+                      Change Avatar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Choose Your Avatar</DialogTitle>
+                    </DialogHeader>
+                    <AvatarSelector
+                      selectedAvatarUrl={avatarUrl}
+                      onAvatarSelect={(url) => {
+                        setAvatarUrl(url);
+                        setAvatarDialogOpen(false);
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
               </div>
 
               <div>
