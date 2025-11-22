@@ -942,24 +942,36 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                               </div>
                             </div>
                             <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-                              <div className="px-3 py-2 min-w-[200px]">
+                              <div className="px-3 py-2 min-w-[150px]">
                                 <div className="flex flex-wrap gap-2">
-                                  {task.collaborators.map((collab: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-1.5">
-                                      <Avatar className="h-5 w-5">
-                                        <AvatarImage 
-                                          src={collab.profiles?.avatar_url || undefined} 
-                                          alt={collab.profiles?.full_name} 
-                                        />
-                                        <AvatarFallback className="text-[10px]">
-                                          {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-xs font-medium">
-                                        {collab.profiles?.full_name || "Unknown"}
-                                      </span>
-                                    </div>
-                                  ))}
+                                  {task.collaborators.map((collab: any, idx: number) => {
+                                    const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
+                                    return (
+                                      <TooltipProvider key={idx}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1.5 cursor-default">
+                                              <Avatar className="h-5 w-5">
+                                                <AvatarImage 
+                                                  src={collab.profiles?.avatar_url || undefined} 
+                                                  alt={collab.profiles?.full_name} 
+                                                />
+                                                <AvatarFallback className="text-[10px]">
+                                                  {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                              <span className="text-xs font-medium">
+                                                {firstName}
+                                              </span>
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             </CollapsibleContent>
