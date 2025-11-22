@@ -33,6 +33,18 @@ interface TaskDialogProps {
   task?: any;
   onClose?: () => void;
   userRole?: string;
+  duplicateData?: {
+    task_name: string;
+    client_id: string;
+    project_id: string;
+    assignee_id: string;
+    urgency: string;
+    reference_link_1?: string;
+    reference_link_2?: string;
+    reference_link_3?: string;
+    notes?: string;
+    reference_image?: string;
+  };
 }
 
 const taskSchema = z.object({
@@ -49,7 +61,7 @@ const taskSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: TaskDialogProps) => {
+export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplicateData }: TaskDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
@@ -126,29 +138,55 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           tomorrow.setDate(tomorrow.getDate() + 1);
           const tomorrowStr = tomorrow.toISOString().split('T')[0];
           
-          setReferenceImage(null);
-          setExistingImageUrl("");
-          setImagePreview("");
-          
-          // Fetch default project and set it in form
-          const defaultProject = await fetchDefaultProject();
-          setFormData({
-            task_name: "",
-            client_id: defaultProject?.client_id || "",
-            project_id: defaultProject?.id || "",
-            assignee_id: "",
-            deadline: tomorrowStr,
-            status: "Not Started",
-            urgency: "Medium",
-            reference_link_1: "",
-            reference_link_2: "",
-            reference_link_3: "",
-            notes: "",
-          });
-          
-          // Fetch projects for the default client
-          if (defaultProject?.client_id) {
-            await fetchProjects(defaultProject.client_id);
+          // Check if we have duplicate data
+          if (duplicateData) {
+            setReferenceImage(null);
+            setExistingImageUrl(duplicateData.reference_image || "");
+            setImagePreview(duplicateData.reference_image || "");
+            
+            setFormData({
+              task_name: `Copy of ${duplicateData.task_name}`,
+              client_id: duplicateData.client_id || "",
+              project_id: duplicateData.project_id || "",
+              assignee_id: duplicateData.assignee_id || "",
+              deadline: tomorrowStr,
+              status: "Not Started",
+              urgency: duplicateData.urgency || "Medium",
+              reference_link_1: duplicateData.reference_link_1 || "",
+              reference_link_2: duplicateData.reference_link_2 || "",
+              reference_link_3: duplicateData.reference_link_3 || "",
+              notes: duplicateData.notes || "",
+            });
+            
+            // Fetch projects for the duplicate's client
+            if (duplicateData.client_id) {
+              await fetchProjects(duplicateData.client_id);
+            }
+          } else {
+            setReferenceImage(null);
+            setExistingImageUrl("");
+            setImagePreview("");
+            
+            // Fetch default project and set it in form
+            const defaultProject = await fetchDefaultProject();
+            setFormData({
+              task_name: "",
+              client_id: defaultProject?.client_id || "",
+              project_id: defaultProject?.id || "",
+              assignee_id: "",
+              deadline: tomorrowStr,
+              status: "Not Started",
+              urgency: "Medium",
+              reference_link_1: "",
+              reference_link_2: "",
+              reference_link_3: "",
+              notes: "",
+            });
+            
+            // Fetch projects for the default client
+            if (defaultProject?.client_id) {
+              await fetchProjects(defaultProject.client_id);
+            }
           }
         }
       };

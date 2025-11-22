@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [duplicateData, setDuplicateData] = useState<any>(null);
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
@@ -117,7 +118,11 @@ const Dashboard = () => {
           <TaskTable 
             filters={filters} 
             userRole={userRole} 
-            userId={user?.id || ""} 
+            userId={user?.id || ""}
+            onDuplicate={(data) => {
+              setDuplicateData(data);
+              setDialogOpen(true);
+            }}
           />
         </div>
       </div>
@@ -125,8 +130,12 @@ const Dashboard = () => {
       {dialogOpen && (
         <TaskDialog
           open={dialogOpen}
-          onOpenChange={setDialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setDuplicateData(null);
+          }}
           userRole={userRole}
+          duplicateData={duplicateData}
         />
       )}
     </MainLayout>
