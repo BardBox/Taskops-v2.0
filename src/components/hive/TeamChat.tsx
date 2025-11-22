@@ -7,8 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { MessageCircle, Send, Smile } from "lucide-react";
+import { MessageCircle, Send, Pencil, Trash2, Check, X } from "lucide-react";
 import { format } from "date-fns";
+import { EmojiPicker } from "./EmojiPicker";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ChatMessage {
   id: string;
@@ -30,6 +41,9 @@ const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "🔥", "👏"];
 
 const TeamChat = () => {
   const [message, setMessage] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -172,11 +186,70 @@ const TeamChat = () => {
     },
   });
 
+  const updateMessage = useMutation({
+    mutationFn: async ({ messageId, newText }: { messageId: string; newText: string }) => {
+      const { error } = await supabase
+        .from("team_chat_messages")
+        .update({ message: newText })
+        .eq("id", messageId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teamChat"] });
+      toast.success("Message updated");
+      setEditingMessageId(null);
+      setEditingText("");
+    },
+    onError: () => {
+      toast.error("Failed to update message");
+    },
+  });
+
+  const deleteMessage = useMutation({
+    mutationFn: async (messageId: string) => {
+      const { error } = await supabase
+        .from("team_chat_messages")
+        .delete()
+        .eq("id", messageId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teamChat"] });
+      toast.success("Message deleted");
+      setDeleteMessageId(null);
+    },
+    onError: () => {
+      toast.error("Failed to delete message");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
       sendMessage.mutate();
     }
+  };
+
+  const startEdit = (msg: ChatMessage) => {
+    setEditingMessageId(msg.id);
+    setEditingText(msg.message);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingText("");
+  };
+
+  const saveEdit = (messageId: string) => {
+    if (editingText.trim()) {
+      updateMessage.mutate({ messageId, newText: editingText });
+    }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setMessage((prev) => prev + emoji);
   };
 
   return (
@@ -193,16 +266,15 @@ const TeamChat = () => {
             <div className="space-y-4">
               {messages.map((msg) => {
                 const isOwnMessage = msg.user_id === currentUserId;
+                const isEditing = editingMessageId === msg.id;
+                
                 return (
-                  <div
-                    key={msg.id}
-                    className={`flex gap-3 ${isOwnMessage ? "flex-row-reverse" : ""}`}
-                  >
+                  <div key={msg.id} className="flex gap-3">
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={msg.profiles.avatar_url || undefined} />
                       <AvatarFallback>{msg.profiles.full_name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className={`flex-1 ${isOwnMessage ? "text-right" : ""}`}>
+                    <div className="flex-1">
                       <div className="flex items-baseline gap-2 mb-1">
                         <span className="font-medium text-sm text-foreground">
                           {msg.profiles.full_name}
@@ -211,15 +283,65 @@ const TeamChat = () => {
                           {format(new Date(msg.created_at), "p")}
                         </span>
                       </div>
-                      <div
-                        className={`inline-block px-4 py-2 rounded-lg ${
-                          isOwnMessage
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-accent text-accent-foreground"
-                        }`}
-                      >
-                        <p className="text-sm">{msg.message}</p>
-                      </div>
+                      
+                      {isEditing ? (
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            className="flex-1"
+                            autoFocus
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => saveEdit(msg.id)}
+                            disabled={!editingText.trim()}
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={cancelEdit}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="group relative">
+                          <div
+                            className={`inline-block px-4 py-2 rounded-lg ${
+                              isOwnMessage
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-accent text-accent-foreground"
+                            }`}
+                          >
+                            <p className="text-sm">{msg.message}</p>
+                          </div>
+                          {isOwnMessage && (
+                            <div className="absolute -right-20 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                onClick={() => startEdit(msg)}
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-destructive"
+                                onClick={() => setDeleteMessageId(msg.id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
                       <div className="flex gap-1 mt-2 flex-wrap">
                         {msg.reactions.map((reaction, idx) => (
                           <button
@@ -230,20 +352,18 @@ const TeamChat = () => {
                             {reaction.emoji} {reaction.count}
                           </button>
                         ))}
-                        {!isOwnMessage && (
-                          <div className="flex gap-1">
-                            {QUICK_REACTIONS.map((emoji) => (
-                              <button
-                                key={emoji}
-                                onClick={() => addReaction.mutate({ messageId: msg.id, emoji })}
-                                className="w-6 h-6 text-xs hover:bg-accent rounded-full transition-colors opacity-50 hover:opacity-100"
-                                title={`React with ${emoji}`}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        <div className="flex gap-1">
+                          {QUICK_REACTIONS.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => addReaction.mutate({ messageId: msg.id, emoji })}
+                              className="w-6 h-6 text-xs hover:bg-accent rounded-full transition-colors opacity-50 hover:opacity-100"
+                              title={`React with ${emoji}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -259,10 +379,31 @@ const TeamChat = () => {
               onChange={(e) => setMessage(e.target.value)}
               className="flex-1"
             />
+            <EmojiPicker onSelect={handleEmojiSelect} />
             <Button type="submit" disabled={!message.trim()}>
               <Send className="w-4 h-4" />
             </Button>
           </form>
+
+          <AlertDialog open={!!deleteMessageId} onOpenChange={() => setDeleteMessageId(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Message</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this message? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteMessageId && deleteMessage.mutate(deleteMessageId)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>
