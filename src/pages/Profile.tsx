@@ -15,6 +15,7 @@ import { CollaborationStyle } from "@/components/profile/CollaborationStyle";
 import { EditProfileDrawer } from "@/components/profile/EditProfileDrawer";
 import { MyCanvas } from "@/components/profile/MyCanvas";
 import { Button } from "@/components/ui/button";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -94,6 +95,7 @@ export default function Profile() {
   return (
     <MainLayout>
       <div className="container mx-auto py-8 px-4 max-w-6xl space-y-6">
+        <Breadcrumbs />
         {fromTeam && (
           <Button
             variant="ghost"

@@ -31,6 +31,8 @@ export const Breadcrumbs = () => {
         return "Admin";
       case "team":
         return "My Team";
+      case "profile":
+        return "My Profile";
       default:
         return segment.charAt(0).toUpperCase() + segment.slice(1);
     }
