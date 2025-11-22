@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users, Info } from "lucide-react";
+import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users, Info, Hexagon } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -189,8 +189,8 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                 }`}
                 onClick={() => navigate("/hive")}
               >
-                <span className="mr-2">🐝</span>
-                The Hive
+                <Hexagon className="mr-2 h-4 w-4" />
+                The Creative Hive
               </Button>
               <Button
                 variant="ghost"
