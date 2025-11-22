@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/MainLayout";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { ProfileHero } from "@/components/profile/ProfileHero";
 import { MyArsenal } from "@/components/profile/MyArsenal";
 import { HobbiesSection } from "@/components/profile/HobbiesSection";
@@ -11,6 +11,7 @@ import { CreativeStats } from "@/components/profile/CreativeStats";
 import { CollaborationStyle } from "@/components/profile/CollaborationStyle";
 import { EditProfileDrawer } from "@/components/profile/EditProfileDrawer";
 import { MyCanvas } from "@/components/profile/MyCanvas";
+import { Button } from "@/components/ui/button";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -85,9 +86,22 @@ export default function Profile() {
     );
   }
 
+  const fromTeam = searchParams.get("from") === "team";
+
   return (
     <MainLayout>
       <div className="container mx-auto py-8 px-4 max-w-6xl space-y-6">
+        {fromTeam && (
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/team")}
+            className="gap-2 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Go back to My Team
+          </Button>
+        )}
+        
         <ProfileHero
           profile={profile}
           role={role}

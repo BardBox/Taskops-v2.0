@@ -202,10 +202,10 @@ export default function Team() {
 
         {/* Search and Filters */}
         <Card>
-          <CardHeader>
-            <div className="flex flex-col md:flex-row gap-4">
+          <CardHeader className="pb-4">
+            <div className="space-y-3">
               {/* Search */}
-              <div className="relative flex-1">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, title, code, or tagline..."
@@ -215,59 +215,63 @@ export default function Team() {
                 />
               </div>
 
-              {/* Role Filter */}
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="project_owner">Project Owner</SelectItem>
-                  <SelectItem value="project_manager">Project Manager</SelectItem>
-                  <SelectItem value="team_member">Team Member</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Filters Row */}
+              <div className="flex flex-wrap gap-2">
+                {/* Role Filter */}
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="project_owner">Project Owner</SelectItem>
+                    <SelectItem value="project_manager">Project Manager</SelectItem>
+                    <SelectItem value="team_member">Team Member</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="Available">Available</SelectItem>
-                  <SelectItem value="Busy">Busy</SelectItem>
-                  <SelectItem value="Away">Away</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Status Filter */}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Available">Available</SelectItem>
+                    <SelectItem value="Busy">Busy</SelectItem>
+                    <SelectItem value="Away">Away</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {/* Creative Title Filter */}
-              <Select value={creativeTitleFilter} onValueChange={setCreativeTitleFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by title" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Titles</SelectItem>
-                  {uniqueCreativeTitles.map((title) => (
-                    <SelectItem key={title} value={title}>
-                      {title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {/* Creative Title Filter */}
+                <Select value={creativeTitleFilter} onValueChange={setCreativeTitleFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Creative Title" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Titles</SelectItem>
+                    {uniqueCreativeTitles.map((title) => (
+                      <SelectItem key={title} value={title}>
+                        {title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              {/* Clear Filters */}
-              {(searchQuery || roleFilter !== "all" || statusFilter !== "all" || creativeTitleFilter !== "all") && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={clearFilters}
-                  className="shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+                {/* Clear Filters */}
+                {(searchQuery || roleFilter !== "all" || statusFilter !== "all" || creativeTitleFilter !== "all") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -292,7 +296,7 @@ export default function Team() {
               >
                 <Card 
                   className="hover:shadow-lg transition-all cursor-pointer group"
-                  onClick={() => navigate(`/profile?user=${member.id}`)}
+                  onClick={() => navigate(`/profile?user=${member.id}&from=team`)}
                 >
                   <CardContent className="p-6">
                     <div className="flex flex-col items-center text-center space-y-4">
