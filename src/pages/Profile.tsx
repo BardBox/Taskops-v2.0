@@ -10,6 +10,7 @@ import { InspirationBoard } from "@/components/profile/InspirationBoard";
 import { CreativeStats } from "@/components/profile/CreativeStats";
 import { CollaborationStyle } from "@/components/profile/CollaborationStyle";
 import { EditProfileDrawer } from "@/components/profile/EditProfileDrawer";
+import { MyCanvas } from "@/components/profile/MyCanvas";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -94,6 +95,8 @@ export default function Profile() {
         <HobbiesSection hobbies={profile?.hobbies || []} />
 
         <CollaborationStyle userId={userId} />
+
+        <MyCanvas userId={userId} />
 
         <InspirationBoard userId={userId} />
 
