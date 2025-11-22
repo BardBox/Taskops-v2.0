@@ -126,7 +126,7 @@ export default function About() {
         </Card>
 
         {/* Technology Stack */}
-        <Card>
+        <Card className="mb-12">
           <CardHeader>
             <CardTitle className="text-2xl">Built With Modern Technology</CardTitle>
             <CardDescription>
@@ -141,6 +141,87 @@ export default function About() {
               <Badge variant="secondary">Lovable Cloud</Badge>
               <Badge variant="secondary">Real-time Sync</Badge>
               <Badge variant="secondary">PWA Ready</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Version & Copyright */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="text-2xl">Version & Copyright</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Version</p>
+              <p className="font-semibold">TaskOPS v1.0.0</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Copyright</p>
+              <p className="font-semibold">© 2025 BardBox DigiGrowth LLP. All rights reserved.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Legal Information */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="text-2xl">Legal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <h3 className="font-semibold mb-2">Disclaimer</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                The information provided by TaskOPS is for general informational purposes only. While we strive to keep the 
+                information up to date and correct, we make no representations or warranties of any kind, express or implied, 
+                about the completeness, accuracy, reliability, suitability, or availability of the platform or the information 
+                contained therein for any purpose. Any reliance you place on such information is strictly at your own risk.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-2">Terms of Use</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                By accessing and using TaskOPS, you accept and agree to be bound by the terms and provision of this agreement. 
+                The use of this platform is subject to the terms and conditions set forth by BardBox DigiGrowth LLP. 
+                Unauthorized use of this platform may give rise to a claim for damages and/or be a criminal offense.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Privacy & Data Protection</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                BardBox DigiGrowth LLP is committed to protecting your privacy. All data collected through TaskOPS is handled 
+                in accordance with applicable data protection laws. We implement appropriate technical and organizational measures 
+                to ensure the security of your personal information. Your data will not be shared with third parties without 
+                your explicit consent, except as required by law.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Limitation of Liability</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                In no event shall BardBox DigiGrowth LLP be liable for any direct, indirect, incidental, special, consequential, 
+                or punitive damages arising out of or relating to your use of or inability to use the platform. This includes, 
+                but is not limited to, damages for loss of profits, data, or other intangible losses.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">License</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Unless otherwise stated, BardBox DigiGrowth LLP owns the intellectual property rights for all material on TaskOPS. 
+                All intellectual property rights are reserved. You may access this platform for your own personal use subject to 
+                restrictions set in these terms and conditions. You must not republish, sell, rent, sub-license, reproduce, 
+                duplicate, or redistribute material from TaskOPS without explicit written permission.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Contact Information</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                For any questions regarding these terms, please contact BardBox DigiGrowth LLP through the appropriate channels 
+                provided within the platform.
+              </p>
             </div>
           </CardContent>
         </Card>
