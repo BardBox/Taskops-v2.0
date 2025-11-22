@@ -54,27 +54,35 @@ export const DashboardCustomization = ({
 
   const handleSave = async () => {
     try {
-      // Save to database
+      // Save to database with proper upsert
       const { error } = await supabase
         .from("user_preferences")
-        .upsert({
-          user_id: userId,
-          show_metrics: localPreferences.showMetrics,
-          show_filters: localPreferences.showFilters,
-          dashboard_view: JSON.stringify({
-            showQuickFilters: localPreferences.showQuickFilters,
-            visibleColumns: localPreferences.visibleColumns,
-          }),
-        });
+        .upsert(
+          {
+            user_id: userId,
+            show_metrics: localPreferences.showMetrics,
+            show_filters: localPreferences.showFilters,
+            dashboard_view: JSON.stringify({
+              showQuickFilters: localPreferences.showQuickFilters,
+              visibleColumns: localPreferences.visibleColumns,
+            }),
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
 
       onPreferencesChange(localPreferences);
       toast.success("Dashboard preferences saved");
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving preferences:", error);
-      toast.error("Failed to save preferences");
+      toast.error(`Failed to save preferences: ${error.message || "Unknown error"}`);
     }
   };
 
