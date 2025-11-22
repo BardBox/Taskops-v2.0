@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
-import { X, FileText, Users, AlertCircle, Link2, StickyNote, Calendar, Sparkles, ExternalLink, UserCircle2 } from "lucide-react";
+import { X, ClipboardList, Users, AlertCircle, Link2, StickyNote, Calendar, Activity, User, UsersRound, Wand2, Zap, Link, Paperclip, Bookmark } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskTimeline } from "@/components/TaskTimeline";
 
@@ -437,7 +437,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           <Card className="border-l-4 border-l-[hsl(var(--section-essentials))] bg-[hsl(var(--section-essentials-bg))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-essentials))]">
-                <FileText className="h-4 w-4" />
+                <ClipboardList className="h-4 w-4" />
                 Task Essentials
               </CardTitle>
             </CardHeader>
@@ -516,7 +516,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 {/* Task Owner */}
                 <div className="flex-1 min-w-[200px] space-y-2">
                   <Label htmlFor="assignee_id" className="text-sm font-medium flex items-center gap-1.5">
-                    <UserCircle2 className="h-3.5 w-3.5" />
+                    <User className="h-3.5 w-3.5" />
                     Task Owner *
                   </Label>
                   <Select
@@ -541,7 +541,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 {task && collaborators.length > 0 && (
                   <div className="flex-1 min-w-[200px] space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5" />
+                      <UsersRound className="h-3.5 w-3.5" />
                       Collaborators
                     </Label>
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30 min-h-[40px]">
@@ -564,7 +564,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 {task && assignedBy && (
                   <div className="flex-1 min-w-[200px] space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                      <Wand2 className="h-3.5 w-3.5 text-purple-500" />
                       Project Manager
                     </Label>
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30 min-h-[40px]">
@@ -619,7 +619,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="status" className="text-sm font-medium flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                    <Activity className="h-3.5 w-3.5 text-blue-500" />
                     Status *
                   </Label>
                   <BadgeDropdown
@@ -638,7 +638,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
                 <div className="space-y-2">
                   <Label htmlFor="urgency" className="text-sm font-medium flex items-center gap-1.5">
-                    <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                    <Zap className="h-3.5 w-3.5 text-red-500" />
                     Urgency *
                   </Label>
                   <BadgeDropdown
@@ -665,7 +665,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor="reference_link_1" className="text-sm font-medium flex items-center gap-1.5">
-                    <ExternalLink className="h-3.5 w-3.5 text-blue-500" />
+                    <Link className="h-3.5 w-3.5 text-blue-500" />
                     Reference Link 1
                   </Label>
                   <Input
@@ -679,7 +679,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
                 <div className="space-y-2">
                   <Label htmlFor="reference_link_2" className="text-sm font-medium flex items-center gap-1.5">
-                    <ExternalLink className="h-3.5 w-3.5 text-emerald-500" />
+                    <Paperclip className="h-3.5 w-3.5 text-emerald-500" />
                     Reference Link 2
                   </Label>
                   <Input
@@ -693,7 +693,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
                 <div className="space-y-2">
                   <Label htmlFor="reference_link_3" className="text-sm font-medium flex items-center gap-1.5">
-                    <ExternalLink className="h-3.5 w-3.5 text-violet-500" />
+                    <Bookmark className="h-3.5 w-3.5 text-violet-500" />
                     Reference Link 3
                   </Label>
                   <Input
