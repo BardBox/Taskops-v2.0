@@ -29,7 +29,11 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
           {/* Avatar */}
           <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
-            <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name} />
+            <AvatarImage 
+              src={profile?.avatar_url || undefined} 
+              alt={profile?.full_name}
+              className="object-cover"
+            />
             <AvatarFallback className="text-2xl md:text-3xl font-bold bg-gradient-to-br from-primary to-secondary text-primary-foreground">
               {getInitials(profile?.full_name || "")}
             </AvatarFallback>
