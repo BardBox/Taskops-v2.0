@@ -13,14 +13,23 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
   const currentDate = new Date();
   const submittedDate = dateSubmitted ? new Date(dateSubmitted) : null;
 
-  // Calculate position percentages (no caps - can exceed 100%)
-  const totalDuration = endDate.getTime() - startDate.getTime();
-  const elapsed = currentDate.getTime() - startDate.getTime();
-  const currentPosition = (elapsed / totalDuration) * 100;
+  // Helper function to get calendar days difference (inclusive)
+  const getDaysDifference = (from: Date, to: Date) => {
+    const fromDay = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const toDay = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+    const diffTime = toDay.getTime() - fromDay.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays + 1; // +1 for inclusive counting
+  };
+
+  // Calculate position percentages based on day count (no caps - can exceed 100%)
+  const totalDays = getDaysDifference(startDate, endDate);
+  const elapsedDays = getDaysDifference(startDate, currentDate);
+  const currentPosition = (elapsedDays / totalDays) * 100;
   
   // Calculate submitted position if exists (no caps - can exceed 100%)
   const submittedPosition = submittedDate 
-    ? ((submittedDate.getTime() - startDate.getTime()) / totalDuration) * 100
+    ? (getDaysDifference(startDate, submittedDate) / totalDays) * 100
     : null;
 
   // Determine color based on timeline utilisation percentage
