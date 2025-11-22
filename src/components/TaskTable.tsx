@@ -842,64 +842,11 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                             Rev {task.revision_count}
                           </Badge>
                         )}
-                        
-                        {/* Floating Action Buttons - appear on hover */}
-                        <div 
-                          className="absolute left-full ml-2 flex items-center gap-1 opacity-0 group-hover/name:opacity-100 transition-all duration-200 z-10 bg-background/95 backdrop-blur-sm px-2 py-1 rounded-md shadow-md border"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {userRole !== "project_manager" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => toggleAppreciation(task.id, e)}
-                              className="h-7 w-7 p-0"
-                              title="Appreciate"
-                            >
-                              <Star className={`h-3.5 w-3.5 ${taskAppreciations.get(task.id) ? "fill-yellow-400 text-yellow-400" : ""}`} />
-                            </Button>
-                          )}
-                          {canEdit(task) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditTask(task);
-                              }}
-                              className="h-7 w-7 p-0"
-                              title="Edit Task"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenNotesDialog(task);
-                            }}
-                            className="h-7 w-7 p-0"
-                            title="View Notes"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                          </Button>
-                          {task.assignee_id === userId && task.status !== "Approved" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenSubmitDialog(task);
-                              }}
-                              className="h-7 w-7 p-0"
-                              title="Submit Task"
-                            >
-                              <Upload className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
+                        {task.status === "Approved" && (
+                          <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-yellow-400/20 text-yellow-600 border-yellow-400/30">
+                            ⭐ Approved
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>{task.clients?.name || "-"}</TableCell>

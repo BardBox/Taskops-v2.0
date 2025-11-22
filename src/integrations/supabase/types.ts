@@ -830,16 +830,22 @@ export type Database = {
           date: string
           deadline: string | null
           id: string
+          is_posted: boolean | null
           is_revision: boolean
           notes: string | null
           parent_task_id: string | null
+          posted_at: string | null
+          posted_by: string | null
           project_id: string | null
           reference_image: string | null
           reference_link_1: string | null
           reference_link_2: string | null
           reference_link_3: string | null
+          revision_comment: string | null
           revision_count: number
           revision_number: number
+          revision_reference_image: string | null
+          revision_reference_link: string | null
           revision_requested_at: string | null
           revision_requested_by: string | null
           status: string
@@ -858,16 +864,22 @@ export type Database = {
           date?: string
           deadline?: string | null
           id?: string
+          is_posted?: boolean | null
           is_revision?: boolean
           notes?: string | null
           parent_task_id?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
           project_id?: string | null
           reference_image?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
+          revision_comment?: string | null
           revision_count?: number
           revision_number?: number
+          revision_reference_image?: string | null
+          revision_reference_link?: string | null
           revision_requested_at?: string | null
           revision_requested_by?: string | null
           status?: string
@@ -886,16 +898,22 @@ export type Database = {
           date?: string
           deadline?: string | null
           id?: string
+          is_posted?: boolean | null
           is_revision?: boolean
           notes?: string | null
           parent_task_id?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
           project_id?: string | null
           reference_image?: string | null
           reference_link_1?: string | null
           reference_link_2?: string | null
           reference_link_3?: string | null
+          revision_comment?: string | null
           revision_count?: number
           revision_number?: number
+          revision_reference_image?: string | null
+          revision_reference_link?: string | null
           revision_requested_at?: string | null
           revision_requested_by?: string | null
           status?: string
@@ -937,6 +955,13 @@ export type Database = {
             columns: ["parent_task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
