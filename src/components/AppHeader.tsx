@@ -146,16 +146,23 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             <div className="flex flex-col gap-2 mt-6">
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${
+                  location.pathname === "/dashboard" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
                 onClick={() => navigate("/dashboard")}
-                disabled={location.pathname === "/dashboard"}
               >
                 <Home className="mr-2 h-4 w-4" />
                 Dashboard
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${
+                  location.pathname === "/profile" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
                 onClick={() => navigate("/profile")}
               >
                 <User className="mr-2 h-4 w-4" />
@@ -163,7 +170,11 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${
+                  location.pathname === "/team" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
                 onClick={() => navigate("/team")}
               >
                 <Users className="mr-2 h-4 w-4" />
@@ -171,7 +182,11 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${
+                  location.pathname === "/analytics" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
                 onClick={() => navigate("/analytics")}
               >
                 <BarChart3 className="mr-2 h-4 w-4" />
@@ -179,7 +194,11 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${
+                  location.pathname === "/account-settings" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
                 onClick={() => navigate("/account-settings")}
               >
                 <Settings className="mr-2 h-4 w-4" />
@@ -187,7 +206,11 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${
+                  location.pathname === "/preferences" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
                 onClick={() => navigate("/preferences")}
               >
                 <Sliders className="mr-2 h-4 w-4" />
@@ -198,7 +221,11 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                   <div className="border-t my-2" />
                   <Button
                     variant="ghost"
-                    className="justify-start"
+                    className={`justify-start ${
+                      location.pathname.startsWith("/admin") 
+                        ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                        : ""
+                    }`}
                     onClick={() => navigate("/admin")}
                   >
                     <Shield className="mr-2 h-4 w-4" />
