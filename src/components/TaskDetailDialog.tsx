@@ -858,29 +858,24 @@ export function TaskDetailDialog({
         isFullscreen ? "max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] animate-fade-in" : "max-w-4xl w-4xl max-h-[90vh] h-[90vh]"
       )}>
         <div className="p-6 pb-4 border-b flex-shrink-0 relative">
-          <div className="absolute top-6 left-6 flex items-center gap-2 z-10">
-            <DialogClose asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-600 p-0 border-0 transition-colors" 
-                title="Close"
-              >
-                <span className="sr-only">Close</span>
-              </Button>
-            </DialogClose>
+          <div className="absolute top-6 right-6 flex items-center gap-1 z-10">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsFullscreen(!isFullscreen)}
               title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-600 p-0 border-0 transition-colors"
+              className="h-9 w-9"
             >
-              <span className="sr-only">{isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}</span>
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-green-500" /> : <Maximize2 className="h-4 w-4 text-green-500" />}
             </Button>
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9" title="Close">
+                <X className="h-4 w-4 text-red-500" />
+              </Button>
+            </DialogClose>
           </div>
           
-          <div className="flex items-start gap-3 pl-16 pr-4">
+          <div className="flex items-start gap-3 pr-24">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full flex-shrink-0`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
