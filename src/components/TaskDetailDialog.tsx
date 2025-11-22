@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock, Sparkles, UserCircle2, Users as UsersIcon } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap } from "lucide-react";
 import { TaskTimeline } from "@/components/TaskTimeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -855,7 +855,7 @@ export function TaskDetailDialog({
                 {/* Task Owner */}
                 <div className="flex-1 min-w-[180px]">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                    <UserCircle2 className="h-3.5 w-3.5" />
+                    <User className="h-3.5 w-3.5" />
                     Task Owner
                   </Label>
                   <div className="flex items-center gap-2 mt-2">
@@ -878,7 +878,7 @@ export function TaskDetailDialog({
                 {collaborators.length > 0 && (
                   <div className="flex-1 min-w-[180px]">
                     <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                      <UsersIcon className="h-3.5 w-3.5" />
+                      <UsersRound className="h-3.5 w-3.5" />
                       Collaborators
                     </Label>
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -900,7 +900,7 @@ export function TaskDetailDialog({
                 {/* Project Manager */}
                 <div className="flex-1 min-w-[180px]">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                    <Wand2 className="h-3.5 w-3.5 text-purple-500" />
                     Project Manager
                   </Label>
                   <div className="flex items-center gap-2 mt-2">
@@ -930,7 +930,7 @@ export function TaskDetailDialog({
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                    <Activity className="h-3.5 w-3.5 text-blue-500" />
                     Status
                   </Label>
                   {(() => {
@@ -978,7 +978,7 @@ export function TaskDetailDialog({
                 
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                    <Zap className="h-3.5 w-3.5 text-amber-500" />
                     Urgency
                   </Label>
                   {!canEditTaskProperties || !canChangeUrgency(userRole) ? (
