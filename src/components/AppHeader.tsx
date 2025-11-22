@@ -234,14 +234,14 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               {mood ? <span className="text-base">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4" />}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-2" align="end">
+          <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-50" align="end">
             <div className="grid grid-cols-2 gap-1">
               {moods.map((m) => (
                 <Button
                   key={m}
                   variant="ghost"
                   size="sm"
-                  className="justify-start text-sm h-auto py-2"
+                  className="justify-center text-sm h-auto py-2.5 px-2 whitespace-nowrap"
                   onClick={() => updateMood(m)}
                 >
                   {m}
