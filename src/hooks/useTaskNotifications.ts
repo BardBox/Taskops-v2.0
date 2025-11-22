@@ -284,14 +284,9 @@ export const useTaskNotifications = (userId: string | undefined) => {
                 duration: 5000,
               });
 
-            // Show browser notification
-            if (getNotificationPermission() === "granted") {
-              showBrowserNotification({
-                title: `Task Updated: ${newTask.task_name}`,
-                body: `${updaterName}: ${description}`,
-                tag: `task-${newTask.id}`,
-              });
-            }
+              // Note: we intentionally do NOT show a browser push notification for generic
+              // task updates to avoid noisy system notifications. Users still get
+              // in-app toasts and stored notifications in the notification center.
 
               // Play notification sound
               if (preferences.notifications_sound_enabled) {
