@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock, Sparkles, UserCircle2, Users as UsersIcon } from "lucide-react";
+import { TaskTimeline } from "@/components/TaskTimeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -114,9 +115,6 @@ export function TaskDetailDialog({
   const [editHistory, setEditHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isCollaborator, setIsCollaborator] = useState(false);
-  const [showAddCollaborator, setShowAddCollaborator] = useState(false);
-  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -386,68 +384,6 @@ export function TaskDetailDialog({
       .eq("task_id", taskId);
     
     setCollaborators(data || []);
-  };
-
-  const fetchAvailableUsers = async () => {
-    if (!taskId || !task) return;
-    
-    // Get all users
-    const { data: allUsers } = await supabase
-      .from("profiles")
-      .select("id, full_name, avatar_url")
-      .order("full_name");
-    
-    // Filter out task owner and existing collaborators
-    const collaboratorIds = collaborators.map(c => c.user_id);
-    const available = allUsers?.filter(
-      user => user.id !== task.assignee_id && !collaboratorIds.includes(user.id)
-    ) || [];
-    
-    setAvailableUsers(available);
-  };
-
-  const handleAddCollaborator = async () => {
-    if (!taskId || !selectedUserId) return;
-    
-    try {
-      const { error } = await supabase
-        .from("task_collaborators")
-        .insert({
-          task_id: taskId,
-          user_id: selectedUserId,
-          added_by_id: userId,
-        });
-      
-      if (error) throw error;
-      
-      toast.success("Collaborator added");
-      setShowAddCollaborator(false);
-      setSelectedUserId("");
-      fetchCollaborators();
-    } catch (error: any) {
-      console.error("Error adding collaborator:", error);
-      toast.error("Failed to add collaborator");
-    }
-  };
-
-  const handleRemoveCollaborator = async (collaboratorUserId: string) => {
-    if (!taskId) return;
-    
-    try {
-      const { error } = await supabase
-        .from("task_collaborators")
-        .delete()
-        .eq("task_id", taskId)
-        .eq("user_id", collaboratorUserId);
-      
-      if (error) throw error;
-      
-      toast.success("Collaborator removed");
-      fetchCollaborators();
-    } catch (error: any) {
-      console.error("Error removing collaborator:", error);
-      toast.error("Failed to remove collaborator");
-    }
   };
 
   const fetchEditHistory = async () => {
@@ -914,10 +850,15 @@ export function TaskDetailDialog({
         <div className="flex-1 overflow-y-auto min-h-0">
           <div className={`border-b transition-all duration-300 ease-in-out ${isTaskDetailsCollapsed ? 'max-h-0 overflow-hidden' : ''}`}>
             <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Task Owner</Label>
-                  <div className="flex items-center gap-2 mt-1">
+              {/* Team Row - Task Owner, Collaborators, Project Manager in one row */}
+              <div className="flex flex-wrap items-start gap-4 pb-4 border-b">
+                {/* Task Owner */}
+                <div className="flex-1 min-w-[180px]">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                    <UserCircle2 className="h-3.5 w-3.5" />
+                    Task Owner
+                  </Label>
+                  <div className="flex items-center gap-2 mt-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={assigneeAvatar || undefined} alt={assigneeName} />
                       <AvatarFallback className="text-xs">
@@ -932,84 +873,37 @@ export function TaskDetailDialog({
                     </div>
                   </div>
                 </div>
-                
-                {/* Collaborators Section */}
-                <div className="col-span-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Collaborators</Label>
-                    {(userRole === 'project_manager' || userRole === 'project_owner') && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          fetchAvailableUsers();
-                          setShowAddCollaborator(true);
-                        }}
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
-                    )}
-                  </div>
-                  {showAddCollaborator && (
-                    <div className="mb-3 p-3 border rounded-lg bg-accent/30 space-y-2">
-                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a user to add" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableUsers.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.full_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={handleAddCollaborator} disabled={!selectedUserId}>
-                          Add Collaborator
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => {
-                          setShowAddCollaborator(false);
-                          setSelectedUserId("");
-                        }}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {collaborators.length > 0 ? (
-                    <div className="flex gap-3 flex-wrap">
+
+                {/* Collaborators (Read-only display) */}
+                {collaborators.length > 0 && (
+                  <div className="flex-1 min-w-[180px]">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                      <UsersIcon className="h-3.5 w-3.5" />
+                      Collaborators
+                    </Label>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       {collaborators.map((collab: any) => (
-                        <div key={collab.user_id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/50 border border-border hover:bg-accent transition-colors group">
-                          <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
+                        <div key={collab.user_id} className="flex items-center gap-1.5">
+                          <Avatar className="h-6 w-6">
                             <AvatarImage src={collab.profiles?.avatar_url || undefined} alt={collab.profiles?.full_name} />
-                            <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                            <AvatarFallback className="text-xs">
                               {(collab.profiles?.full_name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium">{collab.profiles?.full_name || "Unknown"}</span>
-                          {(userRole === 'project_manager' || userRole === 'project_owner') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
-                              onClick={() => handleRemoveCollaborator(collab.user_id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          )}
+                          <span className="text-xs font-medium">{collab.profiles?.full_name || "Unknown"}</span>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No collaborators added</p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project Manager</Label>
-                  <div className="flex items-center gap-2 mt-1">
+                  </div>
+                )}
+
+                {/* Project Manager */}
+                <div className="flex-1 min-w-[180px]">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                    Project Manager
+                  </Label>
+                  <div className="flex items-center gap-2 mt-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={assignedByAvatar || undefined} alt={assignedByName} />
                       <AvatarFallback className="text-xs">
@@ -1024,39 +918,21 @@ export function TaskDetailDialog({
                     </div>
                   </div>
                 </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date Assigned</Label>
-                  <p className="text-sm font-medium mt-1">{format(new Date(task.date), 'PPP')}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Deadline</Label>
-                  {canEditTaskProperties ? (
-                    <Input 
-                      type="date"
-                      value={task.deadline || ''}
-                      onChange={(e) => {
-                        setTask({ ...task, deadline: e.target.value });
-                        handleDeadlineChange(e.target.value);
-                      }}
-                      className="text-sm font-medium mt-1"
-                    />
-                  ) : (
-                    <p className="text-sm font-medium mt-1">
-                      {task.deadline ? format(new Date(task.deadline), 'PPP') : 'No deadline'}
-                    </p>
-                  )}
-                </div>
-                {task.actual_delivery && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Submission Date</Label>
-                    <p className="text-sm font-medium mt-1">{format(new Date(task.actual_delivery), 'PPP')}</p>
-                  </div>
-                )}
               </div>
+
+              {/* Task Timeline */}
+              <TaskTimeline 
+                dateAssigned={task.date}
+                deadline={task.deadline || new Date().toISOString()}
+                dateSubmitted={task.actual_delivery}
+              />
               
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                    Status
+                  </Label>
                   {(() => {
                     const availableStatuses = getAvailableStatuses(userRole, task.status || "");
                     const canChange = canEditTaskProperties && (userRole !== "team_member" || availableStatuses.length > 0);
@@ -1101,7 +977,10 @@ export function TaskDetailDialog({
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Urgency</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                    Urgency
+                  </Label>
                   {!canEditTaskProperties || !canChangeUrgency(userRole) ? (
                     <Badge variant="outline" className="h-8 px-4">
                       {task.urgency}
