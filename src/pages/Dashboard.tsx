@@ -95,9 +95,11 @@ const Dashboard = () => {
         <GlobalFilters filters={filters} onFiltersChange={setFilters} />
 
         <div className="flex items-center justify-center py-4">
-          <QuickFilters 
+        <QuickFilters 
             activeFilters={filters.quickFilter} 
             onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
+            userRole={userRole}
+            userId={user?.id}
           />
         </div>
 

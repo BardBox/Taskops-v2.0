@@ -25,6 +25,7 @@ interface DashboardMetricsProps {
     teamMemberId: string;
     projectManagerId: string;
     highlightToday: boolean;
+    quickFilter: string[];
   };
 }
 
@@ -163,7 +164,7 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
   const fetchMetrics = async () => {
     let query = supabase
       .from("tasks")
-      .select("status, deadline, actual_delivery, date, urgency, client_id, assignee_id, assigned_by_id");
+      .select("status, deadline, actual_delivery, date, urgency, client_id, assignee_id, assigned_by_id, revision_count");
 
     // Team members only see their own tasks (no other filters applied)
     if (userRole === "team_member" && userId) {
@@ -171,6 +172,82 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
     } else {
       // PM and PO see total statistics based on filters
       if (filters) {
+        // Apply quick filters first
+        if (filters.quickFilter && filters.quickFilter.length > 0) {
+          const quickFilters = filters.quickFilter;
+          
+          // Handle "my-tasks" filter for PO/PM
+          if (quickFilters.includes("my-tasks") && userId) {
+            query = query.or(`assignee_id.eq.${userId},assigned_by_id.eq.${userId}`);
+          }
+          
+          // Handle "most-busy" and "least-busy" filters
+          if (quickFilters.includes("most-busy") || quickFilters.includes("least-busy")) {
+            // Fetch team member with most/least pending tasks
+            const { data: teamMembers } = await supabase
+              .from("user_roles")
+              .select("user_id")
+              .eq("role", "team_member");
+            
+            if (teamMembers && teamMembers.length > 0) {
+              const memberIds = teamMembers.map(tm => tm.user_id);
+              
+              // Count pending tasks for each team member
+              const { data: pendingTasks } = await supabase
+                .from("tasks")
+                .select("assignee_id")
+                .in("assignee_id", memberIds)
+                .in("status", ["Not Started", "In Progress", "Waiting for Approval", "In Approval"]);
+              
+              if (pendingTasks) {
+                const taskCounts = pendingTasks.reduce((acc, task) => {
+                  acc[task.assignee_id] = (acc[task.assignee_id] || 0) + 1;
+                  return acc;
+                }, {} as Record<string, number>);
+                
+                const sortedMembers = Object.entries(taskCounts).sort((a, b) => b[1] - a[1]);
+                
+                if (sortedMembers.length > 0) {
+                  if (quickFilters.includes("most-busy")) {
+                    query = query.eq("assignee_id", sortedMembers[0][0]);
+                  } else if (quickFilters.includes("least-busy")) {
+                    query = query.eq("assignee_id", sortedMembers[sortedMembers.length - 1][0]);
+                  }
+                }
+              }
+            }
+          }
+          
+          // Handle time-based filters
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          if (quickFilters.includes("today")) {
+            const todayStr = today.toISOString().split('T')[0];
+            query = query.or(`deadline.eq.${todayStr},status.in.("Not Started","In Progress","Waiting for Approval")`);
+          }
+          
+          if (quickFilters.includes("this-month")) {
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+            query = query.gte("deadline", firstDay).lte("deadline", lastDay);
+          }
+          
+          // Handle additive filters
+          if (quickFilters.includes("urgent")) {
+            query = query.in("urgency", ["High", "Critical", "Urgent"]);
+          }
+          
+          if (quickFilters.includes("revisions")) {
+            query = query.gt("revision_count", 0);
+          }
+          
+          if (quickFilters.includes("pending")) {
+            query = query.in("status", ["In Progress", "Doing"]);
+          }
+        }
+        
+        // Apply standard filters
         if (filters.year !== "all") {
           const yearStart = `${filters.year}-01-01`;
           const yearEnd = `${filters.year}-12-31`;
