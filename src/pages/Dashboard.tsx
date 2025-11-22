@@ -166,21 +166,13 @@ const Dashboard = () => {
         )}
 
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Tasks</h2>
-            {canCreateTasks && (
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Task
-              </Button>
-            )}
-          </div>
-
           <TaskTable 
             filters={filters} 
             userRole={userRole} 
             userId={user?.id || ""}
             visibleColumns={preferences.visibleColumns}
+            canCreateTasks={canCreateTasks}
+            onCreateTask={() => setDialogOpen(true)}
             onDuplicate={(data) => {
               setDuplicateData(data);
               setDialogOpen(true);
