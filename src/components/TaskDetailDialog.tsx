@@ -97,8 +97,10 @@ export function TaskDetailDialog({
   const [projectName, setProjectName] = useState("");
   const [assigneeName, setAssigneeName] = useState("");
   const [assigneeAvatar, setAssigneeAvatar] = useState("");
+  const [assigneeCreativeTitle, setAssigneeCreativeTitle] = useState("");
   const [assignedByName, setAssignedByName] = useState("");
   const [assignedByAvatar, setAssignedByAvatar] = useState("");
+  const [assignedByCreativeTitle, setAssignedByCreativeTitle] = useState("");
   const [editingAssetLink, setEditingAssetLink] = useState(false);
   const [assetLinkValue, setAssetLinkValue] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
@@ -334,19 +336,21 @@ export function TaskDetailDialog({
 
       const { data: assigneeData } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url")
+        .select("full_name, avatar_url, creative_title")
         .eq("id", taskData.assignee_id)
         .single();
       setAssigneeName(assigneeData?.full_name || "");
       setAssigneeAvatar(assigneeData?.avatar_url || "");
+      setAssigneeCreativeTitle(assigneeData?.creative_title || "");
 
       const { data: assignedByData } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url")
+        .select("full_name, avatar_url, creative_title")
         .eq("id", taskData.assigned_by_id)
         .single();
       setAssignedByName(assignedByData?.full_name || "");
       setAssignedByAvatar(assignedByData?.avatar_url || "");
+      setAssignedByCreativeTitle(assignedByData?.creative_title || "");
 
       // Check if user is a collaborator
       const { data: collabCheck } = await supabase
@@ -855,7 +859,12 @@ export function TaskDetailDialog({
                         {assigneeName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="text-sm font-medium">{assigneeName}</p>
+                    <div className="flex flex-col">
+                      <p className="text-sm font-medium">{assigneeName}</p>
+                      {assigneeCreativeTitle && (
+                        <p className="text-xs text-muted-foreground">{assigneeCreativeTitle}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -888,7 +897,12 @@ export function TaskDetailDialog({
                         {assignedByName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="text-sm font-medium">{assignedByName}</p>
+                    <div className="flex flex-col">
+                      <p className="text-sm font-medium">{assignedByName}</p>
+                      {assignedByCreativeTitle && (
+                        <p className="text-xs text-muted-foreground">{assignedByCreativeTitle}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div>
