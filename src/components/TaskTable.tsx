@@ -942,7 +942,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                               </div>
                             </div>
                             <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-                              <div className="px-3 py-2 min-w-[150px]">
+                              <div className="px-2 py-1.5 min-w-[100px]">
                                 <div className="flex flex-wrap gap-2">
                                   {task.collaborators.map((collab: any, idx: number) => {
                                     const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
@@ -950,7 +950,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                                       <TooltipProvider key={idx}>
                                         <Tooltip>
                                           <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1.5 cursor-default">
+                                            <div className="flex items-center gap-1 cursor-default">
                                               <Avatar className="h-5 w-5">
                                                 <AvatarImage 
                                                   src={collab.profiles?.avatar_url || undefined} 
