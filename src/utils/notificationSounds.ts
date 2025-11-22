@@ -1,6 +1,6 @@
 // Notification sound types
 export type NotificationSoundType = 'default' | 'chime' | 'bell' | 'pop';
-export type ExtendedSoundType = NotificationSoundType | 'peel' | 'slap' | 'crumple' | 'whoosh';
+export type ExtendedSoundType = NotificationSoundType | 'peel' | 'slap' | 'crumple' | 'whoosh' | 'twinkle';
 
 // Create audio context for Web Audio API
 let audioContext: AudioContext | null = null;
@@ -118,6 +118,20 @@ const generateExtendedSound = (type: ExtendedSoundType, volume: number) => {
       oscillator.stop(now + 0.2);
       break;
     
+    case 'twinkle':
+      // Magical twinkle sound for "In Approval" - ascending notes
+      oscillator.type = 'sine';
+      // Play a pleasant ascending melody (C-E-G-C)
+      oscillator.frequency.setValueAtTime(523.25, now); // C5
+      oscillator.frequency.setValueAtTime(659.25, now + 0.1); // E5
+      oscillator.frequency.setValueAtTime(783.99, now + 0.2); // G5
+      oscillator.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+      gainNode.gain.setValueAtTime(volume * 0.5, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      oscillator.start(now);
+      oscillator.stop(now + 0.5);
+      break;
+    
     default:
       generateSound(type as NotificationSoundType, volume);
       return;
@@ -131,7 +145,7 @@ export const playNotificationSound = (
 ) => {
   try {
     const safeVolume = Math.max(0, Math.min(1, volume));
-    if (['peel', 'slap', 'crumple', 'whoosh'].includes(type)) {
+    if (['peel', 'slap', 'crumple', 'whoosh', 'twinkle'].includes(type)) {
       generateExtendedSound(type as ExtendedSoundType, safeVolume);
     } else {
       generateSound(type as NotificationSoundType, safeVolume);
