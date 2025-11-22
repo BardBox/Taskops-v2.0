@@ -114,6 +114,9 @@ export function TaskDetailDialog({
   const [editHistory, setEditHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isCollaborator, setIsCollaborator] = useState(false);
+  const [showAddCollaborator, setShowAddCollaborator] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -365,7 +368,7 @@ export function TaskDetailDialog({
       // Fetch collaborators for role fetching
       const { data: collabData } = await supabase
         .from("task_collaborators")
-        .select("user_id, profiles(full_name, avatar_url)")
+        .select("user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url)")
         .eq("task_id", taskId);
       
       setCollaborators(collabData || []);
@@ -379,10 +382,72 @@ export function TaskDetailDialog({
     
     const { data } = await supabase
       .from("task_collaborators")
-      .select("user_id, profiles(full_name, avatar_url)")
+      .select("user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url)")
       .eq("task_id", taskId);
     
     setCollaborators(data || []);
+  };
+
+  const fetchAvailableUsers = async () => {
+    if (!taskId || !task) return;
+    
+    // Get all users
+    const { data: allUsers } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .order("full_name");
+    
+    // Filter out task owner and existing collaborators
+    const collaboratorIds = collaborators.map(c => c.user_id);
+    const available = allUsers?.filter(
+      user => user.id !== task.assignee_id && !collaboratorIds.includes(user.id)
+    ) || [];
+    
+    setAvailableUsers(available);
+  };
+
+  const handleAddCollaborator = async () => {
+    if (!taskId || !selectedUserId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("task_collaborators")
+        .insert({
+          task_id: taskId,
+          user_id: selectedUserId,
+          added_by_id: userId,
+        });
+      
+      if (error) throw error;
+      
+      toast.success("Collaborator added");
+      setShowAddCollaborator(false);
+      setSelectedUserId("");
+      fetchCollaborators();
+    } catch (error: any) {
+      console.error("Error adding collaborator:", error);
+      toast.error("Failed to add collaborator");
+    }
+  };
+
+  const handleRemoveCollaborator = async (collaboratorUserId: string) => {
+    if (!taskId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("task_collaborators")
+        .delete()
+        .eq("task_id", taskId)
+        .eq("user_id", collaboratorUserId);
+      
+      if (error) throw error;
+      
+      toast.success("Collaborator removed");
+      fetchCollaborators();
+    } catch (error: any) {
+      console.error("Error removing collaborator:", error);
+      toast.error("Failed to remove collaborator");
+    }
   };
 
   const fetchEditHistory = async () => {
@@ -868,13 +933,55 @@ export function TaskDetailDialog({
                   </div>
                 </div>
                 
-                {/* Collaborators Section - 2x Larger Avatars */}
-                {collaborators.length > 0 && (
-                  <div className="col-span-2">
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wide mb-3 block">Collaborators</Label>
+                {/* Collaborators Section */}
+                <div className="col-span-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Collaborators</Label>
+                    {(userRole === 'project_manager' || userRole === 'project_owner') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          fetchAvailableUsers();
+                          setShowAddCollaborator(true);
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                    )}
+                  </div>
+                  {showAddCollaborator && (
+                    <div className="mb-3 p-3 border rounded-lg bg-accent/30 space-y-2">
+                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a user to add" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableUsers.map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleAddCollaborator} disabled={!selectedUserId}>
+                          Add Collaborator
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => {
+                          setShowAddCollaborator(false);
+                          setSelectedUserId("");
+                        }}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {collaborators.length > 0 ? (
                     <div className="flex gap-3 flex-wrap">
                       {collaborators.map((collab: any) => (
-                        <div key={collab.user_id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/50 border border-border hover:bg-accent transition-colors">
+                        <div key={collab.user_id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/50 border border-border hover:bg-accent transition-colors group">
                           <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
                             <AvatarImage src={collab.profiles?.avatar_url || undefined} alt={collab.profiles?.full_name} />
                             <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
@@ -882,11 +989,23 @@ export function TaskDetailDialog({
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium">{collab.profiles?.full_name || "Unknown"}</span>
+                          {(userRole === 'project_manager' || userRole === 'project_owner') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                              onClick={() => handleRemoveCollaborator(collab.user_id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No collaborators added</p>
+                  )}
+                </div>
                 
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Project Manager</Label>
