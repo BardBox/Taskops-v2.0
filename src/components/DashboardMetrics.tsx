@@ -12,6 +12,7 @@ interface Metrics {
   approved: number;
   onHold: number;
   delayed: number;
+  awaitingApproval: number;
 }
 
 interface DashboardMetricsProps {
@@ -110,6 +111,7 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
     approved: 0,
     onHold: 0,
     delayed: 0,
+    awaitingApproval: 0,
   });
   const [userRole, setUserRole] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
@@ -235,6 +237,8 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
       return deadline < today;
     }).length;
 
+    const awaitingApproval = tasks.filter((t) => t.status === "In Approval" || t.status === "Waiting for Approval").length;
+
     setMetrics({
       total: tasks.length,
       todo: tasks.filter((t) => t.status === "Not Started").length,
@@ -243,6 +247,7 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
       approved: tasks.filter((t) => t.status === "Approved").length,
       onHold: tasks.filter((t) => t.status === "On Hold").length,
       delayed,
+      awaitingApproval,
     });
   };
 
@@ -326,9 +331,14 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
                 <CheckCircle2 className="h-8 w-8 text-green-600" />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting approval
-            </p>
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold text-orange-600">
+                <AnimatedCounter value={metrics.awaitingApproval} />
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Awaiting approval
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
