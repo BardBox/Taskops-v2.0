@@ -1084,7 +1084,7 @@ export function TaskDetailDialog({
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap max-h-[300px] overflow-y-auto pr-2">
+                  <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap overflow-y-auto pr-2">
                     {task.notes || "No description"}
                   </div>
                 )}
