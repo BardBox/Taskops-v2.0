@@ -912,7 +912,7 @@ export function TaskDetailDialog({
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-0">
-          <div className={`border-b transition-all duration-300 ease-in-out ${isTaskDetailsCollapsed ? 'max-h-0 overflow-hidden' : 'max-h-[50vh]'}`}>
+          <div className={`border-b transition-all duration-300 ease-in-out ${isTaskDetailsCollapsed ? 'max-h-0 overflow-hidden' : ''}`}>
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <div>
@@ -1172,9 +1172,9 @@ export function TaskDetailDialog({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                  <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap max-h-[300px] overflow-y-auto pr-2">
                     {task.notes || "No description"}
-                  </p>
+                  </div>
                 )}
               </div>
 
