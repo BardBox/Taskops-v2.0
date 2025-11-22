@@ -4,11 +4,22 @@ export type AchievementType =
   | 'early_bird'
   | 'streak_3'
   | 'streak_7'
+  | 'fire_streak'
   | 'streak_30'
   | 'multitasker'
   | 'perfectionist'
+  | 'perfect_timing'
   | 'night_owl'
-  | 'urgent_master';
+  | 'urgent_master'
+  | 'urgent_hero'
+  | 'task_master'
+  | 'team_player'
+  | 'client_favorite'
+  | 'comeback_kid'
+  | 'mentor'
+  | 'consistency_king'
+  | 'innovation_award'
+  | 'weekend_warrior';
 
 export interface Achievement {
   id: AchievementType;
@@ -54,6 +65,13 @@ export const ACHIEVEMENTS: Record<AchievementType, Achievement> = {
     icon: '🔥🔥',
     points: 75,
   },
+  fire_streak: {
+    id: 'fire_streak',
+    name: '7-Day Fire Streak',
+    description: 'Maintain a 7-day completion streak',
+    icon: '🔥🔥',
+    points: 75,
+  },
   streak_30: {
     id: 'streak_30',
     name: '30-Day Streak',
@@ -75,6 +93,13 @@ export const ACHIEVEMENTS: Record<AchievementType, Achievement> = {
     icon: '💎',
     points: 100,
   },
+  perfect_timing: {
+    id: 'perfect_timing',
+    name: 'Perfect Timing',
+    description: 'Complete 5 tasks on time',
+    icon: '⏰',
+    points: 50,
+  },
   night_owl: {
     id: 'night_owl',
     name: 'Night Owl',
@@ -88,6 +113,69 @@ export const ACHIEVEMENTS: Record<AchievementType, Achievement> = {
     description: 'Complete 10 urgent/high priority tasks',
     icon: '👑',
     points: 100,
+  },
+  urgent_hero: {
+    id: 'urgent_hero',
+    name: 'Urgent Hero',
+    description: 'Complete 10 high-urgency tasks',
+    icon: '🦸',
+    points: 60,
+  },
+  task_master: {
+    id: 'task_master',
+    name: 'Task Master',
+    description: 'Complete 50 tasks total',
+    icon: '🏆',
+    points: 100,
+  },
+  team_player: {
+    id: 'team_player',
+    name: 'Team Player',
+    description: 'Collaborate on 10 tasks',
+    icon: '🤝',
+    points: 50,
+  },
+  client_favorite: {
+    id: 'client_favorite',
+    name: 'Client Favorite',
+    description: 'Earn 5 quality stars from the same client',
+    icon: '⭐',
+    points: 75,
+  },
+  comeback_kid: {
+    id: 'comeback_kid',
+    name: 'Comeback Kid',
+    description: 'Turn around 3 delayed tasks',
+    icon: '🎭',
+    points: 40,
+  },
+  mentor: {
+    id: 'mentor',
+    name: 'Mentor',
+    description: 'Help colleagues as collaborator 20 times',
+    icon: '🎓',
+    points: 80,
+  },
+  consistency_king: {
+    id: 'consistency_king',
+    name: 'Consistency King',
+    description: 'Maintain 90%+ on-time rate for 3 months',
+    icon: '👑',
+    points: 150,
+  },
+  innovation_award: {
+    id: 'innovation_award',
+    name: 'Innovation Award',
+    description: 'Complete complex/unique tasks',
+    icon: '💡',
+    points: 100,
+  },
+  weekend_warrior: {
+    id: 'weekend_warrior',
+    name: 'Weekend Warrior',
+    description: 'Complete tasks on weekends',
+    icon: '⚔️',
+    points: 30,
   },
 };
 
