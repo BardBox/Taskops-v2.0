@@ -35,7 +35,9 @@ export default function Team() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [creativeTitleFilter, setCreativeTitleFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [uniqueCreativeTitles, setUniqueCreativeTitles] = useState<string[]>([]);
 
   useEffect(() => {
     checkAuthAndFetchTeam();
@@ -43,7 +45,7 @@ export default function Team() {
 
   useEffect(() => {
     applyFilters();
-  }, [searchQuery, roleFilter, statusFilter, teamMembers]);
+  }, [searchQuery, roleFilter, statusFilter, creativeTitleFilter, teamMembers]);
 
   const checkAuthAndFetchTeam = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -84,6 +86,14 @@ export default function Team() {
 
       setTeamMembers(membersWithRoles);
       setFilteredMembers(membersWithRoles);
+      
+      // Extract unique creative titles for filter
+      const titles = membersWithRoles
+        .map(m => m.creative_title)
+        .filter((title): title is string => !!title)
+        .filter((title, index, self) => self.indexOf(title) === index)
+        .sort();
+      setUniqueCreativeTitles(titles);
     } catch (error) {
       console.error("Error fetching team members:", error);
       toast.error("Failed to load team members");
@@ -116,6 +126,11 @@ export default function Team() {
       filtered = filtered.filter(member => member.status === statusFilter);
     }
 
+    // Creative title filter
+    if (creativeTitleFilter !== "all") {
+      filtered = filtered.filter(member => member.creative_title === creativeTitleFilter);
+    }
+
     setFilteredMembers(filtered);
   };
 
@@ -123,6 +138,7 @@ export default function Team() {
     setSearchQuery("");
     setRoleFilter("all");
     setStatusFilter("all");
+    setCreativeTitleFilter("all");
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -226,8 +242,23 @@ export default function Team() {
                 </SelectContent>
               </Select>
 
+              {/* Creative Title Filter */}
+              <Select value={creativeTitleFilter} onValueChange={setCreativeTitleFilter}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Filter by title" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Titles</SelectItem>
+                  {uniqueCreativeTitles.map((title) => (
+                    <SelectItem key={title} value={title}>
+                      {title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {/* Clear Filters */}
-              {(searchQuery || roleFilter !== "all" || statusFilter !== "all") && (
+              {(searchQuery || roleFilter !== "all" || statusFilter !== "all" || creativeTitleFilter !== "all") && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -336,28 +367,6 @@ export default function Team() {
                           </div>
                         )}
                       </div>
-
-                      {/* Powers & Weaknesses */}
-                      {(member.superpower || member.kryptonite) && (
-                        <div className="w-full pt-2 space-y-2 text-xs">
-                          {member.superpower && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-medium text-green-600 dark:text-green-400">💪</span>
-                              <span className="text-left flex-1 text-muted-foreground line-clamp-2">
-                                {member.superpower}
-                              </span>
-                            </div>
-                          )}
-                          {member.kryptonite && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-medium text-red-600 dark:text-red-400">⚠️</span>
-                              <span className="text-left flex-1 text-muted-foreground line-clamp-2">
-                                {member.kryptonite}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
