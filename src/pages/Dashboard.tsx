@@ -9,7 +9,7 @@ import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
 import { QuickFilters } from "@/components/QuickFilters";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { DashboardCustomization, DashboardPreferences } from "@/components/DashboardCustomization";
+import { DashboardPreferences } from "@/components/DashboardCustomization";
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
@@ -137,16 +137,7 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <Breadcrumbs />
-          {user && (
-            <DashboardCustomization
-              userId={user.id}
-              preferences={preferences}
-              onPreferencesChange={setPreferences}
-            />
-          )}
-        </div>
+        <Breadcrumbs />
         
         {preferences.showMetrics && <DashboardMetrics filters={filters} />}
 
@@ -173,6 +164,8 @@ const Dashboard = () => {
             visibleColumns={preferences.visibleColumns}
             canCreateTasks={canCreateTasks}
             onCreateTask={() => setDialogOpen(true)}
+            preferences={preferences}
+            onPreferencesChange={setPreferences}
             onDuplicate={(data) => {
               setDuplicateData(data);
               setDialogOpen(true);

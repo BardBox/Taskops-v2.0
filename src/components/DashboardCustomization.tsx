@@ -106,8 +106,11 @@ export const DashboardCustomization = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Settings className="h-4 w-4" />
+        <Button
+          size="icon"
+          className="h-10 w-10 rounded-full bg-foreground hover:bg-foreground/90 text-background"
+        >
+          <Settings className="h-5 w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
