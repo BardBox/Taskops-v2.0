@@ -10,6 +10,7 @@ import { AvatarSelector } from "@/components/AvatarSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
 interface EditProfileDrawerProps {
@@ -35,6 +36,12 @@ export function EditProfileDrawer({
   const [kryptonite, setKryptonite] = useState("");
   const [hobbies, setHobbies] = useState<string[]>([]);
   const [newHobby, setNewHobby] = useState("");
+  const [weapons, setWeapons] = useState<string[]>([]);
+  const [newWeapon, setNewWeapon] = useState("");
+  const [skillSet, setSkillSet] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
+  const [mission, setMission] = useState("");
+  const [status, setStatus] = useState("Available");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -47,6 +54,10 @@ export function EditProfileDrawer({
       setSuperpower(profile.superpower || "");
       setKryptonite(profile.kryptonite || "");
       setHobbies(profile.hobbies || []);
+      setWeapons(profile.weapons || []);
+      setSkillSet(profile.skill_set || []);
+      setMission(profile.mission || "");
+      setStatus(profile.status || "Available");
     }
     
     // Fetch email
@@ -70,6 +81,10 @@ export function EditProfileDrawer({
         superpower: superpower || null,
         kryptonite: kryptonite || null,
         hobbies: hobbies.length > 0 ? hobbies : null,
+        weapons: weapons.length > 0 ? weapons : null,
+        skill_set: skillSet.length > 0 ? skillSet : null,
+        mission: mission || null,
+        status: status,
       })
       .eq("id", profile.id);
 
@@ -123,6 +138,28 @@ export function EditProfileDrawer({
 
   const removeHobby = (index: number) => {
     setHobbies(hobbies.filter((_, i) => i !== index));
+  };
+
+  const addWeapon = () => {
+    if (newWeapon.trim() && weapons.length < 10) {
+      setWeapons([...weapons, newWeapon.trim()]);
+      setNewWeapon("");
+    }
+  };
+
+  const removeWeapon = (index: number) => {
+    setWeapons(weapons.filter((_, i) => i !== index));
+  };
+
+  const addSkill = () => {
+    if (newSkill.trim() && skillSet.length < 10) {
+      setSkillSet([...skillSet, newSkill.trim()]);
+      setNewSkill("");
+    }
+  };
+
+  const removeSkill = (index: number) => {
+    setSkillSet(skillSet.filter((_, i) => i !== index));
   };
 
   const getInitials = (name: string) => {
@@ -223,6 +260,22 @@ export function EditProfileDrawer({
 
             <TabsContent value="about" className="space-y-4 mt-4">
               <div>
+                <Label htmlFor="status">Availability Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Available">Available</SelectItem>
+                    <SelectItem value="Busy">Busy</SelectItem>
+                    <SelectItem value="Out of Office">Out of Office</SelectItem>
+                    <SelectItem value="Do Not Disturb">Do Not Disturb</SelectItem>
+                    <SelectItem value="On Leave">On Leave</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="superpower">My Superpower 💪</Label>
                 <Textarea
                   id="superpower"
@@ -240,6 +293,101 @@ export function EditProfileDrawer({
                   value={kryptonite}
                   onChange={(e) => setKryptonite(e.target.value)}
                   placeholder="What challenges you?"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label>My Weapons (Max 10)</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    value={newWeapon}
+                    onChange={(e) => setNewWeapon(e.target.value)}
+                    placeholder="e.g., Figma, React, Photoshop..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addWeapon();
+                      }
+                    }}
+                    disabled={weapons.length >= 10}
+                  />
+                  <Button
+                    onClick={addWeapon}
+                    size="icon"
+                    disabled={weapons.length >= 10}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {weapons.map((weapon, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="gap-1 pr-1"
+                    >
+                      {weapon}
+                      <button
+                        onClick={() => removeWeapon(index)}
+                        className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>My Skill Set (Max 10)</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    placeholder="e.g., 3D Animation, Leadership..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSkill();
+                      }
+                    }}
+                    disabled={skillSet.length >= 10}
+                  />
+                  <Button
+                    onClick={addSkill}
+                    size="icon"
+                    disabled={skillSet.length >= 10}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {skillSet.map((skill, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="gap-1 pr-1"
+                    >
+                      {skill}
+                      <button
+                        onClick={() => removeSkill(index)}
+                        className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="mission">My Mission 🎯</Label>
+                <Textarea
+                  id="mission"
+                  value={mission}
+                  onChange={(e) => setMission(e.target.value)}
+                  placeholder="What are your learning goals and aspirations?"
                   rows={3}
                 />
               </div>

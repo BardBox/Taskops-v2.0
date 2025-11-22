@@ -160,13 +160,17 @@ export default function Team() {
 
   const getStatusColor = (status: string | null) => {
     if (!status) return "bg-muted";
-    switch (status.toLowerCase()) {
-      case "available":
+    switch (status) {
+      case "Available":
         return "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20";
-      case "busy":
+      case "Busy":
         return "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20";
-      case "away":
-        return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20";
+      case "Out of Office":
+        return "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20";
+      case "Do Not Disturb":
+        return "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20";
+      case "On Leave":
+        return "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20";
       default:
         return "bg-muted";
     }
@@ -240,7 +244,9 @@ export default function Team() {
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="Available">Available</SelectItem>
                     <SelectItem value="Busy">Busy</SelectItem>
-                    <SelectItem value="Away">Away</SelectItem>
+                    <SelectItem value="Out of Office">Out of Office</SelectItem>
+                    <SelectItem value="Do Not Disturb">Do Not Disturb</SelectItem>
+                    <SelectItem value="On Leave">On Leave</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -311,9 +317,11 @@ export default function Team() {
                         {member.status && (
                           <div className="absolute -bottom-1 -right-1">
                             <div className={`w-4 h-4 rounded-full border-2 border-background ${
-                              member.status.toLowerCase() === "available" ? "bg-green-500" :
-                              member.status.toLowerCase() === "busy" ? "bg-red-500" :
-                              member.status.toLowerCase() === "away" ? "bg-yellow-500" :
+                              member.status === "Available" ? "bg-green-500" :
+                              member.status === "Busy" ? "bg-red-500" :
+                              member.status === "Out of Office" ? "bg-orange-500" :
+                              member.status === "Do Not Disturb" ? "bg-purple-500" :
+                              member.status === "On Leave" ? "bg-gray-500" :
                               "bg-gray-500"
                             }`} />
                           </div>

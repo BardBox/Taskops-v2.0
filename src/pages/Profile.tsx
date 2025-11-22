@@ -6,6 +6,9 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { ProfileHero } from "@/components/profile/ProfileHero";
 import { MyArsenal } from "@/components/profile/MyArsenal";
 import { HobbiesSection } from "@/components/profile/HobbiesSection";
+import { MyWeapons } from "@/components/profile/MyWeapons";
+import { MySkillSet } from "@/components/profile/MySkillSet";
+import { MyMission } from "@/components/profile/MyMission";
 import { InspirationBoard } from "@/components/profile/InspirationBoard";
 import { CreativeStats } from "@/components/profile/CreativeStats";
 import { CollaborationStyle } from "@/components/profile/CollaborationStyle";
@@ -115,6 +118,13 @@ export default function Profile() {
           />
           <CreativeStats userId={viewingUserId} />
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MyWeapons weapons={profile?.weapons} />
+          <MySkillSet skillSet={profile?.skill_set} />
+        </div>
+
+        <MyMission mission={profile?.mission} />
 
         <HobbiesSection hobbies={profile?.hobbies || []} />
 
