@@ -11,7 +11,7 @@ const TheHive = () => {
         <div className="flex items-center gap-3">
           <span className="text-4xl">🐝</span>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">The Hive</h1>
+            <h1 className="text-3xl font-bold text-foreground">The Creative Hive</h1>
             <p className="text-muted-foreground">Team communication & celebration center</p>
           </div>
         </div>
