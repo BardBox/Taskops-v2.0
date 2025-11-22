@@ -866,8 +866,8 @@ export function TaskDetailDialog({
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <div className="px-6 border-b flex-shrink-0">
-            <TabsList className="w-full justify-start">
+          <div className="px-6 border-b flex-shrink-0 bg-background">
+            <TabsList className="w-full justify-start bg-transparent">
               <TabsTrigger value="details" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Details
