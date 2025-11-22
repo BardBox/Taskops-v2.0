@@ -80,22 +80,26 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
       </motion.div>
 
       {/* Center Section: Logo */}
-      <motion.div 
-        className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2 cursor-pointer"
-        onClick={() => navigate("/dashboard")}
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      >
-        <img 
-          src="/bardbox-logo.png" 
-          alt="BardBox" 
-          className="h-8 w-auto object-contain"
-        />
-        <h1 className="text-base font-semibold cursor-pointer" onClick={() => navigate("/dashboard")}>
-          TaskOPS<sup className="text-xs">™</sup>
-        </h1>
-        {showRoleBadge && userRole && <RoleBadge role={userRole as "project_owner" | "project_manager" | "team_member"} />}
-      </motion.div>
+      <div className="absolute left-1/2 -translate-x-1/2 transform">
+        <motion.div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => navigate("/dashboard")}
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
+          <img
+            src="/bardbox-logo.png"
+            alt="BardBox"
+            className="h-8 w-auto object-contain"
+          />
+          <h1 className="text-base font-semibold">
+            TaskOPS<sup className="text-xs">™</sup>
+          </h1>
+          {showRoleBadge && userRole && (
+            <RoleBadge role={userRole as "project_owner" | "project_manager" | "team_member"} />
+          )}
+        </motion.div>
+      </div>
 
       {/* Right Section: Notifications & Burger Menu */}
       <div className="flex items-center gap-3">
