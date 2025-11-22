@@ -23,7 +23,9 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
-import { X, FileText, Users, AlertCircle, Link2, StickyNote, Calendar } from "lucide-react";
+import { X, FileText, Users, AlertCircle, Link2, StickyNote, Calendar, Sparkles, ExternalLink, UserCircle2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TaskTimeline } from "@/components/TaskTimeline";
 
 interface TaskDialogProps {
   open: boolean;
@@ -57,6 +59,8 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [assignedBy, setAssignedBy] = useState<any>(null);
   
   const { statuses, urgencies, isLoading: isLoadingSettings} = useStatusUrgency();
   
@@ -91,6 +95,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           if (task.client_id) {
             await fetchProjects(task.client_id);
           }
+          
+          // Fetch collaborators and assigned by user
+          await fetchCollaborators(task.id);
+          await fetchAssignedBy(task.assigned_by_id);
 
           // Set form data AFTER projects are loaded
           setFormData({
@@ -243,6 +251,35 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
     
     if (data) {
       setUsers(data);
+    }
+  };
+
+  const fetchCollaborators = async (taskId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("task_collaborators")
+        .select("*, profiles(id, full_name, avatar_url)")
+        .eq("task_id", taskId);
+      
+      if (error) throw error;
+      setCollaborators(data || []);
+    } catch (error) {
+      console.error("Error fetching collaborators:", error);
+    }
+  };
+
+  const fetchAssignedBy = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .eq("id", userId)
+        .single();
+      
+      if (error) throw error;
+      setAssignedBy(data);
+    } catch (error) {
+      console.error("Error fetching assigned by user:", error);
     }
   };
 
@@ -470,13 +507,18 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-assignment))]">
                 <Users className="h-4 w-4" />
-                Assignment & Timeline
+                Team & Timeline
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="assignee_id" className="text-sm font-medium">Task Owner *</Label>
+              {/* Team Row - Task Owner, Collaborators, Project Manager */}
+              <div className="flex flex-wrap items-start gap-4">
+                {/* Task Owner */}
+                <div className="flex-1 min-w-[200px] space-y-2">
+                  <Label htmlFor="assignee_id" className="text-sm font-medium flex items-center gap-1.5">
+                    <UserCircle2 className="h-3.5 w-3.5" />
+                    Task Owner *
+                  </Label>
                   <Select
                     key={task?.id || 'new'}
                     value={formData.assignee_id}
@@ -495,10 +537,64 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                   </Select>
                 </div>
 
+                {/* Collaborators (Read-only display when editing) */}
+                {task && collaborators.length > 0 && (
+                  <div className="flex-1 min-w-[200px] space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5" />
+                      Collaborators
+                    </Label>
+                    <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30 min-h-[40px]">
+                      {collaborators.map((collab) => (
+                        <div key={collab.id} className="flex items-center gap-1.5">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={collab.profiles?.avatar_url} />
+                            <AvatarFallback className="text-xs">
+                              {collab.profiles?.full_name?.charAt(0) || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs font-medium">{collab.profiles?.full_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Project Manager (Assigned By) */}
+                {task && assignedBy && (
+                  <div className="flex-1 min-w-[200px] space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                      Project Manager
+                    </Label>
+                    <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30 min-h-[40px]">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={assignedBy.avatar_url} />
+                        <AvatarFallback className="text-xs">
+                          {assignedBy.full_name?.charAt(0) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{assignedBy.full_name}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Timeline Bar */}
+              {task && task.date && task.deadline && (
+                <TaskTimeline 
+                  dateAssigned={task.date}
+                  deadline={task.deadline}
+                  dateSubmitted={task.actual_delivery}
+                />
+              )}
+
+              {/* Deadline input for new tasks */}
+              {!task && (
                 <div className="space-y-2">
                   <Label htmlFor="deadline" className="text-sm font-medium flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5" />
-                    Deadline
+                    Deadline *
                   </Label>
                   <Input
                     id="deadline"
@@ -507,7 +603,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   />
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -515,14 +611,17 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           <Card className="border-l-4 border-l-[hsl(var(--section-priority))] bg-[hsl(var(--section-priority-bg))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-priority))]">
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4 text-amber-500" />
                 Priority & Status
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="status" className="text-sm font-medium">Status *</Label>
+                  <Label htmlFor="status" className="text-sm font-medium flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                    Status *
+                  </Label>
                   <BadgeDropdown
                     options={statuses.filter((status) => {
                       if (currentUserRole === 'team_member' && !['Not Started', 'In Progress', 'In Approval'].includes(status.label)) {
@@ -538,7 +637,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="urgency" className="text-sm font-medium">Urgency *</Label>
+                  <Label htmlFor="urgency" className="text-sm font-medium flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                    Urgency *
+                  </Label>
                   <BadgeDropdown
                     options={urgencies}
                     value={formData.urgency}
@@ -555,14 +657,17 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           <Card className="border-l-4 border-l-[hsl(var(--section-references))] bg-[hsl(var(--section-references-bg))] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-references))]">
-                <Link2 className="h-4 w-4" />
+                <Link2 className="h-4 w-4 text-teal-500" />
                 References & Resources
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="reference_link_1" className="text-sm font-medium">Reference Link 1</Label>
+                  <Label htmlFor="reference_link_1" className="text-sm font-medium flex items-center gap-1.5">
+                    <ExternalLink className="h-3.5 w-3.5 text-blue-500" />
+                    Reference Link 1
+                  </Label>
                   <Input
                     id="reference_link_1"
                     type="url"
@@ -573,7 +678,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reference_link_2" className="text-sm font-medium">Reference Link 2</Label>
+                  <Label htmlFor="reference_link_2" className="text-sm font-medium flex items-center gap-1.5">
+                    <ExternalLink className="h-3.5 w-3.5 text-emerald-500" />
+                    Reference Link 2
+                  </Label>
                   <Input
                     id="reference_link_2"
                     type="url"
@@ -584,7 +692,10 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reference_link_3" className="text-sm font-medium">Reference Link 3</Label>
+                  <Label htmlFor="reference_link_3" className="text-sm font-medium flex items-center gap-1.5">
+                    <ExternalLink className="h-3.5 w-3.5 text-violet-500" />
+                    Reference Link 3
+                  </Label>
                   <Input
                     id="reference_link_3"
                     type="url"
