@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText, Maximize2, Minimize2, FileEdit } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText, Maximize2, Minimize2, FileEdit, Copy } from "lucide-react";
 import { TaskTimeline } from "@/components/TaskTimeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -88,6 +88,7 @@ interface TaskDetailDialogProps {
   taskId: string | null;
   userRole: string;
   userId: string;
+  onDuplicate?: (data: any) => void;
 }
 
 export function TaskDetailDialog({
@@ -96,6 +97,7 @@ export function TaskDetailDialog({
   taskId,
   userRole,
   userId,
+  onDuplicate,
 }: TaskDetailDialogProps) {
   const [task, setTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -863,14 +865,39 @@ export function TaskDetailDialog({
                 )}
                 <div className="ml-auto flex items-center gap-2">
                   {(userRole === 'project_manager' || userRole === 'project_owner') && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowEditDialog(true)}
-                      title="Edit task"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (onDuplicate && task) {
+                            onDuplicate({
+                              task_name: task.task_name,
+                              client_id: task.client_id,
+                              project_id: task.project_id,
+                              assignee_id: task.assignee_id,
+                              urgency: task.urgency,
+                              reference_link_1: task.reference_link_1,
+                              reference_link_2: task.reference_link_2,
+                              reference_link_3: task.reference_link_3,
+                              reference_image: task.reference_image,
+                              notes: task.notes,
+                            });
+                          }
+                        }}
+                        title="Duplicate task"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowEditDialog(true)}
+                        title="Edit task"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    </>
                   )}
                   <Button
                     variant="ghost"

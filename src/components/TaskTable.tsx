@@ -56,9 +56,10 @@ interface TaskTableProps {
   userRole: string;
   userId: string;
   filters?: FilterState;
+  onDuplicate?: (data: any) => void;
 }
 
-export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -1133,6 +1134,12 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         taskId={selectedTaskId}
         userRole={userRole}
         userId={userId}
+        onDuplicate={(duplicateData) => {
+          if (onDuplicate) {
+            onDuplicate(duplicateData);
+            setDetailDialogOpen(false);
+          }
+        }}
       />
       
       <SubmitDialog
