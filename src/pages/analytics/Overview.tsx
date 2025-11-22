@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, Tooltip, Legend } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { TimeRangeFilter } from "@/components/TimeRangeFilter";
 
 interface OrganizationStats {
   totalTasks: number;
@@ -29,6 +30,8 @@ interface OrganizationStats {
 const Overview = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [stats, setStats] = useState<OrganizationStats>({
     totalTasks: 0,
     completedTasks: 0,
@@ -53,14 +56,23 @@ const Overview = () => {
 
   useEffect(() => {
     fetchOrganizationStats();
-  }, []);
+  }, [dateFrom, dateTo]);
 
   const fetchOrganizationStats = async () => {
     try {
-      // Fetch all tasks
-      const { data: tasks, error: tasksError } = await supabase
+      // Build query with optional date filters
+      let tasksQuery = supabase
         .from('tasks')
         .select('*, assignee:profiles!tasks_assignee_id_fkey(full_name)');
+      
+      if (dateFrom) {
+        tasksQuery = tasksQuery.gte('date', dateFrom.toISOString().split('T')[0]);
+      }
+      if (dateTo) {
+        tasksQuery = tasksQuery.lte('date', dateTo.toISOString().split('T')[0]);
+      }
+      
+      const { data: tasks, error: tasksError } = await tasksQuery;
 
       if (tasksError) throw tasksError;
 
@@ -219,9 +231,17 @@ const Overview = () => {
       <div className="container mx-auto px-6 py-8 space-y-8">
         <div>
           <Breadcrumbs />
-          <div className="mt-6">
-            <h1 className="text-3xl font-bold tracking-tight">Bardbox Command Center</h1>
-            <p className="text-muted-foreground mt-2">Real-time organizational performance overview</p>
+          <div className="mt-6 space-y-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Bardbox Command Center</h1>
+              <p className="text-muted-foreground mt-2">Real-time organizational performance overview</p>
+            </div>
+            <TimeRangeFilter
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              onDateFromChange={setDateFrom}
+              onDateToChange={setDateTo}
+            />
           </div>
         </div>
 

@@ -282,11 +282,19 @@ const Analytics = () => {
 
     if (!tasks) return;
 
+    // Fetch only project managers (exclude project owners)
+    const { data: pmRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "project_manager");
+
+    const pmIds = new Set(pmRoles?.map(r => r.user_id) || []);
+
     const pmMap = new Map<string, any>();
 
     tasks.forEach((task: any) => {
       const pmId = task.assigned_by_id;
-      if (!pmId) return;
+      if (!pmId || !pmIds.has(pmId)) return; // Only include PMs
 
       if (!pmMap.has(pmId)) {
         pmMap.set(pmId, {
@@ -536,7 +544,11 @@ const Analytics = () => {
               <CardContent>
                 <div className="space-y-4">
                   {teamPerformance.map((member, index) => (
-                    <div key={member.id} className="flex items-center gap-4 p-3 rounded-lg border bg-card">
+                    <div 
+                      key={member.id} 
+                      className="flex items-center gap-4 p-3 rounded-lg border bg-card cursor-pointer hover:shadow-md hover:bg-muted/50 transition-all"
+                      onClick={() => setSelectedIndividualId(member.id)}
+                    >
                       <div className="flex items-center gap-3 flex-1">
                         <span className="text-2xl font-bold text-muted-foreground w-8">#{index + 1}</span>
                         {getRankIcon(index)}
@@ -656,16 +668,22 @@ const Analytics = () => {
 
           {/* Client Performance */}
           <TabsContent value="clients" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              {clientPerformance.slice(0, 4).map((client) => (
+            {/* Top 3 Clients */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {clientPerformance.slice(0, 3).map((client, index) => (
                 <Card 
                   key={client.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  className="relative overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => window.location.href = `/analytics/client?id=${client.id}&name=${encodeURIComponent(client.name)}`}
                 >
-                  <CardHeader>
-                    <CardTitle className="text-lg">{client.name}</CardTitle>
-                    <CardDescription>{client.totalTasks} total tasks</CardDescription>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {getRankIcon(index)}
+                        {client.name}
+                      </CardTitle>
+                    </div>
+                    <CardDescription>Rank #{index + 1} • {client.totalTasks} tasks</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -689,6 +707,38 @@ const Analytics = () => {
                 </Card>
               ))}
             </div>
+
+            {/* Full Client Leaderboard */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Client Leaderboard</CardTitle>
+                <CardDescription>Performance rankings for all clients</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {clientPerformance.map((client, index) => (
+                    <div 
+                      key={client.id}
+                      className="flex items-center gap-4 p-3 rounded-lg border bg-card cursor-pointer hover:shadow-md hover:bg-muted/50 transition-all"
+                      onClick={() => window.location.href = `/analytics/client?id=${client.id}&name=${encodeURIComponent(client.name)}`}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="text-2xl font-bold text-muted-foreground w-8">#{index + 1}</span>
+                        {getRankIcon(index)}
+                        <div className="flex-1">
+                          <p className="font-semibold">{client.name}</p>
+                          <p className="text-sm text-muted-foreground">{client.totalTasks} tasks • {client.completedTasks} completed</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold">{client.weightedScore.toFixed(1)}%</p>
+                        <p className="text-xs text-muted-foreground">Avg delay: {client.avgDelayDays.toFixed(1)}d</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>

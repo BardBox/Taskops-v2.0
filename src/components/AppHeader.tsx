@@ -367,43 +367,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                 onClick={() => navigate("/analytics")}
               >
                 <BarChart3 className="mr-2 h-4 w-4" />
-                Analytics
-              </Button>
-              <Button
-                variant="ghost"
-                className={`justify-start pl-8 ${
-                  location.pathname === "/analytics/overview" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
-                onClick={() => navigate("/analytics/overview")}
-              >
-                <Target className="mr-2 h-3 w-3" />
-                Command Center
-              </Button>
-              <Button
-                variant="ghost"
-                className={`justify-start pl-8 ${
-                  location.pathname === "/analytics/personal" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
-                onClick={() => navigate("/analytics/personal")}
-              >
-                <TrendingUp className="mr-2 h-3 w-3" />
-                My Performance
-              </Button>
-              <Button
-                variant="ghost"
-                className={`justify-start pl-8 ${
-                  location.pathname === "/analytics/leaderboard" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
-                onClick={() => navigate("/analytics/leaderboard")}
-              >
-                <Trophy className="mr-2 h-3 w-3" />
-                Leaderboards
+                Performance Analytics
               </Button>
               <Button
                 variant="ghost"
