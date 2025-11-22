@@ -76,3 +76,58 @@ export const triggerSparkles = (element: HTMLElement) => {
     zIndex: 10000,
   });
 };
+
+// Star burst animation for "In Approval" status
+export const triggerStarBurst = (urgency: string) => {
+  const urgencyLower = urgency.toLowerCase();
+  
+  // Determine intensity based on urgency
+  const particleCount = urgencyLower.includes('high') || urgencyLower.includes('urgent') || urgencyLower.includes('critical') 
+    ? 100 
+    : urgencyLower.includes('medium') || urgencyLower.includes('moderate')
+    ? 70
+    : 50;
+
+  const duration = urgencyLower.includes('high') || urgencyLower.includes('urgent') || urgencyLower.includes('critical')
+    ? 2000
+    : 1500;
+
+  // Create a star pattern burst
+  const createStarBurst = () => {
+    const defaults = {
+      spread: 360,
+      ticks: 100,
+      gravity: 1,
+      decay: 0.94,
+      startVelocity: 30,
+      zIndex: 10000,
+    };
+
+    // Star-shaped confetti with sparkle colors
+    confetti({
+      ...defaults,
+      particleCount: particleCount / 2,
+      scalar: 1.2,
+      shapes: ['star'],
+      colors: ['#FFD700', '#FFC107', '#FFEB3B', '#FFF59D', '#FFFFFF'],
+    });
+
+    // Add some circular sparkles
+    confetti({
+      ...defaults,
+      particleCount: particleCount / 2,
+      scalar: 0.8,
+      shapes: ['circle'],
+      colors: ['#64B5F6', '#81C784', '#FFB74D', '#BA68C8', '#4FC3F7'],
+    });
+  };
+
+  // Trigger multiple bursts for high urgency
+  if (urgencyLower.includes('high') || urgencyLower.includes('urgent') || urgencyLower.includes('critical')) {
+    createStarBurst();
+    setTimeout(createStarBurst, 400);
+    setTimeout(createStarBurst, 800);
+  } else {
+    createStarBurst();
+  }
+};

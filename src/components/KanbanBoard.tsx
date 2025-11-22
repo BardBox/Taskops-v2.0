@@ -18,6 +18,7 @@ import { playNotificationSound } from "@/utils/notificationSounds";
 import { canChangeUrgency, canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerConfetti, triggerStarBurst } from "@/utils/celebrationEffects";
 
 interface Task {
   id: string;
@@ -583,15 +584,24 @@ export const KanbanBoard = ({
       // If all TM validations pass, make the change
       if (task.status !== newStatus) {
         onStatusChange(taskId, newStatus);
-        playNotificationSound('slap', 0.6);
         
-        // Check if task was completed
-        if (newStatus.toLowerCase() === 'completed' || newStatus.toLowerCase() === 'done' || newStatus.toLowerCase() === 'approved') {
+        // Different celebrations for different statuses
+        if (newStatus.toLowerCase() === 'in approval') {
+          // Star burst animation and twinkle sound for "In Approval"
+          triggerStarBurst(task.urgency);
+          playNotificationSound('twinkle', 0.7);
+        } else if (newStatus.toLowerCase() === 'completed' || newStatus.toLowerCase() === 'done' || newStatus.toLowerCase() === 'approved') {
+          // Confetti and chime for "Approved"
+          triggerConfetti(task.urgency);
+          playNotificationSound('chime', 0.7);
           onTaskCompleted({
             urgency: task.urgency,
             deadline: task.deadline,
             created_at: task.date,
           });
+        } else {
+          // Regular slap sound for other status changes
+          playNotificationSound('slap', 0.6);
         }
       }
       setActiveId(null);
@@ -601,15 +611,24 @@ export const KanbanBoard = ({
     // For PM and PO, use the canEdit check
     if (task && task.status !== newStatus && canEdit(task)) {
       onStatusChange(taskId, newStatus);
-      playNotificationSound('slap', 0.6);
       
-      // Check if task was completed and trigger gamification
-      if (newStatus.toLowerCase() === 'completed' || newStatus.toLowerCase() === 'done' || newStatus.toLowerCase() === 'approved') {
+      // Different celebrations for different statuses
+      if (newStatus.toLowerCase() === 'in approval') {
+        // Star burst animation and twinkle sound for "In Approval"
+        triggerStarBurst(task.urgency);
+        playNotificationSound('twinkle', 0.7);
+      } else if (newStatus.toLowerCase() === 'completed' || newStatus.toLowerCase() === 'done' || newStatus.toLowerCase() === 'approved') {
+        // Confetti and chime for "Approved"
+        triggerConfetti(task.urgency);
+        playNotificationSound('chime', 0.7);
         onTaskCompleted({
           urgency: task.urgency,
           deadline: task.deadline,
           created_at: task.date,
         });
+      } else {
+        // Regular slap sound for other status changes
+        playNotificationSound('slap', 0.6);
       }
     } else if (task && task.status === newStatus) {
       console.log("Same status, no change needed");
