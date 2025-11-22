@@ -15,7 +15,7 @@ import { BadgeDropdown } from "./BadgeDropdown";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users } from "lucide-react";
+import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users, Plus } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
@@ -72,9 +72,11 @@ interface TaskTableProps {
   filters?: FilterState;
   onDuplicate?: (data: any) => void;
   visibleColumns?: VisibleColumns;
+  canCreateTasks?: boolean;
+  onCreateTask?: () => void;
 }
 
-export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask }: TaskTableProps) => {
   const columns = visibleColumns ?? {
     date: true,
     client: true,
@@ -722,6 +724,16 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
             Calendar
           </Button>
         </div>
+
+        {canCreateTasks && onCreateTask && (
+          <Button
+            onClick={onCreateTask}
+            size="icon"
+            className="h-10 w-10 rounded-full bg-foreground hover:bg-foreground/90 text-background"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        )}
 
         {selectedTaskIds.size > 0 && userRole === "project_owner" && (
           <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-2 animate-fade-in">
