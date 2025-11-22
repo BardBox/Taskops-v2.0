@@ -701,6 +701,12 @@ export function TaskDetailDialog({
 
   const handleNotesSave = async () => {
     if (!task) return;
+
+    if (userRole === "team_member") {
+      toast.error("Team members cannot edit task descriptions");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("tasks")
@@ -819,6 +825,10 @@ export function TaskDetailDialog({
     userRole === 'project_owner' || 
     (task?.assignee_id === userId && !isCollaborator)
   );
+
+  const canEditDescription =
+    userRole === 'project_manager' ||
+    userRole === 'project_owner';
 
   const delayStatus = getDelayStatus();
   const typingUserNames = Array.from(typingUsers)
@@ -1072,19 +1082,21 @@ export function TaskDetailDialog({
               <div>
                 <div className="flex items-center justify-between">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Description</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={() => {
-                      setEditingNotes(!editingNotes);
-                      if (!editingNotes) setNotesValue(task.notes || "");
-                    }}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
+                  {canEditDescription && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        setEditingNotes(!editingNotes);
+                        if (!editingNotes) setNotesValue(task.notes || "");
+                      }}
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
-                {editingNotes ? (
+                {canEditDescription && editingNotes ? (
                   <div className="mt-2 space-y-2">
                     <Textarea
                       value={notesValue}
@@ -1094,16 +1106,27 @@ export function TaskDetailDialog({
                     />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleNotesSave}>Save</Button>
-                      <Button size="sm" variant="outline" onClick={() => {
-                        setEditingNotes(false);
-                        setNotesValue(task.notes || "");
-                      }}>Cancel</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingNotes(false);
+                          setNotesValue(task.notes || "");
+                        }}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap overflow-y-auto pr-2">
                     {task.notes || "No description"}
                   </div>
+                )}
+                {!canEditDescription && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Only project managers and owners can edit the task description.
+                  </p>
                 )}
               </div>
 
