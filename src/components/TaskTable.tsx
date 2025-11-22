@@ -726,7 +726,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     />
                   </TableHead>
                 )}
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
+                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
                   <div className="flex items-center gap-2">
                     Date
                     <div className="flex flex-col">
@@ -735,7 +735,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
+                <TableHead className="min-w-[200px] max-w-[300px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
                   <div className="flex items-center gap-2">
                     Task
                     <div className="flex flex-col">
@@ -744,7 +744,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
+                <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
                   <div className="flex items-center gap-2">
                     Client
                     <div className="flex flex-col">
@@ -753,7 +753,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
+                <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
                   <div className="flex items-center gap-2">
                     Project
                     <div className="flex flex-col">
@@ -762,7 +762,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
+                <TableHead className="w-[140px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
                   <div className="flex items-center gap-2">
                     Task Owner
                     <div className="flex flex-col">
@@ -771,7 +771,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
+                <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
                   <div className="flex items-center gap-2">
                     PM
                     <div className="flex flex-col">
@@ -797,7 +797,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
+                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
                   <div className="flex items-center gap-2">
                     Deadline
                     <div className="flex flex-col">
@@ -806,7 +806,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("submission")}>
+                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("submission")}>
                   <div className="flex items-center gap-2">
                     Submission
                     <div className="flex flex-col">
@@ -815,7 +815,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
+                <TableHead className="w-[80px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
                   <div className="flex items-center gap-2">
                     Delay
                     <div className="flex flex-col">
@@ -824,7 +824,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
+                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
                   <div className="flex items-center gap-2">
                     Status
                     <div className="flex flex-col">
@@ -833,7 +833,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
+                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
                   <div className="flex items-center gap-2">
                     Urgency
                     <div className="flex flex-col">
@@ -910,9 +910,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                         >
                           <div className="flex items-center">
                             {!collaboratorsExpanded ? (
-                              <div className="w-10 flex items-center justify-center border-r py-2">
+                              <div className="w-10 flex items-center justify-center py-2">
                                 <div className="flex -space-x-2">
-                                  {task.collaborators.slice(0, 3).map((collab: any, idx: number) => (
+                                  {task.collaborators.slice(0, 2).map((collab: any, idx: number) => (
                                     <TooltipProvider key={idx}>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
@@ -932,58 +932,48 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                                       </Tooltip>
                                     </TooltipProvider>
                                   ))}
-                                  {task.collaborators.length > 3 && (
+                                  {task.collaborators.length > 2 && (
                                     <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                                      <span className="text-[10px] font-medium">+{task.collaborators.length - 3}</span>
+                                      <span className="text-[10px] font-medium">+{task.collaborators.length - 2}</span>
                                     </div>
                                   )}
                                 </div>
                               </div>
                             ) : (
-                              <>
-                                <div className="w-10 flex items-center justify-center border-r">
-                                  <div className="relative">
-                                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                                    <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-500 text-white text-[8px] flex items-center justify-center font-medium">
-                                      {task.collaborators.length}
-                                    </span>
+                              <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                                <div className="px-2 py-1.5 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex flex-wrap gap-2">
+                                    {task.collaborators.map((collab: any, idx: number) => {
+                                      const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
+                                      return (
+                                        <TooltipProvider key={idx}>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="flex items-center gap-1 cursor-default">
+                                                <Avatar className="h-5 w-5">
+                                                  <AvatarImage 
+                                                    src={collab.profiles?.avatar_url || undefined} 
+                                                    alt={collab.profiles?.full_name} 
+                                                  />
+                                                  <AvatarFallback className="text-[10px]">
+                                                    {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                                  </AvatarFallback>
+                                                </Avatar>
+                                                <span className="text-xs font-medium">
+                                                  {firstName}
+                                                </span>
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      );
+                                    })}
                                   </div>
                                 </div>
-                                <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-                                  <div className="px-2 py-1.5 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex flex-wrap gap-2">
-                                      {task.collaborators.map((collab: any, idx: number) => {
-                                        const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
-                                        return (
-                                          <TooltipProvider key={idx}>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <div className="flex items-center gap-1 cursor-default">
-                                                  <Avatar className="h-5 w-5">
-                                                    <AvatarImage 
-                                                      src={collab.profiles?.avatar_url || undefined} 
-                                                      alt={collab.profiles?.full_name} 
-                                                    />
-                                                    <AvatarFallback className="text-[10px]">
-                                                      {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                                    </AvatarFallback>
-                                                  </Avatar>
-                                                  <span className="text-xs font-medium">
-                                                    {firstName}
-                                                  </span>
-                                                </div>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                <p>{collab.profiles?.full_name || "Unknown"}</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                </CollapsibleContent>
-                              </>
+                              </CollapsibleContent>
                             )}
                           </div>
                         </Collapsible>
