@@ -232,13 +232,21 @@ export const useTaskNotifications = (userId: string | undefined) => {
               description = `"${newTask.task_name}" urgency changed to "${newTask.urgency}"`;
             }
 
+            // Fetch the user who made the update (could be anyone with permission)
+            // We'll default to assignee but fetch their profile properly
+            const { data: updaterProfile } = await supabase
+              .from("profiles")
+              .select("id, full_name, avatar_url")
+              .eq("id", newTask.assignee_id)
+              .maybeSingle();
+
             // Store notification in database for assignee and all managers
             await createNotifications(
               newTask.assignee_id,
               "Task Updated",
               description,
               newTask.id,
-              newTask.assignee_id, // The assignee updated their task
+              updaterProfile?.id || newTask.assignee_id,
               "info"
             );
 
@@ -255,6 +263,9 @@ export const useTaskNotifications = (userId: string | undefined) => {
                 message: description,
                 type: "info",
                 task_id: newTask.id,
+                actor_id: updaterProfile?.id || newTask.assignee_id,
+                actor_name: updaterProfile?.full_name || "Unknown User",
+                actor_avatar_url: updaterProfile?.avatar_url || null,
               }));
               await supabase.from("notifications").insert(collabNotifications);
             }
@@ -266,8 +277,10 @@ export const useTaskNotifications = (userId: string | undefined) => {
                                managerIds.includes(userId);
 
             if (isInvolved) {
+              const updaterName = updaterProfile?.full_name || "Someone";
+              
               toast.info(`Task Updated`, {
-                description,
+                description: `${updaterName}: ${description}`,
                 duration: 5000,
               });
 
@@ -275,7 +288,7 @@ export const useTaskNotifications = (userId: string | undefined) => {
               if (getNotificationPermission() === "granted") {
                 showBrowserNotification({
                   title: "Task Updated",
-                  body: description,
+                  body: `${updaterName}: ${description}`,
                   tag: `task-${newTask.id}`,
                 });
               }
