@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText } from "lucide-react";
 import { TaskTimeline } from "@/components/TaskTimeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +22,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency } from "@/utils/roleHelpers";
 import { TaskRevisions } from "@/components/TaskRevisions";
+import { TaskHistory } from "@/components/TaskHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Task {
   id: string;
@@ -109,6 +111,7 @@ export function TaskDetailDialog({
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [userProfiles, setUserProfiles] = useState<Map<string, string>>(new Map());
   const [isTaskDetailsCollapsed, setIsTaskDetailsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [showMessageEmojiPicker, setShowMessageEmojiPicker] = useState(false);
   const [collaborators, setCollaborators] = useState<any[]>([]);
@@ -847,8 +850,34 @@ export function TaskDetailDialog({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto min-h-0">
-          <div className={`border-b transition-all duration-300 ease-in-out ${isTaskDetailsCollapsed ? 'max-h-0 overflow-hidden' : ''}`}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+          <div className="px-6 border-b flex-shrink-0">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="details" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="discussion" className="gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Discussion
+              </TabsTrigger>
+              <TabsTrigger value="revisions" className="gap-2">
+                <GitBranch className="h-4 w-4" />
+                Revisions
+                {task.revision_count > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs px-1 py-0">
+                    {task.revision_count}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="history" className="gap-2">
+                <Clock className="h-4 w-4" />
+                History
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="details" className="flex-1 overflow-y-auto m-0">
             <div className="p-6 space-y-6">
               {/* Team Row - Task Owner, Collaborators, Project Manager in one row */}
               <div className="flex flex-wrap items-start gap-4 pb-4 border-b">
@@ -1157,26 +1186,24 @@ export function TaskDetailDialog({
                 </div>
               )}
             </div>
+          </TabsContent>
 
-            <Separator className="my-4" />
+          <TabsContent value="revisions" className="flex-1 overflow-y-auto m-0 p-6">
+            <TaskRevisions
+              taskId={task.id}
+              revisionCount={task.revision_count}
+              status={task.status}
+              userRole={userRole}
+              userId={userId}
+              onRevisionRequested={fetchTaskDetails}
+            />
+          </TabsContent>
 
-            <div className="px-6 pb-6">
-              <TaskRevisions
-                taskId={task.id}
-                revisionCount={task.revision_count}
-                status={task.status}
-                userRole={userRole}
-                userId={userId}
-                onRevisionRequested={fetchTaskDetails}
-              />
-            </div>
-          </div>
+          <TabsContent value="history" className="flex-1 overflow-y-auto m-0 p-6">
+            <TaskHistory taskId={task.id} />
+          </TabsContent>
 
-          <div className="bg-muted/30 flex-1 flex flex-col min-h-0">
-            <div className="p-4 border-b bg-background">
-              <h3 className="font-semibold">Discussion</h3>
-            </div>
-            
+          <TabsContent value="discussion" className="flex-1 flex flex-col m-0 min-h-0">
             <ScrollArea className="flex-1" ref={scrollRef}>
               <div className="p-4 space-y-2">
               {comments.map((comment, index) => (
@@ -1326,10 +1353,9 @@ export function TaskDetailDialog({
               <div ref={commentsEndRef} />
               </div>
             </ScrollArea>
-          </div>
-        </div>
-
-        <div className="p-4 border-t bg-background flex-shrink-0">
+            
+            <div className="p-4 border-t bg-background flex-shrink-0">
+            
             {selectedImage && (
               <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-lg">
                 <span className="text-sm truncate flex-1">{selectedImage.name}</span>
@@ -1406,8 +1432,10 @@ export function TaskDetailDialog({
               <Button onClick={handleSendComment} disabled={uploading || (!newComment.trim() && !selectedImage)}>
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
-          </div>
-        </div>
+            </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

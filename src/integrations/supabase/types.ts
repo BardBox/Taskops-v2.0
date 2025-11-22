@@ -770,6 +770,7 @@ export type Database = {
           new_value: string | null
           old_value: string | null
           task_id: string
+          version_snapshot: string | null
         }
         Insert: {
           change_description?: string | null
@@ -780,6 +781,7 @@ export type Database = {
           new_value?: string | null
           old_value?: string | null
           task_id: string
+          version_snapshot?: string | null
         }
         Update: {
           change_description?: string | null
@@ -790,6 +792,7 @@ export type Database = {
           new_value?: string | null
           old_value?: string | null
           task_id?: string
+          version_snapshot?: string | null
         }
         Relationships: [
           {
@@ -818,6 +821,7 @@ export type Database = {
       tasks: {
         Row: {
           actual_delivery: string | null
+          approval_date: string | null
           asset_link: string | null
           assigned_by_id: string
           assignee_id: string
@@ -845,6 +849,7 @@ export type Database = {
         }
         Insert: {
           actual_delivery?: string | null
+          approval_date?: string | null
           asset_link?: string | null
           assigned_by_id: string
           assignee_id: string
@@ -872,6 +877,7 @@ export type Database = {
         }
         Update: {
           actual_delivery?: string | null
+          approval_date?: string | null
           asset_link?: string | null
           assigned_by_id?: string
           assignee_id?: string
@@ -1140,6 +1146,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_old_task_history: { Args: never; Returns: undefined }
       generate_client_code: { Args: never; Returns: string }
       generate_user_code: { Args: never; Returns: string }
       get_collaborator_count: { Args: { _task_id: string }; Returns: number }
