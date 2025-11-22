@@ -183,6 +183,18 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               <Button
                 variant="ghost"
                 className={`justify-start ${
+                  location.pathname === "/hive" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
+                onClick={() => navigate("/hive")}
+              >
+                <span className="mr-2">🐝</span>
+                The Hive
+              </Button>
+              <Button
+                variant="ghost"
+                className={`justify-start ${
                   location.pathname === "/analytics" 
                     ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
                     : ""
