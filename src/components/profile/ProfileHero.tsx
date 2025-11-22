@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { RoleBadge } from "@/components/RoleBadge";
 import { Edit, Sparkles } from "lucide-react";
 
@@ -46,7 +47,7 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
                 {profile?.full_name}
               </h1>
               
-              {/* Creative Title and Role Badge Row */}
+              {/* Creative Title, Role Badge, and Status Row */}
               <div className="flex flex-wrap items-center gap-3">
                 {profile?.creative_title && (
                   <span className="text-lg font-medium text-primary">
@@ -54,6 +55,21 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
                   </span>
                 )}
                 <RoleBadge role={role} />
+                {profile?.status && (
+                  <Badge 
+                    variant="outline" 
+                    className={`${
+                      profile.status === "Available" ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20" :
+                      profile.status === "Busy" ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20" :
+                      profile.status === "Out of Office" ? "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20" :
+                      profile.status === "Do Not Disturb" ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20" :
+                      profile.status === "On Leave" ? "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20" :
+                      "bg-muted"
+                    }`}
+                  >
+                    {profile.status}
+                  </Badge>
+                )}
               </div>
             </div>
 

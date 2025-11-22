@@ -329,12 +329,15 @@ export type Database = {
           hobbies: string[] | null
           id: string
           kryptonite: string | null
+          mission: string | null
+          skill_set: string[] | null
           status: string | null
           superpower: string | null
           tagline: string | null
           timezone: string | null
           updated_at: string
           user_code: string | null
+          weapons: string[] | null
         }
         Insert: {
           avatar_url?: string | null
@@ -345,12 +348,15 @@ export type Database = {
           hobbies?: string[] | null
           id: string
           kryptonite?: string | null
+          mission?: string | null
+          skill_set?: string[] | null
           status?: string | null
           superpower?: string | null
           tagline?: string | null
           timezone?: string | null
           updated_at?: string
           user_code?: string | null
+          weapons?: string[] | null
         }
         Update: {
           avatar_url?: string | null
@@ -361,12 +367,15 @@ export type Database = {
           hobbies?: string[] | null
           id?: string
           kryptonite?: string | null
+          mission?: string | null
+          skill_set?: string[] | null
           status?: string | null
           superpower?: string | null
           tagline?: string | null
           timezone?: string | null
           updated_at?: string
           user_code?: string | null
+          weapons?: string[] | null
         }
         Relationships: []
       }
