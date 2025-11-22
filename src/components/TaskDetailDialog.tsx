@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText, Maximize2, Minimize2 } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText, Maximize2, Minimize2, FileEdit } from "lucide-react";
 import { TaskTimeline } from "@/components/TaskTimeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -24,6 +24,9 @@ import { canTeamMemberChangeStatus, getAvailableStatuses, canChangeUrgency } fro
 import { TaskRevisions } from "@/components/TaskRevisions";
 import { TaskHistory } from "@/components/TaskHistory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EditTaskTab } from "@/components/EditTaskTab";
+import { RequestRevisionDialog } from "@/components/RequestRevisionDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Task {
   id: string;
@@ -46,6 +49,9 @@ interface Task {
   revision_count: number;
   revision_requested_at: string | null;
   revision_requested_by: string | null;
+  is_posted?: boolean;
+  posted_at?: string | null;
+  posted_by?: string | null;
 }
 
 interface Comment {
@@ -98,6 +104,9 @@ export function TaskDetailDialog({
   const [uploading, setUploading] = useState(false);
   const [clientName, setClientName] = useState("");
   const [projectName, setProjectName] = useState("");
+  const [showRequestRevision, setShowRequestRevision] = useState(false);
+  const [assetLink, setAssetLink] = useState("");
+  const [isPosted, setIsPosted] = useState(false);
   const [assigneeName, setAssigneeName] = useState("");
   const [assigneeAvatar, setAssigneeAvatar] = useState("");
   const [assigneeCreativeTitle, setAssigneeCreativeTitle] = useState("");
@@ -319,6 +328,8 @@ export function TaskDetailDialog({
       if (taskError) throw taskError;
       setTask(taskData);
       setAssetLinkValue(taskData.asset_link || "");
+      setAssetLink(taskData.asset_link || "");
+      setIsPosted(taskData.is_posted || false);
 
       if (taskData.client_id) {
         const { data: clientData } = await supabase
@@ -861,6 +872,12 @@ export function TaskDetailDialog({
                 <FileText className="h-4 w-4" />
                 Details
               </TabsTrigger>
+              {(userRole === 'project_manager' || userRole === 'project_owner') && (
+                <TabsTrigger value="edit" className="gap-2">
+                  <Edit2 className="h-4 w-4" />
+                  Edit Task
+                </TabsTrigger>
+              )}
               <TabsTrigger value="discussion" className="gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Discussion
@@ -1166,7 +1183,7 @@ export function TaskDetailDialog({
                 </div>
               )}
               
-              {/* Edit History */}
+               {/* Edit History */}
               {editHistory.length > 0 && (
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Edit History</Label>
@@ -1189,8 +1206,122 @@ export function TaskDetailDialog({
                   </div>
                 </div>
               )}
+
+              {/* SMO Posted Flag - Visible to task owner and collaborators */}
+              {(task.assignee_id === userId || isCollaborator) && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center space-x-3 p-4 bg-muted/30 rounded-lg">
+                    <Checkbox
+                      id="is_posted"
+                      checked={isPosted}
+                      onCheckedChange={(checked) => {
+                        const isChecked = checked === true;
+                        (async () => {
+                          try {
+                            const { error } = await supabase
+                              .from("tasks")
+                              .update({
+                                is_posted: isChecked,
+                                posted_at: isChecked ? new Date().toISOString() : null,
+                                posted_by: isChecked ? userId : null,
+                              })
+                              .eq("id", task.id);
+                            
+                            if (error) throw error;
+                            setIsPosted(isChecked);
+                            toast.success(isChecked ? "Marked as posted" : "Unmarked as posted");
+                            fetchTaskDetails();
+                          } catch (error: any) {
+                            toast.error("Failed to update posted status");
+                          }
+                        })();
+                      }}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="is_posted" className="text-sm font-medium cursor-pointer">
+                        Posted to Social Media
+                      </Label>
+                      {task.posted_at && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Posted on {format(new Date(task.posted_at), 'PPp')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Asset Submission Area - Visible to task owner and collaborators */}
+              {(task.assignee_id === userId || isCollaborator) && task.status !== "Approved" && (
+                <div className="pt-4 border-t">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Submit Assets</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      type="url"
+                      placeholder="Enter asset link (Google Drive, Dropbox, etc.)"
+                      value={assetLink}
+                      onChange={(e) => setAssetLink(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={async () => {
+                        if (!assetLink.trim()) {
+                          toast.error("Please enter an asset link");
+                          return;
+                        }
+                        try {
+                          const { error } = await supabase
+                            .from("tasks")
+                            .update({
+                              asset_link: assetLink,
+                              actual_delivery: new Date().toISOString().split('T')[0],
+                              status: "In Approval",
+                            })
+                            .eq("id", task.id);
+                          
+                          if (error) throw error;
+                          toast.success("Assets submitted successfully!");
+                          fetchTaskDetails();
+                        } catch (error: any) {
+                          toast.error("Failed to submit assets");
+                        }
+                      }}
+                      disabled={!assetLink.trim()}
+                    >
+                      Submit Assets
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Request Revision Button - Visible to PM/PO when asset link exists */}
+              {(userRole === 'project_manager' || userRole === 'project_owner') && task.asset_link && (
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={() => setShowRequestRevision(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <FileEdit className="h-4 w-4 mr-2" />
+                    Request Revision
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
+
+          {/* Edit Task Tab - PM/PO Only */}
+          {(userRole === 'project_manager' || userRole === 'project_owner') && (
+            <TabsContent value="edit" className="flex-1 overflow-y-auto m-0">
+              <EditTaskTab 
+                task={task} 
+                onTaskUpdated={() => {
+                  fetchTaskDetails();
+                  toast.success("Task updated successfully");
+                }}
+              />
+            </TabsContent>
+          )}
 
           <TabsContent value="revisions" className="flex-1 overflow-y-auto m-0 p-6">
             <TaskRevisions
@@ -1441,6 +1572,18 @@ export function TaskDetailDialog({
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Request Revision Dialog */}
+      <RequestRevisionDialog
+        open={showRequestRevision}
+        onOpenChange={setShowRequestRevision}
+        taskId={task?.id || ""}
+        revisionCount={task?.revision_count || 0}
+        onRevisionRequested={() => {
+          fetchTaskDetails();
+          fetchComments();
+        }}
+      />
     </Dialog>
   );
 }
