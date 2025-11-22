@@ -726,7 +726,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     />
                   </TableHead>
                 )}
-                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
+                <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
                   <div className="flex items-center gap-2">
                     Date
                     <div className="flex flex-col">
@@ -735,7 +735,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="min-w-[200px] max-w-[300px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
+                <TableHead className="min-w-[180px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
                   <div className="flex items-center gap-2">
                     Task
                     <div className="flex flex-col">
@@ -744,7 +744,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
+                <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
                   <div className="flex items-center gap-2">
                     Client
                     <div className="flex flex-col">
@@ -753,7 +753,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
+                <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
                   <div className="flex items-center gap-2">
                     Project
                     <div className="flex flex-col">
@@ -762,7 +762,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[140px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
+                <TableHead className="w-[130px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
                   <div className="flex items-center gap-2">
                     Task Owner
                     <div className="flex flex-col">
@@ -771,7 +771,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
+                <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
                   <div className="flex items-center gap-2">
                     PM
                     <div className="flex flex-col">
@@ -797,7 +797,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
-                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
+                <TableHead className="w-[95px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
                   <div className="flex items-center gap-2">
                     Deadline
                     <div className="flex flex-col">
@@ -815,7 +815,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[80px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
+                <TableHead className="w-[75px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
                   <div className="flex items-center gap-2">
                     Delay
                     <div className="flex flex-col">
@@ -824,7 +824,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
+                <TableHead className="w-[105px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
                   <div className="flex items-center gap-2">
                     Status
                     <div className="flex flex-col">
@@ -833,7 +833,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
+                <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
                   <div className="flex items-center gap-2">
                     Urgency
                     <div className="flex flex-col">
