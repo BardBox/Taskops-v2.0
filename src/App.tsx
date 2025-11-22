@@ -2,8 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -30,6 +32,44 @@ import NotificationCenter from "./pages/NotificationCenter";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+        <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+        <Route path="/analytics" element={<PageTransition><Analytics /></PageTransition>} />
+        <Route path="/analytics/pm" element={<PageTransition><PMPerformance /></PageTransition>} />
+        <Route path="/analytics/client" element={<PageTransition><ClientPerformance /></PageTransition>} />
+        <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        <Route path="/account-settings" element={<PageTransition><AccountSettings /></PageTransition>} />
+        <Route path="/preferences" element={<PageTransition><Preferences /></PageTransition>} />
+        <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+        <Route path="/notifications" element={<PageTransition><NotificationCenter /></PageTransition>} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<PageTransition><AdminOverview /></PageTransition>} />
+          <Route path="users" element={<PageTransition><AdminUsers /></PageTransition>} />
+          <Route path="clients" element={<PageTransition><AdminClients /></PageTransition>} />
+          <Route path="projects" element={<PageTransition><AdminProjects /></PageTransition>} />
+          <Route path="status-urgency" element={<PageTransition><StatusUrgency /></PageTransition>} />
+          <Route path="avatar-generator" element={<PageTransition><AvatarGenerator /></PageTransition>} />
+          <Route path="settings" element={<PageTransition><AdminSettings /></PageTransition>} />
+        </Route>
+
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 const App = () => {
   useEffect(() => {
@@ -59,36 +99,8 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/analytics/pm" element={<PMPerformance />} />
-          <Route path="/analytics/client" element={<ClientPerformance />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/account-settings" element={<AccountSettings />} />
-          <Route path="/preferences" element={<Preferences />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/notifications" element={<NotificationCenter />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminOverview />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="clients" element={<AdminClients />} />
-            <Route path="projects" element={<AdminProjects />} />
-            <Route path="status-urgency" element={<StatusUrgency />} />
-            <Route path="avatar-generator" element={<AvatarGenerator />} />
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
-
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            <AnimatedRoutes />
+          </BrowserRouter>
     </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
