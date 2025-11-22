@@ -926,7 +926,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                         <span>{task.assigned_by?.full_name || "-"}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="p-0 relative" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="p-0 relative">
                       {task.collaborators && task.collaborators.length > 0 ? (
                         <Collapsible
                           open={collaboratorsExpanded}
@@ -942,7 +942,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                               </div>
                             </div>
                             <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-                              <div className="px-2 py-1.5 min-w-[100px]">
+                              <div className="px-2 py-1.5 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex flex-wrap gap-2">
                                   {task.collaborators.map((collab: any, idx: number) => {
                                     const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
