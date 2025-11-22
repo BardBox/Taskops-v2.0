@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Check, CheckCheck, Trash2, ListTodo } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2, ListTodo, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TaskDetailDialog } from "@/components/TaskDetailDialog";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
+  const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -193,6 +195,72 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
     }
   };
 
+  const handleSelectAll = () => {
+    setSelectedNotifications(notifications.map(n => n.id));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedNotifications([]);
+  };
+
+  const handleToggleNotification = (notificationId: string) => {
+    setSelectedNotifications((prev) =>
+      prev.includes(notificationId)
+        ? prev.filter((id) => id !== notificationId)
+        : [...prev, notificationId]
+    );
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedNotifications.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from("notifications" as any)
+        .delete()
+        .in("id", selectedNotifications)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      setNotifications((prev) =>
+        prev.filter((notif) => !selectedNotifications.includes(notif.id))
+      );
+      setSelectedNotifications([]);
+      toast.success(`${selectedNotifications.length} notification(s) deleted`);
+    } catch (error) {
+      console.error("Error deleting selected notifications:", error);
+      toast.error("Failed to delete selected notifications");
+    }
+  };
+
+  const handleMarkSelectedAsRead = async () => {
+    if (selectedNotifications.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from("notifications" as any)
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .in("id", selectedNotifications)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          selectedNotifications.includes(notif.id)
+            ? { ...notif, is_read: true }
+            : notif
+        )
+      );
+      setSelectedNotifications([]);
+      toast.success(`${selectedNotifications.length} notification(s) marked as read`);
+    } catch (error) {
+      console.error("Error marking selected as read:", error);
+      toast.error("Failed to mark selected as read");
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -236,6 +304,60 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
             </Button>
           )}
         </div>
+        {notifications.length > 0 && (
+          <>
+            <div className="flex items-center justify-between px-4 pb-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="h-7 text-xs"
+                >
+                  Select All
+                </Button>
+                {selectedNotifications.length > 0 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearSelection}
+                      className="h-7 text-xs"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedNotifications.length} selected
+                    </Badge>
+                  </>
+                )}
+              </div>
+              {selectedNotifications.length > 0 && (
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleMarkSelectedAsRead}
+                    className="h-7 text-xs"
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Read
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    className="h-7 text-xs text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
         <Separator />
         <ScrollArea className="h-[400px]">
           {loading ? (
@@ -253,17 +375,25 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
                 <div
                   key={notification.id}
                   className={cn(
-                    "flex items-start gap-3 p-3 hover:bg-accent/50 cursor-pointer transition-colors",
+                    "flex items-start gap-3 p-3 hover:bg-accent/50 transition-colors",
                     !notification.is_read && "bg-accent/20"
                   )}
-                  onClick={() => handleNotificationClick(notification)}
                 >
-                  <Avatar className="h-8 w-8 mt-1">
-                    <AvatarImage src={notification.actor_avatar_url || ""} />
-                    <AvatarFallback className="text-xs">
-                      {notification.actor_name?.split(" ").map(n => n[0]).join("") || "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Checkbox
+                    checked={selectedNotifications.includes(notification.id)}
+                    onCheckedChange={() => handleToggleNotification(notification.id)}
+                    className="mt-2"
+                  />
+                  <div
+                    className="flex items-start gap-3 flex-1 cursor-pointer"
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <Avatar className="h-8 w-8 mt-1">
+                      <AvatarImage src={notification.actor_avatar_url || ""} />
+                      <AvatarFallback className="text-xs">
+                        {notification.actor_name?.split(" ").map(n => n[0]).join("") || "U"}
+                      </AvatarFallback>
+                    </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -313,6 +443,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
                         </Button>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </div>
               ))}
