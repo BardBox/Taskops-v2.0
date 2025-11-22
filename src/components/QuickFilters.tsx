@@ -4,11 +4,13 @@ import { Calendar, Clock, AlertTriangle, RefreshCw, ListChecks, Bell } from "luc
 interface QuickFiltersProps {
   activeFilters: string[];
   onFiltersChange: (filters: string[]) => void;
+  userRole?: string;
+  userId?: string;
 }
 
-export const QuickFilters = ({ activeFilters, onFiltersChange }: QuickFiltersProps) => {
+export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId }: QuickFiltersProps) => {
   const timeBasedFilters = ["today", "this-month"];
-  const additiveFilters = ["urgent", "revisions", "pending", "notified"];
+  const additiveFilters = ["urgent", "revisions", "pending", "notified", "my-tasks", "most-busy", "least-busy"];
   
   const quickFilters = [
     {
@@ -60,6 +62,37 @@ export const QuickFilters = ({ activeFilters, onFiltersChange }: QuickFiltersPro
       color: "text-lime-500"
     }
   ];
+
+  // Add PM/PO specific filters
+  const isPMOrPO = userRole === "project_manager" || userRole === "project_owner";
+  if (isPMOrPO) {
+    quickFilters.push(
+      {
+        id: "my-tasks",
+        label: "My Tasks",
+        description: "Tasks where I'm owner or PM (can combine)",
+        type: "additive" as const,
+        icon: ListChecks,
+        color: "text-cyan-500"
+      },
+      {
+        id: "most-busy",
+        label: "Most Busy",
+        description: "Team member with most pending tasks (can combine)",
+        type: "additive" as const,
+        icon: AlertTriangle,
+        color: "text-rose-500"
+      },
+      {
+        id: "least-busy",
+        label: "Least Busy",
+        description: "Team member with least pending tasks (can combine)",
+        type: "additive" as const,
+        icon: Clock,
+        color: "text-emerald-500"
+      }
+    );
+  }
 
   const handleFilterClick = (filterId: string) => {
     const isActive = activeFilters.includes(filterId);
