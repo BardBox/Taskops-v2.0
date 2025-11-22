@@ -64,6 +64,9 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   
   const { statuses, urgencies, isLoading: isLoadingSettings} = useStatusUrgency();
   
+  const effectiveRole = userRole || currentUserRole;
+  const canEditNotes = effectiveRole === "project_manager" || effectiveRole === "project_owner";
+  
   const [formData, setFormData] = useState({
     task_name: "",
     client_id: "",
@@ -360,6 +363,14 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         reference_image: referenceImageUrl || null,
         notes: validated.notes || null,
       };
+
+      if (!canEditNotes) {
+        if (task) {
+          delete taskData.notes;
+        } else {
+          taskData.notes = null;
+        }
+      }
 
       if (task) {
         // Update existing task
@@ -755,10 +766,16 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                   placeholder="Add any additional context, requirements, or special instructions..."
                   rows={4}
                   className="resize-none"
+                  disabled={!canEditNotes}
                 />
                 <p className="text-xs text-muted-foreground">
                   {formData.notes.length} / 1000 characters
                 </p>
+                {!canEditNotes && (
+                  <p className="text-xs text-muted-foreground">
+                    Only project managers and owners can edit the task description.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
