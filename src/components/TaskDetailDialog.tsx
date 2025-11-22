@@ -127,6 +127,7 @@ export function TaskDetailDialog({
   const [editHistory, setEditHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isCollaborator, setIsCollaborator] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -860,15 +861,26 @@ export function TaskDetailDialog({
                     {delayStatus.status}
                   </Badge>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="ml-auto"
-                  title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                >
-                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                </Button>
+                <div className="ml-auto flex items-center gap-2">
+                  {(userRole === 'project_manager' || userRole === 'project_owner') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowEditDialog(true)}
+                      title="Edit task"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsFullscreen(!isFullscreen)}
+                    title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                  >
+                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
               <p className="text-lg text-muted-foreground mt-1">{task.task_name}</p>
             </div>
@@ -882,12 +894,6 @@ export function TaskDetailDialog({
                 <FileText className="h-4 w-4" />
                 Details
               </TabsTrigger>
-              {(userRole === 'project_manager' || userRole === 'project_owner') && (
-                <TabsTrigger value="edit" className="gap-2">
-                  <Edit2 className="h-4 w-4" />
-                  Edit Task
-                </TabsTrigger>
-              )}
               <TabsTrigger value="discussion" className="gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Discussion
@@ -1333,20 +1339,6 @@ export function TaskDetailDialog({
             </div>
           </TabsContent>
 
-          {/* Edit Task Tab - PM/PO Only */}
-          {(userRole === 'project_manager' || userRole === 'project_owner') && (
-            <TabsContent value="edit" className="flex-1 overflow-y-auto m-0">
-              <EditTaskTab 
-                task={task} 
-                onTaskUpdated={() => {
-                  fetchTaskDetails();
-                  toast.success("Task updated successfully");
-                }}
-                userRole={userRole}
-              />
-            </TabsContent>
-          )}
-
           <TabsContent value="revisions" className="flex-1 overflow-y-auto m-0 p-6">
             <TaskRevisions
               taskId={task.id}
@@ -1608,6 +1600,21 @@ export function TaskDetailDialog({
           fetchComments();
         }}
       />
+
+      {/* Edit Task Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <EditTaskTab 
+            task={task} 
+            onTaskUpdated={() => {
+              fetchTaskDetails();
+              setShowEditDialog(false);
+              toast.success("Task updated successfully");
+            }}
+            userRole={userRole}
+          />
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
