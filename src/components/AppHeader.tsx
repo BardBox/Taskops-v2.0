@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users, Info, Hexagon, Activity, Smile } from "lucide-react";
+import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users, Info, Hexagon, Activity, Smile, BellOff, DoorOpen, Plane, Clock3 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -126,6 +126,23 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
     }
   };
 
+  const getStatusIcon = (status: string | null) => {
+    switch (status) {
+      case "Available":
+        return Activity;
+      case "Busy":
+        return Clock3;
+      case "Out of Office":
+        return DoorOpen;
+      case "Do Not Disturb":
+        return BellOff;
+      case "On Leave":
+        return Plane;
+      default:
+        return Activity;
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out successfully");
@@ -205,14 +222,21 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
           <PopoverTrigger asChild>
             <Button variant="ghost" className="h-9 px-2 gap-2">
-              <Activity className={`h-4 w-4 ${
-                status === "Available" ? "text-green-500" :
-                status === "Busy" ? "text-red-500" :
-                status === "Out of Office" ? "text-orange-500" :
-                status === "Do Not Disturb" ? "text-purple-500" :
-                status === "On Leave" ? "text-gray-500" :
-                "text-muted-foreground"
-              }`} />
+              {(() => {
+                const StatusIcon = getStatusIcon(status);
+                return (
+                  <StatusIcon
+                    className={`h-4 w-4 ${
+                      status === "Available" ? "text-green-500" :
+                      status === "Busy" ? "text-red-500" :
+                      status === "Out of Office" ? "text-orange-500" :
+                      status === "Do Not Disturb" ? "text-purple-500" :
+                      status === "On Leave" ? "text-gray-500" :
+                      "text-muted-foreground"
+                    }`}
+                  />
+                );
+              })()}
               <span className="text-xs text-muted-foreground/60 hidden md:block">{status || "Set Status"}</span>
             </Button>
           </PopoverTrigger>
