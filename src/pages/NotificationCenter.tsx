@@ -281,13 +281,13 @@ export default function NotificationCenter() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="container mx-auto px-6 py-8 space-y-8">
         <Breadcrumbs />
 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Notification Center</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-2">
               {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
             </p>
           </div>

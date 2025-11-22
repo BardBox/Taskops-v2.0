@@ -280,7 +280,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-96">
-        <div className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">Notifications</h3>
             <Button
@@ -306,7 +306,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
         </div>
         {notifications.length > 0 && (
           <>
-            <div className="flex items-center justify-between px-4 pb-2">
+            <div className="flex items-center justify-between px-6 pb-3">
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -375,7 +375,7 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
                 <div
                   key={notification.id}
                   className={cn(
-                    "flex items-start gap-3 p-3 hover:bg-accent/50 transition-colors",
+                    "flex items-start gap-4 px-6 py-4 hover:bg-accent/50 transition-colors",
                     !notification.is_read && "bg-accent/20"
                   )}
                 >
