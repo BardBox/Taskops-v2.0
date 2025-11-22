@@ -872,9 +872,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                       <div className="relative flex items-center gap-2 group/name">
                         <span>{task.task_name}</span>
                         {task.revision_count > 0 && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
-                            Rev {task.revision_count}
-                          </Badge>
+                          <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[10px] font-semibold">
+                            {task.revision_count}
+                          </div>
                         )}
                       </div>
                     </TableCell>
