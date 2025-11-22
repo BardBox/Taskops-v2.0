@@ -1319,6 +1319,7 @@ export function TaskDetailDialog({
                   fetchTaskDetails();
                   toast.success("Task updated successfully");
                 }}
+                userRole={userRole}
               />
             </TabsContent>
           )}

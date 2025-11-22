@@ -22,9 +22,10 @@ import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 interface EditTaskTabProps {
   task: any;
   onTaskUpdated: () => void;
+  userRole?: string;
 }
 
-export function EditTaskTab({ task, onTaskUpdated }: EditTaskTabProps) {
+export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps) {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
@@ -160,24 +161,30 @@ export function EditTaskTab({ task, onTaskUpdated }: EditTaskTabProps) {
         if (uploadedUrl) referenceImageUrl = uploadedUrl;
       }
 
+      const updateData: any = {
+        task_name: formData.task_name,
+        client_id: formData.client_id || null,
+        project_id: formData.project_id || null,
+        assignee_id: formData.assignee_id,
+        date: formData.date,
+        deadline: formData.deadline || null,
+        actual_delivery: formData.actual_delivery || null,
+        status: formData.status,
+        urgency: formData.urgency,
+        reference_link_1: formData.reference_link_1 || null,
+        reference_link_2: formData.reference_link_2 || null,
+        reference_link_3: formData.reference_link_3 || null,
+        reference_image: referenceImageUrl || null,
+      };
+
+      // Only allow PMs and POs to update notes
+      if (userRole !== "team_member") {
+        updateData.notes = formData.notes || null;
+      }
+
       const { error } = await supabase
         .from("tasks")
-        .update({
-          task_name: formData.task_name,
-          client_id: formData.client_id || null,
-          project_id: formData.project_id || null,
-          assignee_id: formData.assignee_id,
-          date: formData.date,
-          deadline: formData.deadline || null,
-          actual_delivery: formData.actual_delivery || null,
-          status: formData.status,
-          urgency: formData.urgency,
-          notes: formData.notes || null,
-          reference_link_1: formData.reference_link_1 || null,
-          reference_link_2: formData.reference_link_2 || null,
-          reference_link_3: formData.reference_link_3 || null,
-          reference_image: referenceImageUrl || null,
-        })
+        .update(updateData)
         .eq("id", task.id);
 
       if (error) throw error;
@@ -384,7 +391,11 @@ export function EditTaskTab({ task, onTaskUpdated }: EditTaskTabProps) {
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
               placeholder="Enter task description and notes..."
+              disabled={userRole === "team_member"}
             />
+            {userRole === "team_member" && (
+              <p className="text-xs text-muted-foreground">Team members cannot edit task descriptions</p>
+            )}
           </div>
 
           <div className="space-y-3">
