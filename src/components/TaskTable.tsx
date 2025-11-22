@@ -41,6 +41,9 @@ interface Task {
   revision_count: number;
   revision_requested_at: string | null;
   revision_requested_by: string | null;
+  is_posted?: boolean;
+  posted_at?: string | null;
+  posted_by?: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
   assignee: { full_name: string; avatar_url: string | null } | null;
@@ -808,6 +811,7 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     </div>
                   </div>
                 </TableHead>
+                <TableHead className="w-20 text-center">Posted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -967,6 +971,29 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                           options={urgencies}
                           onChange={(value) => handleUrgencyChange(task.id, value)}
                           disabled={!canEdit(task)}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      {task.projects?.name === "SMO" && task.assignee_id === userId && (
+                        <Checkbox
+                          checked={task.is_posted || false}
+                          onCheckedChange={async (checked) => {
+                            try {
+                              const { error } = await supabase
+                                .from("tasks")
+                                .update({
+                                  is_posted: checked === true,
+                                  posted_at: checked === true ? new Date().toISOString() : null,
+                                  posted_by: checked === true ? userId : null,
+                                })
+                                .eq("id", task.id);
+                              
+                              if (error) throw error;
+                            } catch (error) {
+                              console.error("Error updating posted status:", error);
+                            }
+                          }}
                         />
                       )}
                     </TableCell>
