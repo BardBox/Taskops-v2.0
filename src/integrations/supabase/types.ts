@@ -1172,6 +1172,7 @@ export type Database = {
     }
     Functions: {
       cleanup_old_task_history: { Args: never; Returns: undefined }
+      delete_old_notifications: { Args: never; Returns: undefined }
       generate_client_code: { Args: never; Returns: string }
       generate_user_code: { Args: never; Returns: string }
       get_collaborator_count: { Args: { _task_id: string }; Returns: number }
