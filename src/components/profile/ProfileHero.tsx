@@ -7,7 +7,7 @@ import { Edit, Sparkles } from "lucide-react";
 interface ProfileHeroProps {
   profile: any;
   role: "project_manager" | "project_owner" | "team_member" | null;
-  onEditClick: () => void;
+  onEditClick?: () => void;
 }
 
 export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
@@ -68,15 +68,17 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
           </div>
 
           {/* Edit Button */}
-          <Button
-            onClick={onEditClick}
-            variant="outline"
-            size="lg"
-            className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
-          >
-            <Edit className="h-4 w-4" />
-            Edit Profile
-          </Button>
+          {onEditClick && (
+            <Button
+              onClick={onEditClick}
+              variant="outline"
+              size="lg"
+              className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              <Edit className="h-4 w-4" />
+              Edit Profile
+            </Button>
+          )}
         </div>
       </div>
     </Card>

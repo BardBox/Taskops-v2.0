@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/MainLayout";
 import { Loader2 } from "lucide-react";
@@ -14,15 +14,17 @@ import { MyCanvas } from "@/components/profile/MyCanvas";
 
 export default function Profile() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string>("");
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [viewingUserId, setViewingUserId] = useState<string>("");
   const [profile, setProfile] = useState<any>(null);
   const [role, setRole] = useState<"project_manager" | "project_owner" | "team_member" | null>(null);
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [searchParams]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -32,8 +34,14 @@ export default function Profile() {
       return;
     }
 
-    setUserId(session.user.id);
-    await fetchProfileData(session.user.id);
+    setCurrentUserId(session.user.id);
+    
+    // Check if viewing another user's profile
+    const userParam = searchParams.get("user");
+    const targetUserId = userParam || session.user.id;
+    setViewingUserId(targetUserId);
+    
+    await fetchProfileData(targetUserId);
     setLoading(false);
   };
 
@@ -62,8 +70,10 @@ export default function Profile() {
   };
 
   const handleProfileUpdate = () => {
-    fetchProfileData(userId);
+    fetchProfileData(viewingUserId);
   };
+
+  const isOwnProfile = currentUserId === viewingUserId;
 
   if (loading) {
     return (
@@ -81,7 +91,7 @@ export default function Profile() {
         <ProfileHero
           profile={profile}
           role={role}
-          onEditClick={() => setEditDrawerOpen(true)}
+          onEditClick={isOwnProfile ? () => setEditDrawerOpen(true) : undefined}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -89,23 +99,25 @@ export default function Profile() {
             superpower={profile?.superpower}
             kryptonite={profile?.kryptonite}
           />
-          <CreativeStats userId={userId} />
+          <CreativeStats userId={viewingUserId} />
         </div>
 
         <HobbiesSection hobbies={profile?.hobbies || []} />
 
-        <CollaborationStyle userId={userId} />
+        <CollaborationStyle userId={viewingUserId} />
 
-        <MyCanvas userId={userId} />
+        <MyCanvas userId={viewingUserId} />
 
-        <InspirationBoard userId={userId} />
+        <InspirationBoard userId={viewingUserId} />
 
-        <EditProfileDrawer
-          open={editDrawerOpen}
-          onOpenChange={setEditDrawerOpen}
-          profile={profile}
-          onProfileUpdate={handleProfileUpdate}
-        />
+        {isOwnProfile && (
+          <EditProfileDrawer
+            open={editDrawerOpen}
+            onOpenChange={setEditDrawerOpen}
+            profile={profile}
+            onProfileUpdate={handleProfileUpdate}
+          />
+        )}
       </div>
     </MainLayout>
   );
