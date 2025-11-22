@@ -71,8 +71,8 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
                   </Badge>
                 )}
                 {profile?.mood && (
-                  <Badge variant="outline" className="text-base">
-                    {profile.mood}
+                  <Badge variant="outline" className="text-sm">
+                    Feeling {profile.mood.split(" ")[1] || profile.mood} {profile.mood.split(" ")[0]}
                   </Badge>
                 )}
               </div>

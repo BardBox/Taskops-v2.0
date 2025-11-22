@@ -366,8 +366,8 @@ export default function Team() {
                           </Badge>
                         )}
                         {member.mood && (
-                          <Badge variant="outline" className="text-base">
-                            {member.mood}
+                          <Badge variant="outline" className="text-sm">
+                            Feeling {member.mood.split(" ")[1] || member.mood} {member.mood.split(" ")[0]}
                           </Badge>
                         )}
                       </div>
