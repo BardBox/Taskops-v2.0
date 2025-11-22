@@ -10,14 +10,22 @@ interface QuickFiltersProps {
 
 export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId }: QuickFiltersProps) => {
   const timeBasedFilters = ["today", "this-month"];
-  const additiveFilters = ["urgent", "revisions", "pending", "notified", "my-tasks", "most-busy", "least-busy"];
+  const additiveFilters = ["urgent", "revisions", "pending", "notified"];
+  const exclusiveFilters = ["my-tasks", "most-busy", "least-busy"]; // These are mutually exclusive
   
-  const quickFilters = [
+  const quickFilters: Array<{
+    id: string;
+    label: string;
+    description: string;
+    type: "time" | "additive" | "exclusive";
+    icon: any;
+    color: string;
+  }> = [
     {
       id: "today",
       label: "Today",
       description: "Today's & pending tasks (time-based)",
-      type: "time" as const,
+      type: "time",
       icon: Clock,
       color: "text-blue-500"
     },
@@ -25,7 +33,7 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       id: "this-month",
       label: "This Month",
       description: "This month's & pending tasks (time-based)",
-      type: "time" as const,
+      type: "time",
       icon: Calendar,
       color: "text-purple-500"
     },
@@ -33,7 +41,7 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       id: "urgent",
       label: "Urgent",
       description: "Urgent tasks only (can combine)",
-      type: "additive" as const,
+      type: "additive",
       icon: AlertTriangle,
       color: "text-red-500"
     },
@@ -41,7 +49,7 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       id: "revisions",
       label: "Revisions",
       description: "Tasks with revisions (can combine)",
-      type: "additive" as const,
+      type: "additive",
       icon: RefreshCw,
       color: "text-orange-500"
     },
@@ -49,7 +57,7 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       id: "pending",
       label: "Pending",
       description: "In Progress and Doing tasks (can combine)",
-      type: "additive" as const,
+      type: "additive",
       icon: ListChecks,
       color: "text-yellow-500"
     },
@@ -57,7 +65,7 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       id: "notified",
       label: "Notified",
       description: "Tasks with notifications (can combine)",
-      type: "additive" as const,
+      type: "additive",
       icon: Bell,
       color: "text-lime-500"
     }
@@ -70,24 +78,24 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       {
         id: "my-tasks",
         label: "My Tasks",
-        description: "Tasks where I'm owner or PM (can combine)",
-        type: "additive" as const,
+        description: "Tasks where I'm owner or PM (exclusive)",
+        type: "exclusive",
         icon: ListChecks,
         color: "text-cyan-500"
       },
       {
         id: "most-busy",
         label: "Most Busy",
-        description: "Team member with most pending tasks (can combine)",
-        type: "additive" as const,
+        description: "Team member with most pending tasks (exclusive)",
+        type: "exclusive",
         icon: AlertTriangle,
         color: "text-rose-500"
       },
       {
         id: "least-busy",
         label: "Least Busy",
-        description: "Team member with least pending tasks (can combine)",
-        type: "additive" as const,
+        description: "Team member with least pending tasks (exclusive)",
+        type: "exclusive",
         icon: Clock,
         color: "text-emerald-500"
       }
@@ -101,10 +109,14 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       // Remove the filter
       onFiltersChange(activeFilters.filter(f => f !== filterId));
     } else {
-      // Add the filter
+      // Add the filter based on type
       if (timeBasedFilters.includes(filterId)) {
-        // Remove other time-based filters, keep additive filters
+        // Remove other time-based filters, keep additive and exclusive filters
         const newFilters = activeFilters.filter(f => !timeBasedFilters.includes(f));
+        onFiltersChange([...newFilters, filterId]);
+      } else if (exclusiveFilters.includes(filterId)) {
+        // Remove other exclusive filters, keep time-based and additive filters
+        const newFilters = activeFilters.filter(f => !exclusiveFilters.includes(f));
         onFiltersChange([...newFilters, filterId]);
       } else {
         // Just add the additive filter
