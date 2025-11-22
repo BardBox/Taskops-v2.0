@@ -10,6 +10,9 @@ import { toast } from "sonner";
 import { MessageCircle, Send, Pencil, Trash2, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { EmojiPicker } from "./EmojiPicker";
+import { MentionInput } from "./MentionInput";
+import { MessageWithMentions } from "./MessageWithMentions";
+import { getUserIdsFromMentions } from "@/utils/mentionParser";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,13 +47,26 @@ const TeamChat = () => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null);
+  const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id || null);
+      if (user) {
+        setCurrentUserId(user.id);
+        // Fetch current user's name
+        supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .single()
+          .then(({ data }) => {
+            if (data) setCurrentUserName(data.full_name);
+          });
+      }
     });
   }, []);
 
@@ -139,15 +155,48 @@ const TeamChat = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("team_chat_messages").insert({
-        message,
-        user_id: user.id,
-      });
+      const { data: newMessage, error } = await supabase
+        .from("team_chat_messages")
+        .insert({
+          message,
+          user_id: user.id,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Get mentioned user IDs
+      const mentionedUserIds = await getUserIdsFromMentions(message, supabase);
+      
+      // Create notifications for mentioned users
+      if (mentionedUserIds.length > 0 && newMessage) {
+        const { data: currentUserProfile } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", user.id)
+          .single();
+
+        const notifications = mentionedUserIds
+          .filter((id) => id !== user.id) // Don't notify yourself
+          .map((userId) => ({
+            user_id: userId,
+            type: "mention",
+            title: "You were mentioned",
+            message: `${currentUserProfile?.full_name || "Someone"} mentioned you in team chat`,
+            actor_id: user.id,
+            actor_name: currentUserProfile?.full_name || null,
+            actor_avatar_url: currentUserProfile?.avatar_url || null,
+          }));
+
+        if (notifications.length > 0) {
+          await supabase.from("notifications").insert(notifications);
+        }
+      }
     },
     onSuccess: () => {
       setMessage("");
+      setMentionedUsers([]);
       queryClient.invalidateQueries({ queryKey: ["teamChat"] });
     },
     onError: () => {
@@ -252,6 +301,10 @@ const TeamChat = () => {
     setMessage((prev) => prev + emoji);
   };
 
+  const handleMention = (userId: string, userName: string) => {
+    setMentionedUsers((prev) => [...prev, userId]);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -317,7 +370,12 @@ const TeamChat = () => {
                                 : "bg-accent text-accent-foreground"
                             }`}
                           >
-                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-sm">
+                              <MessageWithMentions 
+                                text={msg.message} 
+                                currentUserName={currentUserName}
+                              />
+                            </p>
                           </div>
                           {isOwnMessage && (
                             <div className="absolute -right-20 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -373,11 +431,11 @@ const TeamChat = () => {
           </ScrollArea>
 
           <form onSubmit={handleSubmit} className="flex gap-2">
-            <Input
-              placeholder="Type your message..."
+            <MentionInput
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="flex-1"
+              onChange={setMessage}
+              onMention={handleMention}
+              placeholder="Type @ to mention someone..."
             />
             <EmojiPicker onSelect={handleEmojiSelect} />
             <Button type="submit" disabled={!message.trim()}>
