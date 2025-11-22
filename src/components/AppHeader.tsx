@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell } from "lucide-react";
+import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -160,6 +160,14 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               >
                 <User className="mr-2 h-4 w-4" />
                 My Profile
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => navigate("/team")}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                My Team
               </Button>
               <Button
                 variant="ghost"
