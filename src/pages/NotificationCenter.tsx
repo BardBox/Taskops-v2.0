@@ -236,7 +236,7 @@ export default function NotificationCenter() {
 
     return (
       <div
-        className={`flex items-start gap-3 p-4 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors ${
+        className={`flex items-start gap-4 p-5 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors ${
           !notification.is_read ? "bg-accent/20" : ""
         }`}
         onClick={() => handleNotificationClick(notification)}
@@ -245,20 +245,20 @@ export default function NotificationCenter() {
           checked={selectedNotifications.has(notification.id)}
           onCheckedChange={() => toggleNotificationSelection(notification.id)}
           onClick={(e) => e.stopPropagation()}
-          className="mt-1"
+          className="mt-1.5"
         />
-        <Avatar className="h-10 w-10">
+        <Avatar className="h-10 w-10 flex-shrink-0">
           <AvatarImage src={notification.actor_avatar_url || ""} />
           <AvatarFallback>
             {notification.actor_name?.split(" ").map(n => n[0]).join("") || "U"}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 space-y-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="space-y-1 flex-1">
-              <p className="font-semibold text-sm">{notification.title}</p>
-              <p className="text-sm text-muted-foreground">{renderMessage()}</p>
-              <div className="flex items-center gap-2 mt-2">
+        <div className="flex-1 space-y-2 min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-2 flex-1 min-w-0">
+              <p className="font-semibold text-sm leading-relaxed">{notification.title}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{renderMessage()}</p>
+              <div className="flex items-center gap-2 pt-1">
                 <p className="text-xs text-muted-foreground">
                   by {notification.actor_name || "System"}
                 </p>
@@ -270,7 +270,7 @@ export default function NotificationCenter() {
             </div>
           </div>
           {!notification.is_read && (
-            <Badge variant="secondary" className="text-xs">New</Badge>
+            <Badge variant="secondary" className="text-xs mt-1">New</Badge>
           )}
         </div>
       </div>
@@ -340,7 +340,7 @@ export default function NotificationCenter() {
                   ) : notifications.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">No notifications yet</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {notifications.map((notification) => (
                         <NotificationItem key={notification.id} notification={notification} />
                       ))}
@@ -361,7 +361,7 @@ export default function NotificationCenter() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {notifs.map((notification) => (
                       <NotificationItem key={notification.id} notification={notification} />
                     ))}
@@ -381,7 +381,7 @@ export default function NotificationCenter() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {notifs.map((notification) => (
                       <NotificationItem key={notification.id} notification={notification} />
                     ))}
@@ -401,7 +401,7 @@ export default function NotificationCenter() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {notifs.map((notification) => (
                       <NotificationItem key={notification.id} notification={notification} />
                     ))}
