@@ -106,6 +106,11 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
             <div className="flex flex-col items-center">
               <span className="font-semibold text-foreground">Submitted</span>
               <span className="text-muted-foreground">{format(submittedDate, "MMM d, yyyy")}</span>
+              {completedLate && (
+                <span className="text-xs font-semibold text-yellow-600 mt-0.5">
+                  Delayed ({Math.ceil((submittedDate.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24))} days)
+                </span>
+              )}
             </div>
           )}
           
@@ -117,13 +122,17 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
       </div>
 
       {/* Progress indicator */}
-      {!submittedDate && (
-        <div className="text-xs text-center text-muted-foreground">
-          {currentPosition < 0 ? "Not started yet" : 
-           currentPosition > 100 ? `${Math.floor(currentPosition - 100)}% overdue` :
-           `${Math.floor(currentPosition)}% of timeline elapsed`}
-        </div>
-      )}
+      <div className="text-xs text-center text-muted-foreground">
+        {submittedDate ? (
+          completedLate ? 
+            `Completed ${Math.floor(submittedPosition!)}% into timeline` : 
+            `Completed ${Math.floor(submittedPosition!)}% of timeline`
+        ) : (
+          currentPosition < 0 ? "Not started yet" : 
+          currentPosition > 100 ? `${Math.floor(currentPosition - 100)}% overdue` :
+          `${Math.floor(currentPosition)}% of timeline elapsed`
+        )}
+      </div>
     </div>
   );
 };
