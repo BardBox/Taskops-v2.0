@@ -81,17 +81,15 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
 
       {/* Center Section: Logo */}
       <motion.div 
-        className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2"
+        className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2 cursor-pointer"
+        onClick={() => navigate("/dashboard")}
         whileHover={{ scale: 1.05 }}
-        transition={{ duration: 0.2 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
       >
-        <motion.img 
+        <img 
           src="/bardbox-logo.png" 
           alt="BardBox" 
-          className="h-8 w-auto object-contain cursor-pointer"
-          onClick={() => navigate("/dashboard")}
-          whileHover={{ rotate: [0, -2, 2, -2, 0] }}
-          transition={{ duration: 0.5 }}
+          className="h-8 w-auto object-contain"
         />
         <h1 className="text-base font-semibold cursor-pointer" onClick={() => navigate("/dashboard")}>
           TaskOPS<sup className="text-xs">™</sup>
@@ -102,26 +100,28 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
       {/* Right Section: Notifications & Burger Menu */}
       <div className="flex items-center gap-3">
         <motion.div
-          whileHover={{ scale: 1.1, rotate: 15 }}
-          transition={{ duration: 0.2 }}
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          {userId && <NotificationCenter userId={userId} />}
+          <motion.div
+            whileHover={{ 
+              rotate: [0, -10, 10, -10, 10, 0],
+            }}
+            transition={{ duration: 0.5 }}
+          >
+            {userId && <NotificationCenter userId={userId} />}
+          </motion.div>
         </motion.div>
         
         <Sheet>
           <SheetTrigger asChild>
             <motion.div
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <Button variant="ghost" size="icon" className="relative">
-                <motion.div
-                  whileHover={{ rotate: 90 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Menu className="h-5 w-5" />
-                </motion.div>
+                <Menu className="h-5 w-5" />
               </Button>
             </motion.div>
           </SheetTrigger>
