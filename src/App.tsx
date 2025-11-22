@@ -29,6 +29,7 @@ import PMPerformance from "./pages/analytics/PMPerformance";
 import ClientPerformance from "./pages/analytics/ClientPerformance";
 import About from "./pages/About";
 import NotificationCenter from "./pages/NotificationCenter";
+import Team from "./pages/Team";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ function AnimatedRoutes() {
         <Route path="/preferences" element={<PageTransition><Preferences /></PageTransition>} />
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         <Route path="/notifications" element={<PageTransition><NotificationCenter /></PageTransition>} />
+        <Route path="/team" element={<PageTransition><Team /></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
