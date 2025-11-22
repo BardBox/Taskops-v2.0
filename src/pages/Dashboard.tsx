@@ -9,7 +9,6 @@ import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
 import { QuickFilters } from "@/components/QuickFilters";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { PostedTasksWidget } from "@/components/PostedTasksWidget";
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
@@ -92,8 +91,6 @@ const Dashboard = () => {
         <Breadcrumbs />
         
         <DashboardMetrics filters={filters} />
-
-        <PostedTasksWidget />
 
         <GlobalFilters filters={filters} onFiltersChange={setFilters} />
 
