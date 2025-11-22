@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users } from "lucide-react";
+import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell, Users, Info } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -215,6 +215,18 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               >
                 <Sliders className="mr-2 h-4 w-4" />
                 Preferences
+              </Button>
+              <Button
+                variant="ghost"
+                className={`justify-start ${
+                  location.pathname === "/about" 
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
+                    : ""
+                }`}
+                onClick={() => navigate("/about")}
+              >
+                <Info className="mr-2 h-4 w-4" />
+                About
               </Button>
               {hasAdminAccess && (
                 <>
