@@ -162,6 +162,18 @@ export default {
           member: "hsl(var(--role-member))",
           "member-foreground": "hsl(var(--role-member-foreground))",
         },
+        section: {
+          essentials: "hsl(var(--section-essentials))",
+          "essentials-bg": "hsl(var(--section-essentials-bg))",
+          assignment: "hsl(var(--section-assignment))",
+          "assignment-bg": "hsl(var(--section-assignment-bg))",
+          priority: "hsl(var(--section-priority))",
+          "priority-bg": "hsl(var(--section-priority-bg))",
+          references: "hsl(var(--section-references))",
+          "references-bg": "hsl(var(--section-references-bg))",
+          context: "hsl(var(--section-context))",
+          "context-bg": "hsl(var(--section-context-bg))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

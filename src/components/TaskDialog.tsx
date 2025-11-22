@@ -18,12 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { X, FileText, Users, AlertCircle, Link2, StickyNote, Calendar } from "lucide-react";
 
 interface TaskDialogProps {
   open: boolean;
@@ -57,7 +57,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
   
   const { statuses, urgencies, isLoading: isLoadingSettings} = useStatusUrgency();
   
@@ -92,16 +91,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           if (task.client_id) {
             await fetchProjects(task.client_id);
           }
-          
-          // Fetch existing collaborators
-          const { data: collabData } = await supabase
-            .from("task_collaborators")
-            .select("user_id")
-            .eq("task_id", task.id);
-          
-          if (collabData) {
-            setSelectedCollaborators(collabData.map(c => c.user_id));
-          }
 
           // Set form data AFTER projects are loaded
           setFormData({
@@ -129,7 +118,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           setReferenceImage(null);
           setExistingImageUrl("");
           setImagePreview("");
-          setSelectedCollaborators([]);
           
           // Fetch default project and set it in form
           const defaultProject = await fetchDefaultProject();
@@ -345,48 +333,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
         if (error) throw error;
 
-        // Update collaborators
-        // First, get existing collaborators to find new ones
-        const { data: existingCollabs } = await supabase
-          .from("task_collaborators")
-          .select("user_id")
-          .eq("task_id", task.id);
-
-        const existingCollabIds = existingCollabs?.map(c => c.user_id) || [];
-        const newCollaborators = selectedCollaborators.filter(
-          userId => !existingCollabIds.includes(userId)
-        );
-
-        // Remove existing collaborators
-        await supabase
-          .from("task_collaborators")
-          .delete()
-          .eq("task_id", task.id);
-
-        // Add new collaborators
-        if (selectedCollaborators.length > 0) {
-          const collaboratorInserts = selectedCollaborators.map(userId => ({
-            task_id: task.id,
-            user_id: userId,
-            added_by_id: currentUserId
-          }));
-
-          await supabase.from("task_collaborators").insert(collaboratorInserts);
-
-          // Send notifications only to new collaborators
-          if (newCollaborators.length > 0) {
-            const notifications = newCollaborators.map(userId => ({
-              user_id: userId,
-              task_id: task.id,
-              title: "Added as Collaborator",
-              message: `You've been added as a collaborator on "${formData.task_name}"`,
-              type: "info"
-            }));
-
-            await supabase.from("notifications").insert(notifications);
-          }
-        }
-
         toast.success("Task updated successfully!");
       } else {
         // Create new task
@@ -397,32 +343,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
           .single();
 
         if (error) throw error;
-
-        // Handle collaborators
-        if (selectedCollaborators.length > 0) {
-          const collaboratorInserts = selectedCollaborators.map(userId => ({
-            task_id: newTask.id,
-            user_id: userId,
-            added_by_id: currentUserId
-          }));
-
-          const { error: collabError } = await supabase
-            .from("task_collaborators")
-            .insert(collaboratorInserts);
-
-          if (!collabError) {
-            // Send notifications to collaborators
-            const notifications = selectedCollaborators.map(userId => ({
-              user_id: userId,
-              task_id: newTask.id,
-              title: "Added as Collaborator",
-              message: `You've been added as a collaborator on "${formData.task_name}"`,
-              type: "info"
-            }));
-
-            await supabase.from("notifications").insert(notifications);
-          }
-        }
 
         toast.success("Task created successfully!");
       }
@@ -436,7 +356,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
         setReferenceImage(null);
         setExistingImageUrl("");
         setImagePreview("");
-        setSelectedCollaborators([]);
         
         setFormData({
           task_name: "",
@@ -468,260 +387,273 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{task ? "Edit Task" : "Create New Task"}</DialogTitle>
+          <DialogTitle className="text-2xl">{task ? "Edit Task" : "Create New Task"}</DialogTitle>
           <DialogDescription>
             {task ? "Update task details below" : "Fill in the task information"}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="task_name">Task Name *</Label>
-              <Input
-                id="task_name"
-                value={formData.task_name}
-                onChange={(e) => setFormData({ ...formData, task_name: e.target.value })}
-                placeholder="Enter task name"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="client_id">Client</Label>
-              <Select
-                key={`client-${task?.id || 'new'}`}
-                value={formData.client_id}
-                onValueChange={(value) => {
-                  setFormData({ ...formData, client_id: value, project_id: "" });
-                  fetchProjects(value);
-                }}
-              >
-                <SelectTrigger id="client_id">
-                  <SelectValue placeholder="Select client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="project_id">Project</Label>
-              <Select
-                key={`project-${task?.id || 'new'}`}
-                value={formData.project_id}
-                onValueChange={(value) => setFormData({ ...formData, project_id: value })}
-                disabled={!formData.client_id}
-              >
-                <SelectTrigger id="project_id">
-                  <SelectValue placeholder="Select project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assignee_id">Task Owner *</Label>
-              <Select
-                key={task?.id || 'new'}
-                value={formData.assignee_id}
-                onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
-              >
-                <SelectTrigger id="assignee_id">
-                  <SelectValue placeholder="Select task owner" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      <span>{user.full_name}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Collaborators */}
-            <div className="space-y-2">
-              <Label htmlFor="collaborators">Collaborators (Max 2)</Label>
-              <Select
-                value=""
-                onValueChange={(value) => {
-                  if (selectedCollaborators.length < 2 && !selectedCollaborators.includes(value) && value !== formData.assignee_id) {
-                    setSelectedCollaborators([...selectedCollaborators, value]);
-                  } else if (selectedCollaborators.length >= 2) {
-                    toast.error("Maximum 2 collaborators allowed");
-                  } else if (value === formData.assignee_id) {
-                    toast.error("Task owner cannot be a collaborator");
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Add collaborators..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {users
-                    .filter(u => u.id !== formData.assignee_id && !selectedCollaborators.includes(u.id))
-                    .map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        <span>{user.full_name}</span>
-                      </SelectItem>
-                    ))
-                  }
-                </SelectContent>
-              </Select>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Task Essentials Section */}
+          <Card className="border-l-4 border-l-[hsl(var(--section-essentials))] bg-[hsl(var(--section-essentials-bg))] shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-essentials))]">
+                <FileText className="h-4 w-4" />
+                Task Essentials
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="task_name" className="text-sm font-medium">Task Name *</Label>
+                <Input
+                  id="task_name"
+                  value={formData.task_name}
+                  onChange={(e) => setFormData({ ...formData, task_name: e.target.value })}
+                  placeholder="Enter a clear, descriptive task name"
+                  className="text-base"
+                  required
+                />
+              </div>
               
-              {/* Selected Collaborators Display */}
-              {selectedCollaborators.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {selectedCollaborators.map(collabId => {
-                    const collab = users.find(u => u.id === collabId);
-                    return (
-                      <Badge key={collabId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-                        {collab?.full_name}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setSelectedCollaborators(prev => prev.filter(id => id !== collabId));
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="deadline">Deadline</Label>
-              <Input
-                id="deadline"
-                type="date"
-                value={formData.deadline}
-                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status *</Label>
-              <BadgeDropdown
-                options={statuses.filter((status) => {
-                  // Filter based on user role
-                  if (currentUserRole === 'team_member' && !['Not Started', 'In Progress', 'In Approval'].includes(status.label)) {
-                    return false;
-                  }
-                  return true;
-                })}
-                value={formData.status}
-                onChange={(value) => setFormData({ ...formData, status: value })}
-                disabled={isLoadingSettings}
-                placeholder="Select status"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="urgency">Urgency *</Label>
-              <BadgeDropdown
-                options={urgencies}
-                value={formData.urgency}
-                onChange={(value) => setFormData({ ...formData, urgency: value })}
-                disabled={isLoadingSettings}
-                placeholder="Select urgency"
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="reference_link_1">Reference Link 1</Label>
-              <Input
-                id="reference_link_1"
-                type="url"
-                value={formData.reference_link_1}
-                onChange={(e) => setFormData({ ...formData, reference_link_1: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="reference_link_2">Reference Link 2</Label>
-              <Input
-                id="reference_link_2"
-                type="url"
-                value={formData.reference_link_2}
-                onChange={(e) => setFormData({ ...formData, reference_link_2: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="reference_link_3">Reference Link 3</Label>
-              <Input
-                id="reference_link_3"
-                type="url"
-                value={formData.reference_link_3}
-                onChange={(e) => setFormData({ ...formData, reference_link_3: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="reference_image">Reference Image (Max 5MB)</Label>
-              <Input
-                id="reference_image"
-                type="file"
-                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                onChange={handleImageSelect}
-                className="cursor-pointer"
-              />
-              {imagePreview && (
-                <div className="relative mt-2 inline-block">
-                  <img 
-                    src={imagePreview} 
-                    alt="Reference preview" 
-                    className="max-w-xs max-h-40 rounded border"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-1 right-1"
-                    onClick={handleRemoveImage}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="client_id" className="text-sm font-medium">Client</Label>
+                  <Select
+                    key={`client-${task?.id || 'new'}`}
+                    value={formData.client_id}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, client_id: value, project_id: "" });
+                      fetchProjects(value);
+                    }}
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
+                    <SelectTrigger id="client_id">
+                      <SelectValue placeholder="Select client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-            </div>
 
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Add any additional notes..."
-                rows={3}
-              />
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="project_id" className="text-sm font-medium">Project</Label>
+                  <Select
+                    key={`project-${task?.id || 'new'}`}
+                    value={formData.project_id}
+                    onValueChange={(value) => setFormData({ ...formData, project_id: value })}
+                    disabled={!formData.client_id}
+                  >
+                    <SelectTrigger id="project_id">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="flex justify-end gap-2">
+          {/* Assignment & Timeline Section */}
+          <Card className="border-l-4 border-l-[hsl(var(--section-assignment))] bg-[hsl(var(--section-assignment-bg))] shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-assignment))]">
+                <Users className="h-4 w-4" />
+                Assignment & Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="assignee_id" className="text-sm font-medium">Task Owner *</Label>
+                  <Select
+                    key={task?.id || 'new'}
+                    value={formData.assignee_id}
+                    onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
+                  >
+                    <SelectTrigger id="assignee_id">
+                      <SelectValue placeholder="Select task owner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="deadline" className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5" />
+                    Deadline
+                  </Label>
+                  <Input
+                    id="deadline"
+                    type="date"
+                    value={formData.deadline}
+                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Priority & Status Section */}
+          <Card className="border-l-4 border-l-[hsl(var(--section-priority))] bg-[hsl(var(--section-priority-bg))] shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-priority))]">
+                <AlertCircle className="h-4 w-4" />
+                Priority & Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-sm font-medium">Status *</Label>
+                  <BadgeDropdown
+                    options={statuses.filter((status) => {
+                      if (currentUserRole === 'team_member' && !['Not Started', 'In Progress', 'In Approval'].includes(status.label)) {
+                        return false;
+                      }
+                      return true;
+                    })}
+                    value={formData.status}
+                    onChange={(value) => setFormData({ ...formData, status: value })}
+                    disabled={isLoadingSettings}
+                    placeholder="Select status"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="urgency" className="text-sm font-medium">Urgency *</Label>
+                  <BadgeDropdown
+                    options={urgencies}
+                    value={formData.urgency}
+                    onChange={(value) => setFormData({ ...formData, urgency: value })}
+                    disabled={isLoadingSettings}
+                    placeholder="Select urgency"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* References & Resources Section */}
+          <Card className="border-l-4 border-l-[hsl(var(--section-references))] bg-[hsl(var(--section-references-bg))] shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-references))]">
+                <Link2 className="h-4 w-4" />
+                References & Resources
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="reference_link_1" className="text-sm font-medium">Reference Link 1</Label>
+                  <Input
+                    id="reference_link_1"
+                    type="url"
+                    value={formData.reference_link_1}
+                    onChange={(e) => setFormData({ ...formData, reference_link_1: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reference_link_2" className="text-sm font-medium">Reference Link 2</Label>
+                  <Input
+                    id="reference_link_2"
+                    type="url"
+                    value={formData.reference_link_2}
+                    onChange={(e) => setFormData({ ...formData, reference_link_2: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reference_link_3" className="text-sm font-medium">Reference Link 3</Label>
+                  <Input
+                    id="reference_link_3"
+                    type="url"
+                    value={formData.reference_link_3}
+                    onChange={(e) => setFormData({ ...formData, reference_link_3: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reference_image" className="text-sm font-medium">Reference Image (Max 5MB)</Label>
+                  <Input
+                    id="reference_image"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={handleImageSelect}
+                    className="cursor-pointer"
+                  />
+                  {imagePreview && (
+                    <div className="relative mt-2 inline-block">
+                      <img 
+                        src={imagePreview} 
+                        alt="Reference preview" 
+                        className="max-w-xs max-h-40 rounded-lg border-2 shadow-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Additional Context Section */}
+          <Card className="border-l-4 border-l-[hsl(var(--section-context))] bg-[hsl(var(--section-context-bg))] shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-[hsl(var(--section-context))]">
+                <StickyNote className="h-4 w-4" />
+                Additional Context
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="notes" className="text-sm font-medium">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Add any additional context, requirements, or special instructions..."
+                  rows={4}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formData.notes.length} / 1000 characters
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -729,6 +661,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 onOpenChange(false);
                 if (onClose) onClose();
               }}
+              className="min-w-24"
             >
               Cancel
             </Button>
@@ -738,11 +671,12 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole }: Task
                 variant="secondary"
                 onClick={(e) => handleSubmit(e as any, true)}
                 disabled={loading}
+                className="min-w-40"
               >
                 {loading ? "Saving..." : "Create and Add More"}
               </Button>
             )}
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="min-w-32">
               {loading ? "Saving..." : task ? "Update Task" : "Create Task"}
             </Button>
           </div>

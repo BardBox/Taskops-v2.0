@@ -179,6 +179,18 @@ All colors MUST be HSL.
     --role-manager-foreground: 0 0% 100%;
     --role-member: 220 13% 91%;
     --role-member-foreground: 210 17% 14%;
+
+    /* Task Dialog Section Colors */
+    --section-essentials: 217 91% 60%;
+    --section-essentials-bg: 217 91% 97%;
+    --section-assignment: 262 83% 58%;
+    --section-assignment-bg: 262 83% 97%;
+    --section-priority: 43 96% 56%;
+    --section-priority-bg: 43 96% 97%;
+    --section-references: 178 78% 40%;
+    --section-references-bg: 178 78% 97%;
+    --section-context: 220 13% 46%;
+    --section-context-bg: 220 13% 96%;
   }
 
   .dark {
@@ -310,6 +322,18 @@ All colors MUST be HSL.
     --role-manager-foreground: 0 0% 100%;
     --role-member: 215 20% 25%;
     --role-member-foreground: 220 9% 65%;
+
+    /* Task Dialog Section Colors (Dark) */
+    --section-essentials: 217 91% 60%;
+    --section-essentials-bg: 217 50% 15%;
+    --section-assignment: 262 83% 58%;
+    --section-assignment-bg: 262 50% 15%;
+    --section-priority: 43 96% 56%;
+    --section-priority-bg: 43 50% 15%;
+    --section-references: 178 78% 40%;
+    --section-references-bg: 178 50% 15%;
+    --section-context: 220 13% 46%;
+    --section-context-bg: 220 13% 20%;
   }
 }
 
