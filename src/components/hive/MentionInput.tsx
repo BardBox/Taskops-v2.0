@@ -16,6 +16,8 @@ interface MentionInputProps {
   onMention?: (userId: string, userName: string) => void;
   placeholder?: string;
   className?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
 }
 
 export const MentionInput = ({ 
@@ -23,7 +25,9 @@ export const MentionInput = ({
   onChange, 
   onMention,
   placeholder = "Type your message...",
-  className 
+  className,
+  onKeyDown,
+  disabled
 }: MentionInputProps) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState("");
@@ -115,8 +119,10 @@ export const MentionInput = ({
         ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         className={className}
+        disabled={disabled}
       />
       {showSuggestions && filteredUsers.length > 0 && (
         <div className="absolute bottom-full left-0 mb-2 w-full max-w-xs bg-popover border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">

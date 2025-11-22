@@ -27,6 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditTaskTab } from "@/components/EditTaskTab";
 import { RequestRevisionDialog } from "@/components/RequestRevisionDialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { MentionInput } from "@/components/hive/MentionInput";
+import { MessageWithMentions } from "@/components/hive/MessageWithMentions";
 
 interface Task {
   id: string;
@@ -130,6 +132,7 @@ export function TaskDetailDialog({
   const [showHistory, setShowHistory] = useState(false);
   const [isCollaborator, setIsCollaborator] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -387,6 +390,15 @@ export function TaskDetailDialog({
         .eq("task_id", taskId);
       
       setCollaborators(collabData || []);
+      
+      // Fetch current user's name for mentions
+      const { data: currentUserData } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userId)
+        .single();
+      
+      setCurrentUserName(currentUserData?.full_name || null);
     } catch (error: any) {
       toast.error("Failed to fetch task details");
     }
@@ -1430,7 +1442,9 @@ export function TaskDetailDialog({
                       )}
                     </div>
                   </div>
-                  <p className={isOnlyEmojis(comment.message) ? "text-5xl leading-tight" : "text-sm"}>{comment.message}</p>
+                  <p className={isOnlyEmojis(comment.message) ? "text-5xl leading-tight" : "text-sm"}>
+                    <MessageWithMentions text={comment.message} currentUserName={currentUserName} />
+                  </p>
                   {comment.image_url && (
                     <img
                       src={comment.image_url}
@@ -1555,19 +1569,19 @@ export function TaskDetailDialog({
               </div>
             )}
             <div className="flex gap-2">
-              <Input
+              <MentionInput
                 value={newComment}
-                onChange={(e) => {
-                  setNewComment(e.target.value);
+                onChange={(value) => {
+                  setNewComment(value);
                   handleTyping();
                 }}
-                onKeyPress={(e) => {
+                onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSendComment();
                   }
                 }}
-                placeholder="Type a message..."
+                placeholder="Type a message... (use @ to mention)"
                 disabled={uploading}
               />
               <input
