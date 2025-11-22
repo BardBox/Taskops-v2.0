@@ -942,10 +942,10 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                               </div>
                             </div>
                             <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-                              <div className="px-3 py-2 min-w-[200px] border-l bg-muted/30">
+                              <div className="px-3 py-2 min-w-[200px]">
                                 <div className="flex flex-wrap gap-2">
                                   {task.collaborators.map((collab: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-1.5 bg-background rounded-md px-2 py-1 border">
+                                    <div key={idx} className="flex items-center gap-1.5">
                                       <Avatar className="h-5 w-5">
                                         <AvatarImage 
                                           src={collab.profiles?.avatar_url || undefined} 
