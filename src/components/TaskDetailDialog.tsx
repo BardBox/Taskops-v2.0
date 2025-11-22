@@ -742,12 +742,39 @@ export function TaskDetailDialog({
   const handleSaveAssetLink = async () => {
     if (!task) return;
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const oldAssetLink = task.asset_link;
+
       const { error } = await supabase
         .from("tasks")
         .update({ asset_link: assetLinkValue || null })
         .eq("id", task.id);
 
       if (error) throw error;
+
+      // Track asset link change in history if it changed
+      if (oldAssetLink !== assetLinkValue) {
+        const { error: historyError } = await supabase
+          .from("task_edit_history")
+          .insert({
+            task_id: task.id,
+            edited_by_id: user.id,
+            field_name: "asset_link",
+            old_value: oldAssetLink || "(empty)",
+            new_value: assetLinkValue || "(empty)",
+            change_description: oldAssetLink 
+              ? "Asset link updated" 
+              : "Asset link added",
+          });
+
+        if (historyError) {
+          console.error("Failed to log asset link history:", historyError);
+        }
+      }
+
       setTask({ ...task, asset_link: assetLinkValue || null });
       setEditingAssetLink(false);
       toast.success("Asset link updated");
@@ -760,12 +787,37 @@ export function TaskDetailDialog({
   const handleDeleteAssetLink = async () => {
     if (!task) return;
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const oldAssetLink = task.asset_link;
+
       const { error } = await supabase
         .from("tasks")
         .update({ asset_link: null })
         .eq("id", task.id);
 
       if (error) throw error;
+
+      // Track asset link deletion in history
+      if (oldAssetLink) {
+        const { error: historyError } = await supabase
+          .from("task_edit_history")
+          .insert({
+            task_id: task.id,
+            edited_by_id: user.id,
+            field_name: "asset_link",
+            old_value: oldAssetLink,
+            new_value: "(empty)",
+            change_description: "Asset link removed",
+          });
+
+        if (historyError) {
+          console.error("Failed to log asset link history:", historyError);
+        }
+      }
+
       setTask({ ...task, asset_link: null });
       setAssetLinkValue("");
       toast.success("Asset link removed");
