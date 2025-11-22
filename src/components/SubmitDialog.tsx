@@ -38,6 +38,22 @@ export const SubmitDialog = ({ open, onOpenChange, taskId, existingAssetLink, on
         return;
       }
 
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      // Fetch current task to get old asset_link
+      const { data: currentTask, error: fetchError } = await supabase
+        .from("tasks")
+        .select("asset_link")
+        .eq("id", taskId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const oldAssetLink = currentTask?.asset_link;
+
+      // Update the task
       const { error } = await supabase
         .from("tasks")
         .update({
@@ -47,6 +63,26 @@ export const SubmitDialog = ({ open, onOpenChange, taskId, existingAssetLink, on
         .eq("id", taskId);
 
       if (error) throw error;
+
+      // Track asset link change in history if it changed
+      if (oldAssetLink !== formData.asset_link) {
+        const { error: historyError } = await supabase
+          .from("task_edit_history")
+          .insert({
+            task_id: taskId,
+            edited_by_id: user.id,
+            field_name: "asset_link",
+            old_value: oldAssetLink || "(empty)",
+            new_value: formData.asset_link,
+            change_description: oldAssetLink 
+              ? "Asset link updated" 
+              : "Asset link added",
+          });
+
+        if (historyError) {
+          console.error("Failed to log asset link history:", historyError);
+        }
+      }
 
       toast.success("Task submitted successfully!");
       onOpenChange(false);
