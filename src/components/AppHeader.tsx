@@ -204,7 +204,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         {/* Status Selector */}
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" className="h-9 px-2 gap-2 relative">
+            <Button variant="ghost" className="h-9 px-2 gap-2">
               <Activity className={`h-4 w-4 ${
                 status === "Available" ? "text-green-500" :
                 status === "Busy" ? "text-red-500" :
@@ -214,7 +214,6 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                 "text-muted-foreground"
               }`} />
               <span className="text-xs text-muted-foreground/60 hidden md:block">{status || "Set Status"}</span>
-              <div className={`absolute top-1 left-1 h-2 w-2 rounded-full ${getStatusDotColor(status)}`} />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-2" align="end">
