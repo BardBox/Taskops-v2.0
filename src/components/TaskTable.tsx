@@ -812,7 +812,6 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className="w-20 text-center">Posted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -880,48 +879,82 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                           onOpenChange={() => {}}
                         >
                           <div className="flex items-center">
-                            <div className="w-10 flex items-center justify-center border-r">
-                              <div className="relative">
-                                <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-500 text-white text-[8px] flex items-center justify-center font-medium">
-                                  {task.collaborators.length}
-                                </span>
-                              </div>
-                            </div>
-                            <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-                              <div className="px-2 py-1.5 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex flex-wrap gap-2">
-                                  {task.collaborators.map((collab: any, idx: number) => {
-                                    const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
-                                    return (
-                                      <TooltipProvider key={idx}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 cursor-default">
-                                              <Avatar className="h-5 w-5">
-                                                <AvatarImage 
-                                                  src={collab.profiles?.avatar_url || undefined} 
-                                                  alt={collab.profiles?.full_name} 
-                                                />
-                                                <AvatarFallback className="text-[10px]">
-                                                  {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                                </AvatarFallback>
-                                              </Avatar>
-                                              <span className="text-xs font-medium">
-                                                {firstName}
-                                              </span>
-                                            </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>{collab.profiles?.full_name || "Unknown"}</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    );
-                                  })}
+                            {!collaboratorsExpanded ? (
+                              <div className="w-10 flex items-center justify-center border-r py-2">
+                                <div className="flex -space-x-2">
+                                  {task.collaborators.slice(0, 3).map((collab: any, idx: number) => (
+                                    <TooltipProvider key={idx}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Avatar className="h-6 w-6 border-2 border-background">
+                                            <AvatarImage 
+                                              src={collab.profiles?.avatar_url || undefined} 
+                                              alt={collab.profiles?.full_name} 
+                                            />
+                                            <AvatarFallback className="text-[10px]">
+                                              {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ))}
+                                  {task.collaborators.length > 3 && (
+                                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                                      <span className="text-[10px] font-medium">+{task.collaborators.length - 3}</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                            </CollapsibleContent>
+                            ) : (
+                              <>
+                                <div className="w-10 flex items-center justify-center border-r">
+                                  <div className="relative">
+                                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-500 text-white text-[8px] flex items-center justify-center font-medium">
+                                      {task.collaborators.length}
+                                    </span>
+                                  </div>
+                                </div>
+                                <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                                  <div className="px-2 py-1.5 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex flex-wrap gap-2">
+                                      {task.collaborators.map((collab: any, idx: number) => {
+                                        const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
+                                        return (
+                                          <TooltipProvider key={idx}>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <div className="flex items-center gap-1 cursor-default">
+                                                  <Avatar className="h-5 w-5">
+                                                    <AvatarImage 
+                                                      src={collab.profiles?.avatar_url || undefined} 
+                                                      alt={collab.profiles?.full_name} 
+                                                    />
+                                                    <AvatarFallback className="text-[10px]">
+                                                      {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                                    </AvatarFallback>
+                                                  </Avatar>
+                                                  <span className="text-xs font-medium">
+                                                    {firstName}
+                                                  </span>
+                                                </div>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </CollapsibleContent>
+                              </>
+                            )}
                           </div>
                         </Collapsible>
                       ) : (
@@ -972,29 +1005,6 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
                           options={urgencies}
                           onChange={(value) => handleUrgencyChange(task.id, value)}
                           disabled={!canEdit(task)}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                      {task.projects?.name === "SMO" && task.assignee_id === userId && (
-                        <Checkbox
-                          checked={task.is_posted || false}
-                          onCheckedChange={async (checked) => {
-                            try {
-                              const { error } = await supabase
-                                .from("tasks")
-                                .update({
-                                  is_posted: checked === true,
-                                  posted_at: checked === true ? new Date().toISOString() : null,
-                                  posted_by: checked === true ? userId : null,
-                                })
-                                .eq("id", task.id);
-                              
-                              if (error) throw error;
-                            } catch (error) {
-                              console.error("Error updating posted status:", error);
-                            }
-                          }}
                         />
                       )}
                     </TableCell>
