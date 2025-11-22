@@ -205,8 +205,15 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
           <PopoverTrigger asChild>
             <Button variant="ghost" className="h-9 px-2 gap-2 relative">
-              <Activity className="h-4 w-4" />
-              <span className="text-xs text-muted-foreground hidden md:block">{status || "Set Status"}</span>
+              <Activity className={`h-4 w-4 ${
+                status === "Available" ? "text-green-500" :
+                status === "Busy" ? "text-red-500" :
+                status === "Out of Office" ? "text-orange-500" :
+                status === "Do Not Disturb" ? "text-purple-500" :
+                status === "On Leave" ? "text-gray-500" :
+                "text-muted-foreground"
+              }`} />
+              <span className="text-xs text-muted-foreground/60 hidden md:block">{status || "Set Status"}</span>
               <div className={`absolute top-1 left-1 h-2 w-2 rounded-full ${getStatusDotColor(status)}`} />
             </Button>
           </PopoverTrigger>
@@ -233,7 +240,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
           <PopoverTrigger asChild>
             <Button variant="ghost" className="h-9 px-2 gap-2">
               {mood ? <span className="text-base">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4" />}
-              <span className="text-xs text-muted-foreground hidden md:block">
+              <span className="text-xs text-muted-foreground/60 hidden md:block">
                 {mood ? mood.split(" ")[1] || "Mood" : "Set Mood"}
               </span>
             </Button>
