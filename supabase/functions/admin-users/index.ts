@@ -14,6 +14,7 @@ const updateUserSchema = z.object({
   email: z.string().email().max(255).optional(),
   full_name: z.string().trim().min(2).max(100).optional(),
   role: z.enum(['team_member', 'project_manager', 'project_owner']).optional(),
+  creative_title: z.string().max(50).nullable().optional(),
   avatar_url: z.string().nullable().optional()
 })
 
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
         // Get all profiles
         const { data: profiles, error: profilesError } = await supabaseClient
           .from('profiles')
-          .select('id, full_name, user_code')
+          .select('id, full_name, user_code, creative_title')
 
         if (profilesError) throw profilesError
 
@@ -101,6 +102,7 @@ Deno.serve(async (req) => {
             email: authUser?.email || '',
             full_name: profile.full_name,
             user_code: profile.user_code || '',
+            creative_title: profile.creative_title || null,
             role: userRole?.role || 'team_member',
           }
         }) || []
@@ -141,7 +143,7 @@ Deno.serve(async (req) => {
       case 'update': {
         // Validate input data
         const validated = updateUserSchema.parse(payload)
-        const { userId, full_name, email, role, avatar_url } = validated
+        const { userId, full_name, email, role, creative_title, avatar_url } = validated
 
         // Get target user's current role
         const { data: targetUserRole } = await supabaseClient
@@ -175,9 +177,10 @@ Deno.serve(async (req) => {
           if (emailError) throw emailError
         }
 
-        // Update profile (full_name and/or avatar_url)
+        // Update profile (full_name, creative_title, and/or avatar_url)
         const profileUpdates: any = {}
         if (full_name !== undefined) profileUpdates.full_name = full_name
+        if (creative_title !== undefined) profileUpdates.creative_title = creative_title
         if (avatar_url !== undefined) profileUpdates.avatar_url = avatar_url
         
         if (Object.keys(profileUpdates).length > 0) {

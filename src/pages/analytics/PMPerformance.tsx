@@ -59,7 +59,7 @@ export default function PMPerformance() {
         .from("tasks")
         .select(`
           *,
-          assignee:profiles!tasks_assignee_id_fkey(id, full_name)
+          assignee:profiles!tasks_assignee_id_fkey(id, full_name, creative_title)
         `)
         .eq("assigned_by_id", pmId);
 

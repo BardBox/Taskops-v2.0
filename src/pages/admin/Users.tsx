@@ -39,6 +39,7 @@ interface User {
   full_name: string;
   user_code: string;
   role: string;
+  creative_title?: string | null;
   avatar_url?: string | null;
 }
 
@@ -62,6 +63,7 @@ export default function AdminUsers() {
     userId: "",
     name: "",
     role: "",
+    creativeTitle: "",
   });
   const [sortField, setSortField] = useState<"user_code" | "full_name" | "email" | "role" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -191,6 +193,7 @@ export default function AdminUsers() {
           full_name: editingUser.full_name,
           email: editingUser.email,
           role: editingUser.role,
+          creative_title: editingUser.creative_title,
           avatar_url: editingUser.avatar_url,
         }),
       });
@@ -408,6 +411,9 @@ export default function AdminUsers() {
       if (filters.role && user.role !== filters.role) {
         return false;
       }
+      if (filters.creativeTitle && !user.creative_title?.toLowerCase().includes(filters.creativeTitle.toLowerCase())) {
+        return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -422,10 +428,10 @@ export default function AdminUsers() {
     });
 
   const clearFilters = () => {
-    setFilters({ userId: "", name: "", role: "" });
+    setFilters({ userId: "", name: "", role: "", creativeTitle: "" });
   };
 
-  const hasActiveFilters = filters.userId || filters.name || filters.role;
+  const hasActiveFilters = filters.userId || filters.name || filters.role || filters.creativeTitle;
 
   if (loading) {
     return <div>Loading...</div>;
@@ -471,6 +477,11 @@ export default function AdminUsers() {
                   Role: {filters.role.replace("_", " ")}
                 </Badge>
               )}
+              {filters.creativeTitle && (
+                <Badge variant="secondary">
+                  Creative Title: {filters.creativeTitle}
+                </Badge>
+              )}
             </div>
           )}
         </CardHeader>
@@ -486,6 +497,12 @@ export default function AdminUsers() {
               placeholder="Filter by Name..."
               value={filters.name}
               onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+              className="max-w-xs"
+            />
+            <Input
+              placeholder="Filter by Creative Title..."
+              value={filters.creativeTitle}
+              onChange={(e) => setFilters({ ...filters, creativeTitle: e.target.value })}
               className="max-w-xs"
             />
             <Select
@@ -528,6 +545,7 @@ export default function AdminUsers() {
                     {getSortIcon("full_name")}
                   </Button>
                 </TableHead>
+                <TableHead>Creative Title</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>
                   <Button
@@ -548,6 +566,11 @@ export default function AdminUsers() {
                 <TableRow key={user.id}>
                   <TableCell className="font-mono text-sm">{user.user_code}</TableCell>
                   <TableCell className="font-medium">{user.full_name}</TableCell>
+                  <TableCell>
+                    <span className="text-sm text-primary">
+                      {user.creative_title || "-"}
+                    </span>
+                  </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Badge className={getRoleBadgeColor(user.role)}>
@@ -688,6 +711,37 @@ export default function AdminUsers() {
                   value={editingUser.full_name}
                   onChange={(e) => setEditingUser({ ...editingUser, full_name: e.target.value })}
                 />
+              </div>
+
+              <div>
+                <Label>Creative Title</Label>
+                <Input
+                  value={editingUser.creative_title || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, creative_title: e.target.value })}
+                  placeholder="e.g., Senior Designer, Creative Director"
+                  maxLength={50}
+                  list="admin-creative-title-suggestions"
+                />
+                <datalist id="admin-creative-title-suggestions">
+                  <option value="Visual Designer" />
+                  <option value="Motion Designer" />
+                  <option value="UX/UI Designer" />
+                  <option value="Graphic Designer" />
+                  <option value="Brand Designer" />
+                  <option value="Creative Director" />
+                  <option value="Art Director" />
+                  <option value="Senior Designer" />
+                  <option value="Junior Designer" />
+                  <option value="Design Lead" />
+                  <option value="Copywriter" />
+                  <option value="Content Creator" />
+                  <option value="Illustrator" />
+                  <option value="Animator" />
+                  <option value="Video Editor" />
+                </datalist>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Organizational position or creative specialty
+                </p>
               </div>
 
               <div>

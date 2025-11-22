@@ -29,8 +29,8 @@ interface Task {
   reference_link_3: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
-  assignee: { full_name: string; avatar_url: string | null } | null;
-  assigned_by: { full_name: string; avatar_url: string | null } | null;
+  assignee: { full_name: string; avatar_url: string | null; creative_title?: string | null } | null;
+  assigned_by: { full_name: string; avatar_url: string | null; creative_title?: string | null } | null;
   task_comments?: Array<{ message: string; created_at: string }>;
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
@@ -281,10 +281,15 @@ export const TaskCard = ({
               {task.assignee ? getInitials(task.assignee.full_name) : "?"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-col">
             <span className="text-sm text-muted-foreground truncate">
               {task.assignee?.full_name || "Unassigned"}
             </span>
+            {task.assignee?.creative_title && (
+              <span className="text-xs text-primary/80 truncate">
+                {task.assignee.creative_title}
+              </span>
+            )}
           </div>
         </div>
 

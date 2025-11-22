@@ -37,11 +37,20 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
 
           {/* Info */}
           <div className="flex-1 space-y-3">
-            <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <div className="space-y-2">
               <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 {profile?.full_name}
               </h1>
-              <RoleBadge role={role} />
+              
+              {/* Creative Title and Role Badge Row */}
+              <div className="flex flex-wrap items-center gap-3">
+                {profile?.creative_title && (
+                  <span className="text-lg font-medium text-primary">
+                    {profile.creative_title}
+                  </span>
+                )}
+                <RoleBadge role={role} />
+              </div>
             </div>
 
             {profile?.tagline && (

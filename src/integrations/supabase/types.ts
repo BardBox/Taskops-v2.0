@@ -324,6 +324,7 @@ export type Database = {
           avatar_url: string | null
           best_contact_time: string | null
           created_at: string
+          creative_title: string | null
           full_name: string
           hobbies: string[] | null
           id: string
@@ -339,6 +340,7 @@ export type Database = {
           avatar_url?: string | null
           best_contact_time?: string | null
           created_at?: string
+          creative_title?: string | null
           full_name: string
           hobbies?: string[] | null
           id: string
@@ -354,6 +356,7 @@ export type Database = {
           avatar_url?: string | null
           best_contact_time?: string | null
           created_at?: string
+          creative_title?: string | null
           full_name?: string
           hobbies?: string[] | null
           id?: string

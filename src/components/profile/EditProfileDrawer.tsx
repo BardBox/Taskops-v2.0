@@ -27,6 +27,7 @@ export function EditProfileDrawer({
 }: EditProfileDrawerProps) {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [creativeTitle, setCreativeTitle] = useState("");
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [tagline, setTagline] = useState("");
@@ -40,6 +41,7 @@ export function EditProfileDrawer({
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
+      setCreativeTitle(profile.creative_title || "");
       setAvatarUrl(profile.avatar_url || "");
       setTagline(profile.tagline || "");
       setSuperpower(profile.superpower || "");
@@ -62,6 +64,7 @@ export function EditProfileDrawer({
       .from("profiles")
       .update({
         full_name: fullName,
+        creative_title: creativeTitle || null,
         avatar_url: avatarUrl,
         tagline: tagline || null,
         superpower: superpower || null,
@@ -167,6 +170,38 @@ export function EditProfileDrawer({
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="creativeTitle">Creative Title</Label>
+                <Input
+                  id="creativeTitle"
+                  value={creativeTitle}
+                  onChange={(e) => setCreativeTitle(e.target.value)}
+                  placeholder="e.g., Senior Designer, Creative Director"
+                  maxLength={50}
+                  list="creative-title-suggestions"
+                />
+                <datalist id="creative-title-suggestions">
+                  <option value="Visual Designer" />
+                  <option value="Motion Designer" />
+                  <option value="UX/UI Designer" />
+                  <option value="Graphic Designer" />
+                  <option value="Brand Designer" />
+                  <option value="Creative Director" />
+                  <option value="Art Director" />
+                  <option value="Senior Designer" />
+                  <option value="Junior Designer" />
+                  <option value="Design Lead" />
+                  <option value="Copywriter" />
+                  <option value="Content Creator" />
+                  <option value="Illustrator" />
+                  <option value="Animator" />
+                  <option value="Video Editor" />
+                </datalist>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your organizational position or creative specialty (optional)
+                </p>
               </div>
 
               <div>
