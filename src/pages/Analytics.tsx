@@ -395,12 +395,60 @@ const Analytics = () => {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight">Performance Analytics</h2>
-                <p className="text-muted-foreground">Track team performance, client metrics, and quality indicators</p>
+                <p className="text-muted-foreground">Comprehensive insights into team performance and organizational metrics</p>
               </div>
               <Button onClick={handleExportOverview} variant="outline">
                 <Download className="h-4 w-4 mr-2" />
                 Export Overview
               </Button>
+            </div>
+
+            {/* Quick Navigation Cards */}
+            <div className="grid gap-4 md:grid-cols-3 mb-8">
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                onClick={() => navigate('/analytics/overview')}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Command Center
+                  </CardTitle>
+                  <CardDescription>
+                    Organization-wide dashboard with real-time metrics and health scores
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                onClick={() => navigate('/analytics/personal')}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    My Performance
+                  </CardTitle>
+                  <CardDescription>
+                    Your personal analytics dashboard with detailed insights
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                onClick={() => navigate('/analytics/leaderboard')}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-primary" />
+                    Leaderboards
+                  </CardTitle>
+                  <CardDescription>
+                    Team rankings across performance, speed, quality, and more
+                  </CardDescription>
+                </CardHeader>
+              </Card>
             </div>
 
             <div id="analytics-overview">
