@@ -842,11 +842,6 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                             Rev {task.revision_count}
                           </Badge>
                         )}
-                        {task.status === "Approved" && (
-                          <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-yellow-400/20 text-yellow-600 border-yellow-400/30">
-                            ⭐ Approved
-                          </Badge>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>{task.clients?.name || "-"}</TableCell>
