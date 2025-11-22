@@ -56,9 +56,11 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
       <motion.div 
         className="flex items-center gap-3 cursor-pointer"
         onClick={() => navigate("/profile")}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.2 }}
       >
         <motion.div
           whileHover={{ rotate: [0, -5, 5, -5, 0] }}
@@ -84,8 +86,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         <motion.div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate("/dashboard")}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
           whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
           <img
             src="/bardbox-logo.png"
@@ -102,7 +106,12 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
       </div>
 
       {/* Right Section: Notifications & Burger Menu */}
-      <div className="flex items-center gap-3">
+      <motion.div 
+        className="flex items-center gap-3"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+      >
         <motion.div
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -199,7 +208,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             </div>
           </SheetContent>
         </Sheet>
-      </div>
+      </motion.div>
     </header>
   );
 }
