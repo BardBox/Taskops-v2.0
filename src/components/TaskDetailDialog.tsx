@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, ChevronUp, ChevronDown, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText, Maximize2, Minimize2 } from "lucide-react";
 import { TaskTimeline } from "@/components/TaskTimeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -110,7 +110,7 @@ export function TaskDetailDialog({
   const [notesValue, setNotesValue] = useState("");
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [userProfiles, setUserProfiles] = useState<Map<string, string>>(new Map());
-  const [isTaskDetailsCollapsed, setIsTaskDetailsCollapsed] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [showMessageEmojiPicker, setShowMessageEmojiPicker] = useState(false);
@@ -816,7 +816,10 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden gap-0">
+      <DialogContent className={cn(
+        "p-0 flex flex-col overflow-hidden gap-0 transition-all duration-300",
+        isFullscreen ? "max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh]" : "max-w-4xl max-h-[90vh]"
+      )}>
         <div className="p-6 pb-4 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full`} />
@@ -839,10 +842,11 @@ export function TaskDetailDialog({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsTaskDetailsCollapsed(!isTaskDetailsCollapsed)}
+                  onClick={() => setIsFullscreen(!isFullscreen)}
                   className="ml-auto"
+                  title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
                 >
-                  {isTaskDetailsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </Button>
               </div>
               <p className="text-lg text-muted-foreground mt-1">{task.task_name}</p>
