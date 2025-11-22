@@ -1011,6 +1011,52 @@ export type Database = {
           },
         ]
       }
+      team_mappings: {
+        Row: {
+          assigned_at: string
+          assigned_by_id: string
+          id: string
+          pm_id: string
+          team_member_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by_id: string
+          id?: string
+          pm_id: string
+          team_member_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by_id?: string
+          id?: string
+          pm_id?: string
+          team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_mappings_assigned_by_id_fkey"
+            columns: ["assigned_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_mappings_pm_id_fkey"
+            columns: ["pm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_mappings_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           created_at: string | null
