@@ -10,6 +10,7 @@ import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
 import { QuickFilters } from "@/components/QuickFilters";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PostedTasksWidget } from "@/components/PostedTasksWidget";
+import { StatusMoodSelector } from "@/components/StatusMoodSelector";
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
@@ -19,6 +20,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
@@ -52,6 +54,7 @@ const Dashboard = () => {
     }
     setUser(session.user);
     await fetchUserRole(session.user.id);
+    await fetchUserProfile(session.user.id);
   };
 
   const fetchUserRole = async (userId: string) => {
@@ -68,13 +71,42 @@ const Dashboard = () => {
     }
   };
 
+  const fetchUserProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("status, mood")
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching profile:", error);
+    } else {
+      setUserProfile(data);
+    }
+  };
+
   const canCreateTasks = userRole === "project_owner" || userRole === "project_manager";
 
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8 space-y-6">
         <Breadcrumbs />
-        <DashboardMetrics filters={filters} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <DashboardMetrics filters={filters} />
+          </div>
+          <div className="lg:col-span-1">
+            {user && (
+              <StatusMoodSelector
+                userId={user.id}
+                currentStatus={userProfile?.status}
+                currentMood={userProfile?.mood}
+                onUpdate={() => fetchUserProfile(user.id)}
+              />
+            )}
+          </div>
+        </div>
 
         <PostedTasksWidget />
 

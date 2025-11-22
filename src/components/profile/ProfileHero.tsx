@@ -47,7 +47,7 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
                 {profile?.full_name}
               </h1>
               
-              {/* Creative Title, Role Badge, and Status Row */}
+              {/* Creative Title, Role Badge, Status & Mood Row */}
               <div className="flex flex-wrap items-center gap-3">
                 {profile?.creative_title && (
                   <span className="text-lg font-medium text-primary">
@@ -68,6 +68,11 @@ export function ProfileHero({ profile, role, onEditClick }: ProfileHeroProps) {
                     }`}
                   >
                     {profile.status}
+                  </Badge>
+                )}
+                {profile?.mood && (
+                  <Badge variant="outline" className="text-base">
+                    {profile.mood}
                   </Badge>
                 )}
               </div>

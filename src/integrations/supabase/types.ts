@@ -457,6 +457,7 @@ export type Database = {
           id: string
           kryptonite: string | null
           mission: string | null
+          mood: string | null
           skill_set: string[] | null
           status: string | null
           superpower: string | null
@@ -478,6 +479,7 @@ export type Database = {
           id: string
           kryptonite?: string | null
           mission?: string | null
+          mood?: string | null
           skill_set?: string[] | null
           status?: string | null
           superpower?: string | null
@@ -499,6 +501,7 @@ export type Database = {
           id?: string
           kryptonite?: string | null
           mission?: string | null
+          mood?: string | null
           skill_set?: string[] | null
           status?: string | null
           superpower?: string | null
