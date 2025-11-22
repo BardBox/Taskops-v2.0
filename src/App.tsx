@@ -28,6 +28,9 @@ import AvatarGenerator from "./pages/admin/AvatarGenerator";
 import TeamMapping from "./pages/admin/TeamMapping";
 import PMPerformance from "./pages/analytics/PMPerformance";
 import ClientPerformance from "./pages/analytics/ClientPerformance";
+import Overview from "./pages/analytics/Overview";
+import PersonalAnalytics from "./pages/analytics/PersonalAnalytics";
+import Leaderboard from "./pages/analytics/Leaderboard";
 import About from "./pages/About";
 import NotificationCenter from "./pages/NotificationCenter";
 import Team from "./pages/Team";
@@ -49,6 +52,9 @@ function AnimatedRoutes() {
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/analytics" element={<PageTransition><Analytics /></PageTransition>} />
+        <Route path="/analytics/overview" element={<PageTransition><Overview /></PageTransition>} />
+        <Route path="/analytics/personal" element={<PageTransition><PersonalAnalytics /></PageTransition>} />
+        <Route path="/analytics/leaderboard" element={<PageTransition><Leaderboard /></PageTransition>} />
         <Route path="/analytics/pm" element={<PageTransition><PMPerformance /></PageTransition>} />
         <Route path="/analytics/client" element={<PageTransition><ClientPerformance /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />

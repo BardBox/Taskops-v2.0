@@ -250,6 +250,63 @@ export type Database = {
         }
         Relationships: []
       }
+      gamification_stats: {
+        Row: {
+          collaboration_count: number
+          completed_before_deadline: number
+          completed_today: number
+          created_at: string | null
+          current_level: number
+          current_streak: number
+          id: string
+          last_completion_date: string | null
+          longest_streak: number
+          quality_stars_received: number
+          speed_completion_count: number
+          total_completed: number
+          total_points: number
+          updated_at: string | null
+          urgent_completed: number
+          user_id: string
+        }
+        Insert: {
+          collaboration_count?: number
+          completed_before_deadline?: number
+          completed_today?: number
+          created_at?: string | null
+          current_level?: number
+          current_streak?: number
+          id?: string
+          last_completion_date?: string | null
+          longest_streak?: number
+          quality_stars_received?: number
+          speed_completion_count?: number
+          total_completed?: number
+          total_points?: number
+          updated_at?: string | null
+          urgent_completed?: number
+          user_id: string
+        }
+        Update: {
+          collaboration_count?: number
+          completed_before_deadline?: number
+          completed_today?: number
+          created_at?: string | null
+          current_level?: number
+          current_streak?: number
+          id?: string
+          last_completion_date?: string | null
+          longest_streak?: number
+          quality_stars_received?: number
+          speed_completion_count?: number
+          total_completed?: number
+          total_points?: number
+          updated_at?: string | null
+          urgent_completed?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       hall_of_fame: {
         Row: {
           achievement_title: string
@@ -443,6 +500,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      performance_metrics: {
+        Row: {
+          avg_completion_time_hours: number | null
+          collaboration_score: number | null
+          created_at: string | null
+          id: string
+          metric_date: string
+          quality_score: number | null
+          speed_score: number | null
+          tasks_completed: number | null
+          tasks_delayed: number | null
+          tasks_on_time: number | null
+          urgency_score: number | null
+          user_id: string
+        }
+        Insert: {
+          avg_completion_time_hours?: number | null
+          collaboration_score?: number | null
+          created_at?: string | null
+          id?: string
+          metric_date: string
+          quality_score?: number | null
+          speed_score?: number | null
+          tasks_completed?: number | null
+          tasks_delayed?: number | null
+          tasks_on_time?: number | null
+          urgency_score?: number | null
+          user_id: string
+        }
+        Update: {
+          avg_completion_time_hours?: number | null
+          collaboration_score?: number | null
+          created_at?: string | null
+          id?: string
+          metric_date?: string
+          quality_score?: number | null
+          speed_score?: number | null
+          tasks_completed?: number | null
+          tasks_delayed?: number | null
+          tasks_on_time?: number | null
+          urgency_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1056,6 +1158,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          points_earned: number
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          points_earned?: number
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          points_earned?: number
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_preferences: {
         Row: {
