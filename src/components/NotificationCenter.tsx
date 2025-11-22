@@ -198,13 +198,13 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
       <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
-          <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-primary">
+          <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary">
             <Bell className="h-6 w-6 text-secondary" strokeWidth={3} />
           </div>
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs pointer-events-none"
             >
               {unreadCount > 9 ? "9+" : unreadCount}
             </Badge>

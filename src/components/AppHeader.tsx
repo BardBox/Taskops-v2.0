@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, Settings, Sliders, Home, Shield, User, Menu, BarChart3, Bell } from "lucide-react";
 import {
@@ -25,6 +25,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true }: AppHeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -147,6 +148,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                 variant="ghost"
                 className="justify-start"
                 onClick={() => navigate("/dashboard")}
+                disabled={location.pathname === "/dashboard"}
               >
                 <Home className="mr-2 h-4 w-4" />
                 Dashboard

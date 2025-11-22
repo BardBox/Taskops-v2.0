@@ -15,7 +15,7 @@ import { BadgeDropdown } from "./BadgeDropdown";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, LayoutGrid, List, ArrowUpDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users } from "lucide-react";
+import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
@@ -70,21 +70,12 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">("table");
   const [notifiedTaskIds, setNotifiedTaskIds] = useState<Set<string>>(new Set());
-  const [expandedCollaborators, setExpandedCollaborators] = useState<Set<string>>(new Set());
+  const [collaboratorsExpanded, setCollaboratorsExpanded] = useState(false);
   
   const { statuses, urgencies } = useStatusUrgency();
 
-  const toggleCollaboratorExpansion = (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpandedCollaborators(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(taskId)) {
-        newSet.delete(taskId);
-      } else {
-        newSet.add(taskId);
-      }
-      return newSet;
-    });
+  const toggleCollaboratorsColumn = () => {
+    setCollaboratorsExpanded(prev => !prev);
   };
 
   useEffect(() => {
@@ -703,69 +694,118 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                 )}
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
                   <div className="flex items-center gap-2">
-                    Date {sortField === "date" && <ArrowUpDown className="h-4 w-4" />}
+                    Date
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "date" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "date" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
                   <div className="flex items-center gap-2">
-                    Task {sortField === "task" && <ArrowUpDown className="h-4 w-4" />}
+                    Task
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "task" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "task" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
                   <div className="flex items-center gap-2">
-                    Client {sortField === "client" && <ArrowUpDown className="h-4 w-4" />}
+                    Client
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "client" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "client" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
                   <div className="flex items-center gap-2">
-                    Project {sortField === "project" && <ArrowUpDown className="h-4 w-4" />}
+                    Project
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "project" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "project" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
                   <div className="flex items-center gap-2">
-                    Task Owner {sortField === "assignee" && <ArrowUpDown className="h-4 w-4" />}
+                    Task Owner
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assignee" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "assignee" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
                   <div className="flex items-center gap-2">
-                    PM {sortField === "assigned_by" && <ArrowUpDown className="h-4 w-4" />}
+                    PM
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assigned_by" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "assigned_by" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="w-10 text-center">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="flex items-center justify-center">
-                          <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleCollaboratorsColumn}
+                          className="h-8 w-8 p-0 hover:bg-muted"
+                        >
+                          <Users className={`h-3.5 w-3.5 transition-colors ${collaboratorsExpanded ? "text-primary" : "text-muted-foreground"}`} />
+                        </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Collaborators</TooltipContent>
+                      <TooltipContent>{collaboratorsExpanded ? "Hide" : "Show"} Collaborators</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
                   <div className="flex items-center gap-2">
-                    Deadline {sortField === "deadline" && <ArrowUpDown className="h-4 w-4" />}
+                    Deadline
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "deadline" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "deadline" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("submission")}>
                   <div className="flex items-center gap-2">
-                    Submission {sortField === "submission" && <ArrowUpDown className="h-4 w-4" />}
+                    Submission
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "submission" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "submission" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
                   <div className="flex items-center gap-2">
-                    Delay {sortField === "delay" && <ArrowUpDown className="h-4 w-4" />}
+                    Delay
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "delay" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "delay" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
                   <div className="flex items-center gap-2">
-                    Status {sortField === "status" && <ArrowUpDown className="h-4 w-4" />}
+                    Status
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "status" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "status" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
                   <div className="flex items-center gap-2">
-                    Urgency {sortField === "urgency" && <ArrowUpDown className="h-4 w-4" />}
+                    Urgency
+                    <div className="flex flex-col">
+                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "urgency" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                      <ArrowDown className={`h-3 w-3 ${sortField === "urgency" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
                   </div>
                 </TableHead>
               </TableRow>
@@ -889,26 +929,17 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
                     <TableCell className="p-0 relative" onClick={(e) => e.stopPropagation()}>
                       {task.collaborators && task.collaborators.length > 0 ? (
                         <Collapsible
-                          open={expandedCollaborators.has(task.id)}
+                          open={collaboratorsExpanded}
                           onOpenChange={() => {}}
                         >
                           <div className="flex items-center">
                             <div className="w-10 flex items-center justify-center border-r">
-                              <CollapsibleTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => toggleCollaboratorExpansion(task.id, e)}
-                                  className="h-8 w-8 p-0 hover:bg-muted"
-                                >
-                                  <div className="relative">
-                                    <Users className="h-3.5 w-3.5" />
-                                    <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-500 text-white text-[8px] flex items-center justify-center font-medium">
-                                      {task.collaborators.length}
-                                    </span>
-                                  </div>
-                                </Button>
-                              </CollapsibleTrigger>
+                              <div className="relative">
+                                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-500 text-white text-[8px] flex items-center justify-center font-medium">
+                                  {task.collaborators.length}
+                                </span>
+                              </div>
                             </div>
                             <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
                               <div className="px-3 py-2 min-w-[200px] border-l bg-muted/30">
