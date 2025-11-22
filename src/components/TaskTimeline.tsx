@@ -13,36 +13,39 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
   const currentDate = new Date();
   const submittedDate = dateSubmitted ? new Date(dateSubmitted) : null;
 
-  // Calculate position percentages
+  // Calculate position percentages (no caps - can exceed 100%)
   const totalDuration = endDate.getTime() - startDate.getTime();
   const elapsed = currentDate.getTime() - startDate.getTime();
-  const currentPosition = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+  const currentPosition = (elapsed / totalDuration) * 100;
   
-  // Calculate submitted position if exists
+  // Calculate submitted position if exists (no caps - can exceed 100%)
   const submittedPosition = submittedDate 
-    ? Math.max(0, Math.min(100, ((submittedDate.getTime() - startDate.getTime()) / totalDuration) * 100))
+    ? ((submittedDate.getTime() - startDate.getTime()) / totalDuration) * 100
     : null;
 
-  // Determine color based on progress
+  // Determine color based on timeline utilisation percentage
   const getTimelineColor = () => {
-    if (submittedDate) {
-      return submittedPosition! <= 100 ? "hsl(142, 76%, 36%)" : "hsl(48, 96%, 53%)"; // Green if on time, yellow if late
-    }
+    const percentage = submittedDate ? submittedPosition! : currentPosition;
     
-    if (currentPosition < 50) return "hsl(142, 76%, 36%)"; // Green
-    if (currentPosition < 75) return "hsl(48, 96%, 53%)"; // Yellow
-    if (currentPosition < 100) return "hsl(25, 95%, 53%)"; // Orange
-    return "hsl(0, 84%, 60%)"; // Red (overdue)
+    if (percentage < 70) return "hsl(142, 76%, 36%)"; // Green (0-70%)
+    if (percentage <= 100) return "hsl(48, 96%, 53%)"; // Yellow (70-100%)
+    if (percentage <= 130) {
+      // Transition from yellow to red (100-130%)
+      const transitionProgress = (percentage - 100) / 30;
+      return `hsl(${48 - (48 * transitionProgress)}, ${96 - (12 * transitionProgress)}%, ${53 + (7 * transitionProgress)}%)`;
+    }
+    return "hsl(0, 84%, 60%)"; // Red (130%+)
   };
 
   const getGradient = () => {
     const color = getTimelineColor();
-    return `linear-gradient(to right, ${color} 0%, ${color} ${currentPosition}%, hsl(var(--muted)) ${currentPosition}%, hsl(var(--muted)) 100%)`;
+    const visualPosition = Math.min(100, submittedDate ? submittedPosition! : currentPosition);
+    return `linear-gradient(to right, ${color} 0%, ${color} ${visualPosition}%, hsl(var(--muted)) ${visualPosition}%, hsl(var(--muted)) 100%)`;
   };
 
-  const isOverdue = currentDate > endDate && !submittedDate;
-  const completedOnTime = submittedDate && submittedDate <= endDate;
-  const completedLate = submittedDate && submittedDate > endDate;
+  const isOverdue = currentPosition > 100 && !submittedDate;
+  const completedOnTime = submittedDate && submittedPosition! <= 100;
+  const completedLate = submittedDate && submittedPosition! > 100;
 
   return (
     <div className="space-y-3 p-4 rounded-lg border bg-card">
@@ -77,10 +80,10 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
           style={{ background: getGradient() }}
         >
           {/* Current date marker (if task not submitted) */}
-          {!submittedDate && currentPosition >= 0 && currentPosition <= 100 && (
+          {!submittedDate && (
             <div 
               className="absolute top-0 h-3 w-1 bg-foreground shadow-lg"
-              style={{ left: `${currentPosition}%`, transform: 'translateX(-50%)' }}
+              style={{ left: `${Math.min(100, Math.max(0, currentPosition))}%`, transform: 'translateX(-50%)' }}
             />
           )}
           
@@ -88,7 +91,7 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
           {submittedDate && submittedPosition !== null && (
             <div 
               className="absolute top-0 h-3 flex items-center"
-              style={{ left: `${submittedPosition}%`, transform: 'translateX(-50%)' }}
+              style={{ left: `${Math.min(100, Math.max(0, submittedPosition))}%`, transform: 'translateX(-50%)' }}
             >
               <Flag className="h-4 w-4 text-foreground drop-shadow-md" fill="currentColor" />
             </div>
@@ -106,9 +109,9 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
             <div className="flex flex-col items-center">
               <span className="font-semibold text-foreground">Submitted</span>
               <span className="text-muted-foreground">{format(submittedDate, "MMM d, yyyy")}</span>
-              {completedLate && (
-                <span className="text-xs font-semibold text-yellow-600 mt-0.5">
-                  Delayed ({Math.ceil((submittedDate.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24))} days)
+              {completedLate && submittedDate && (
+                <span className="text-xs font-semibold text-red-600 mt-0.5">
+                  {Math.ceil((submittedDate.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24))} days late
                 </span>
               )}
             </div>
@@ -124,13 +127,10 @@ export const TaskTimeline = ({ dateAssigned, deadline, dateSubmitted }: TaskTime
       {/* Progress indicator */}
       <div className="text-xs text-center text-muted-foreground">
         {submittedDate ? (
-          completedLate ? 
-            `Completed ${Math.floor(submittedPosition!)}% into timeline` : 
-            `Completed ${Math.floor(submittedPosition!)}% of timeline`
+          `${Math.floor(submittedPosition!)}% of timeline utilised`
         ) : (
           currentPosition < 0 ? "Not started yet" : 
-          currentPosition > 100 ? `${Math.floor(currentPosition - 100)}% overdue` :
-          `${Math.floor(currentPosition)}% of timeline elapsed`
+          `${Math.floor(currentPosition)}% of timeline utilised`
         )}
       </div>
     </div>
