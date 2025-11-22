@@ -73,7 +73,7 @@ export default function ClientPerformance() {
         .select(`
           *,
           project:projects(id, name),
-          assignee:profiles!tasks_assignee_id_fkey(full_name)
+          assignee:profiles!tasks_assignee_id_fkey(full_name, creative_title)
         `)
         .eq("client_id", clientId)
         .order("date", { ascending: false })

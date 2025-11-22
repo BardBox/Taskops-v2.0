@@ -202,8 +202,8 @@ export const TaskTable = ({ userRole, userId, filters }: TaskTableProps) => {
         *,
         clients(name),
         projects(name),
-        assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url),
-        assigned_by:profiles!tasks_assigned_by_id_fkey(full_name, avatar_url),
+        assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url, creative_title),
+        assigned_by:profiles!tasks_assigned_by_id_fkey(full_name, avatar_url, creative_title),
         task_comments(message, created_at),
         task_collaborators(user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url))
       `);
