@@ -424,6 +424,36 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate }: TaskTableP
         if (filters.quickFilter.includes("notified")) {
           filtered = filtered.filter(task => notifiedTaskIds.has(task.id));
         }
+        
+        // Handle exclusive filters (my-tasks, most-busy, least-busy)
+        if (filters.quickFilter.includes("my-tasks")) {
+          filtered = filtered.filter(task => 
+            task.assignee_id === userId || task.assigned_by_id === userId
+          );
+        } else if (filters.quickFilter.includes("most-busy") || filters.quickFilter.includes("least-busy")) {
+          // These filters only work for PM/PO
+          // We need to find the team member with most/least pending tasks
+          const pendingTasksByMember = new Map<string, number>();
+          
+          // Count pending tasks per team member
+          tasks.forEach(task => {
+            if (!["Approved", "Cancelled"].includes(task.status)) {
+              const count = pendingTasksByMember.get(task.assignee_id) || 0;
+              pendingTasksByMember.set(task.assignee_id, count + 1);
+            }
+          });
+          
+          if (pendingTasksByMember.size > 0) {
+            const sortedMembers = Array.from(pendingTasksByMember.entries())
+              .sort((a, b) => b[1] - a[1]);
+            
+            const targetMemberId = filters.quickFilter.includes("most-busy")
+              ? sortedMembers[0][0]
+              : sortedMembers[sortedMembers.length - 1][0];
+            
+            filtered = filtered.filter(task => task.assignee_id === targetMemberId);
+          }
+        }
       }
     }
 
