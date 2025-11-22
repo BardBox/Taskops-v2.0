@@ -40,8 +40,8 @@ interface Task {
   revision_requested_by: string | null;
   clients: { name: string } | null;
   projects: { name: string } | null;
-  assignee: { full_name: string; avatar_url: string | null } | null;
-  assigned_by: { full_name: string; avatar_url: string | null } | null;
+  assignee: { full_name: string; avatar_url: string | null; creative_title?: string | null } | null;
+  assigned_by: { full_name: string; avatar_url: string | null; creative_title?: string | null } | null;
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
 }
 
@@ -260,19 +260,80 @@ const SortableTaskCard = ({
             {(userRole === "project_owner" || userRole === "project_manager") && (
               <div className="flex flex-col gap-1.5">
                 {task.assignee && (
-                  <div className="flex items-center gap-1.5">
-                    <Avatar className="h-6 w-6 border border-border">
+                  <div className="flex items-start gap-1.5">
+                    <Avatar className="h-6 w-6 border border-border shrink-0">
                       <AvatarImage src={task.assignee.avatar_url || undefined} alt={task.assignee.full_name} />
                       <AvatarFallback className="text-[10px]">
                         {task.assignee.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-medium">{task.assignee.full_name}</span>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium truncate">{task.assignee.full_name}</span>
+                        {task.collaborators && task.collaborators.length > 0 && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-[10px] text-muted-foreground cursor-help shrink-0">+{task.collaborators.length}</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="space-y-1">
+                                  <p className="text-xs font-semibold mb-1">Collaborators:</p>
+                                  {task.collaborators.map((collab: any, idx: number) => (
+                                    <p key={idx} className="text-xs">{collab.profiles?.full_name || "Unknown"}</p>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      {task.assignee.creative_title && (
+                        <span className="text-[10px] text-primary/80 truncate">
+                          {task.assignee.creative_title}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {task.assigned_by && (
+                  <div className="flex items-start gap-1.5">
+                    <Avatar className="h-6 w-6 border border-border shrink-0">
+                      <AvatarImage src={task.assigned_by.avatar_url || undefined} alt={task.assigned_by.full_name} />
+                      <AvatarFallback className="text-[10px]">
+                        {task.assigned_by.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-xs text-muted-foreground truncate">PM: {task.assigned_by.full_name}</span>
+                      {task.assigned_by.creative_title && (
+                        <span className="text-[10px] text-primary/60 truncate">
+                          {task.assigned_by.creative_title}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* TM View - Only show PM who assigned */}
+            {userRole === "team_member" && task.assigned_by && (
+              <div className="flex items-start gap-1.5">
+                <Avatar className="h-6 w-6 border border-border shrink-0">
+                  <AvatarImage src={task.assigned_by.avatar_url || undefined} alt={task.assigned_by.full_name} />
+                  <AvatarFallback className="text-[10px]">
+                    {task.assigned_by.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium truncate">{task.assigned_by.full_name}</span>
                     {task.collaborators && task.collaborators.length > 0 && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-[10px] text-muted-foreground cursor-help">+{task.collaborators.length}</span>
+                            <span className="text-[10px] text-muted-foreground cursor-help shrink-0">+{task.collaborators.length}</span>
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="space-y-1">
@@ -286,48 +347,12 @@ const SortableTaskCard = ({
                       </TooltipProvider>
                     )}
                   </div>
-                )}
-                {task.assigned_by && (
-                  <div className="flex items-center gap-1.5">
-                    <Avatar className="h-6 w-6 border border-border">
-                      <AvatarImage src={task.assigned_by.avatar_url || undefined} alt={task.assigned_by.full_name} />
-                      <AvatarFallback className="text-[10px]">
-                        {task.assigned_by.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground">PM: {task.assigned_by.full_name}</span>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* TM View - Only show PM who assigned */}
-            {userRole === "team_member" && task.assigned_by && (
-              <div className="flex items-center gap-1.5">
-                <Avatar className="h-6 w-6 border border-border">
-                  <AvatarImage src={task.assigned_by.avatar_url || undefined} alt={task.assigned_by.full_name} />
-                  <AvatarFallback className="text-[10px]">
-                    {task.assigned_by.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs font-medium">{task.assigned_by.full_name}</span>
-                {task.collaborators && task.collaborators.length > 0 && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-[10px] text-muted-foreground cursor-help">+{task.collaborators.length}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="space-y-1">
-                          <p className="text-xs font-semibold mb-1">Collaborators:</p>
-                          {task.collaborators.map((collab: any, idx: number) => (
-                            <p key={idx} className="text-xs">{collab.profiles?.full_name || "Unknown"}</p>
-                          ))}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                  {task.assigned_by.creative_title && (
+                    <span className="text-[10px] text-primary/80 truncate">
+                      {task.assigned_by.creative_title}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
             
