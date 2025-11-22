@@ -818,7 +818,7 @@ export function TaskDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
         "p-0 flex flex-col overflow-hidden gap-0 transition-all duration-300",
-        isFullscreen ? "max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] animate-fade-in" : "max-w-4xl max-h-[90vh]"
+        isFullscreen ? "max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] animate-fade-in" : "max-w-4xl w-4xl max-h-[90vh] h-[90vh]"
       )}>
         <div className="p-6 pb-4 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
