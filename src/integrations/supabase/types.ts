@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      broadcasts: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_pinned: boolean | null
+          priority: string
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          priority?: string
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          priority?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcasts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "team_chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           client_code: string | null
@@ -170,6 +250,51 @@ export type Database = {
         }
         Relationships: []
       }
+      hall_of_fame: {
+        Row: {
+          achievement_title: string
+          created_at: string
+          description: string
+          id: string
+          month_year: string
+          nominated_by: string
+          user_id: string
+        }
+        Insert: {
+          achievement_title: string
+          created_at?: string
+          description: string
+          id?: string
+          month_year: string
+          nominated_by: string
+          user_id: string
+        }
+        Update: {
+          achievement_title?: string
+          created_at?: string
+          description?: string
+          id?: string
+          month_year?: string
+          nominated_by?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hall_of_fame_nominated_by_fkey"
+            columns: ["nominated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hall_of_fame_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       link_boards: {
         Row: {
           created_at: string
@@ -323,6 +448,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           best_contact_time: string | null
+          birth_day: number | null
+          birth_month: number | null
           created_at: string
           creative_title: string | null
           full_name: string
@@ -342,6 +469,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           best_contact_time?: string | null
+          birth_day?: number | null
+          birth_month?: number | null
           created_at?: string
           creative_title?: string | null
           full_name: string
@@ -361,6 +490,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           best_contact_time?: string | null
+          birth_day?: number | null
+          birth_month?: number | null
           created_at?: string
           creative_title?: string | null
           full_name?: string
@@ -807,6 +938,41 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          message_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          message_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          message_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
