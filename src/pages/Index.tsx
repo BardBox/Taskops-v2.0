@@ -3,36 +3,29 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-
 const Index = () => {
   const navigate = useNavigate();
-
   useEffect(() => {
     checkAuth();
   }, []);
-
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: {
+        session
+      }
+    } = await supabase.auth.getSession();
     if (session) {
       navigate("/dashboard");
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-accent to-background">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-accent to-background">
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-8">
           <div className="space-y-4">
             <div className="flex items-center justify-center mb-6">
-              <div className="h-20 w-20 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
-                <span className="text-4xl font-bold text-primary-foreground">B</span>
-              </div>
+              
             </div>
-            <img 
-              src="/bardbox-logo.png" 
-              alt="BardBox" 
-              className="h-24 md:h-32 w-auto object-contain mx-auto"
-            />
+            <img src="/bardbox-logo.png" alt="BardBox" className="h-24 md:h-32 w-auto object-contain mx-auto" />
             <h1 className="text-4xl md:text-5xl font-bold">
               TaskOPS<sup className="text-2xl">™</sup>
             </h1>
@@ -42,20 +35,11 @@ const Index = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <Button
-              size="lg"
-              onClick={() => navigate("/dashboard")}
-              className="text-lg px-8"
-            >
+            <Button size="lg" onClick={() => navigate("/dashboard")} className="text-lg px-8">
               Dashboard
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate("/auth")}
-              className="text-lg px-8"
-            >
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth")} className="text-lg px-8">
               Get Started
             </Button>
           </div>
@@ -82,8 +66,6 @@ const Index = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
