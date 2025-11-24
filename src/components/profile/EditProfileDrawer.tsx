@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Plus, X, Camera } from "lucide-react";
+import { Loader2, Plus, X, Camera, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -46,6 +46,9 @@ export function EditProfileDrawer({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [customAvatarPrompt, setCustomAvatarPrompt] = useState("");
+  const [generatingCustom, setGeneratingCustom] = useState(false);
+  const [avatarRefreshTrigger, setAvatarRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (profile) {
@@ -173,6 +176,135 @@ export function EditProfileDrawer({
       .slice(0, 2) || "?";
   };
 
+  const detectCategory = (prompt: string): string => {
+    const lowerPrompt = prompt.toLowerCase();
+    if (lowerPrompt.includes('dragon') || lowerPrompt.includes('elf') || lowerPrompt.includes('wizard') || 
+        lowerPrompt.includes('fairy') || lowerPrompt.includes('fantasy') || lowerPrompt.includes('mythical')) {
+      return 'fantasy';
+    }
+    if (lowerPrompt.includes('cat') || lowerPrompt.includes('dog') || lowerPrompt.includes('bird') || 
+        lowerPrompt.includes('lion') || lowerPrompt.includes('animal') || lowerPrompt.includes('wolf') ||
+        lowerPrompt.includes('panda') || lowerPrompt.includes('fox') || lowerPrompt.includes('bear') ||
+        lowerPrompt.includes('tiger') || lowerPrompt.includes('elephant') || lowerPrompt.includes('bull')) {
+      return 'animal';
+    }
+    if (lowerPrompt.includes('abstract') || lowerPrompt.includes('geometric') || lowerPrompt.includes('pattern') ||
+        lowerPrompt.includes('colorful') || lowerPrompt.includes('artistic')) {
+      return 'abstract';
+    }
+    if (lowerPrompt.includes('robot') || lowerPrompt.includes('droid') || lowerPrompt.includes('cyborg') ||
+        lowerPrompt.includes('android') || lowerPrompt.includes('machine')) {
+      return 'droid';
+    }
+    if (lowerPrompt.includes('hero') || lowerPrompt.includes('superhero') || lowerPrompt.includes('super hero')) {
+      return 'superhero';
+    }
+    if (lowerPrompt.includes('villain') || lowerPrompt.includes('supervillain') || lowerPrompt.includes('super villain')) {
+      return 'supervillain';
+    }
+    if (lowerPrompt.includes('nature') || lowerPrompt.includes('landscape') || lowerPrompt.includes('mountain') ||
+        lowerPrompt.includes('ocean') || lowerPrompt.includes('forest') || lowerPrompt.includes('tree')) {
+      return 'nature';
+    }
+    return 'human';
+  };
+
+  const generateSmartName = (prompt: string): string => {
+    const words = prompt.toLowerCase()
+      .replace(/[^a-z\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 3)
+      .slice(0, 3);
+    
+    if (words.length === 0) return "Avatar";
+    
+    return words
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  };
+
+  const handleGenerateCustomAvatar = async () => {
+    if (!customAvatarPrompt.trim()) {
+      toast.error("Please describe your avatar");
+      return;
+    }
+
+    setGeneratingCustom(true);
+
+    try {
+      const fullPrompt = `${customAvatarPrompt}, high quality avatar portrait, professional digital art`;
+      const detectedCategory = detectCategory(customAvatarPrompt);
+      const firstName = fullName.split(' ')[0] || 'User';
+      
+      let smartName = generateSmartName(customAvatarPrompt);
+      try {
+        const { data: nameData, error: nameError } = await supabase.functions.invoke('generate-avatar-name', {
+          body: { prompt: customAvatarPrompt }
+        });
+        
+        if (!nameError && nameData?.name) {
+          smartName = nameData.name;
+        }
+      } catch (nameErr) {
+        console.warn("Failed to generate AI name, using fallback:", nameErr);
+      }
+      
+      const finalName = `${smartName} - ${firstName}`;
+      
+      const { data, error } = await supabase.functions.invoke('generate-avatar', {
+        body: { 
+          prompt: fullPrompt,
+          name: finalName,
+          category: detectedCategory
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        const base64Response = await fetch(data.imageUrl);
+        const blob = await base64Response.blob();
+        
+        const fileName = `custom_${profile.id}_${Date.now()}.png`;
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, blob, {
+            contentType: 'image/png',
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        await supabase.from('default_avatars').insert({
+          name: smartName,
+          image_url: publicUrl,
+          category: 'custom'
+        });
+
+        await supabase.from('default_avatars').insert({
+          name: smartName,
+          image_url: publicUrl,
+          category: detectedCategory
+        });
+
+        setAvatarUrl(publicUrl);
+        setCustomAvatarPrompt("");
+        setAvatarRefreshTrigger(prev => prev + 1);
+        toast.success("Custom avatar generated and saved!");
+      }
+    } catch (error: any) {
+      console.error('Error generating custom avatar:', error);
+      toast.error(error.message || 'Failed to generate avatar');
+    } finally {
+      setGeneratingCustom(false);
+    }
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh]">
@@ -197,26 +329,60 @@ export function EditProfileDrawer({
                   </AvatarFallback>
                 </Avatar>
                 
-                <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2">
-                      <Camera className="h-4 w-4" />
-                      Change Avatar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Choose Your Avatar</DialogTitle>
-                    </DialogHeader>
-                    <AvatarSelector
-                      selectedAvatarUrl={avatarUrl}
-                      onAvatarSelect={(url) => {
-                        setAvatarUrl(url);
-                        setAvatarDialogOpen(false);
-                      }}
-                    />
-                  </DialogContent>
-                </Dialog>
+                <div className="flex gap-2">
+                  <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <Camera className="h-4 w-4" />
+                        Change Avatar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Choose Your Avatar</DialogTitle>
+                      </DialogHeader>
+                      <AvatarSelector
+                        selectedAvatarUrl={avatarUrl}
+                        onAvatarSelect={(url) => {
+                          setAvatarUrl(url);
+                          setAvatarDialogOpen(false);
+                        }}
+                        refreshTrigger={avatarRefreshTrigger}
+                      />
+                      
+                      <div className="mt-4 space-y-3 border-t pt-4">
+                        <Label htmlFor="customPrompt" className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          Create Custom Avatar with AI
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="customPrompt"
+                            value={customAvatarPrompt}
+                            onChange={(e) => setCustomAvatarPrompt(e.target.value)}
+                            placeholder="Describe your avatar (e.g., 'a cosmic astronaut cat')"
+                            disabled={generatingCustom}
+                          />
+                          <Button
+                            onClick={handleGenerateCustomAvatar}
+                            disabled={generatingCustom || !customAvatarPrompt.trim()}
+                            className="gap-2"
+                          >
+                            {generatingCustom ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-4 w-4" />
+                            )}
+                            Generate
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          AI will generate a unique avatar based on your description and add it to the gallery above
+                        </p>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               <div>
