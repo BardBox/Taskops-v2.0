@@ -341,6 +341,15 @@ export function EditProfileDrawer({
                       <DialogHeader>
                         <DialogTitle>Choose Your Avatar</DialogTitle>
                       </DialogHeader>
+                      <div className="flex flex-col items-center gap-2 py-4 border-b mb-4">
+                        <p className="text-sm text-muted-foreground">Selected Avatar</p>
+                        <Avatar className="w-20 h-20">
+                          <AvatarImage src={avatarUrl || undefined} />
+                          <AvatarFallback className="text-2xl">
+                            {getInitials(fullName)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
                       <AvatarSelector
                         selectedAvatarUrl={avatarUrl}
                         onAvatarSelect={(url) => {
