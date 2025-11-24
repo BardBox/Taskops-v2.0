@@ -384,18 +384,6 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               <Button
                 variant="ghost"
                 className={`justify-start ${
-                  location.pathname === "/account-settings" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
-                onClick={() => navigate("/account-settings")}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Account Settings
-              </Button>
-              <Button
-                variant="ghost"
-                className={`justify-start ${
                   location.pathname === "/preferences" 
                     ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
                     : ""
