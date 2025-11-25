@@ -14,8 +14,8 @@ export const MessageWithMentions = ({ text, currentUserName }: MessageWithMentio
     <>
       {parts.map((part: MessagePart, idx: number) => {
         if (part.type === "text") {
-          // Linkify URLs in regular text
-          return <span key={idx}>{linkifyText(part.content)}</span>;
+          // Linkify URLs in regular text - return as fragment
+          return <React.Fragment key={idx}>{linkifyText(part.content)}</React.Fragment>;
         }
         
         if (part.type === "currentUserMention") {

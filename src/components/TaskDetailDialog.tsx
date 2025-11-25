@@ -1502,6 +1502,17 @@ export function TaskDetailDialog({
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
+                      {comment.user_id === userId && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          title="Delete your comment"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <p className={isOnlyEmojis(comment.message) ? "text-5xl leading-tight" : "text-sm"}>
