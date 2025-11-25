@@ -321,6 +321,9 @@ const TeamChat = () => {
                 const isOwnMessage = msg.user_id === currentUserId;
                 const isEditing = editingMessageId === msg.id;
                 
+                // Safety check for profiles
+                if (!msg.profiles) return null;
+                
                 return (
                   <div key={msg.id} className="flex gap-3">
                     <Avatar className="w-8 h-8">

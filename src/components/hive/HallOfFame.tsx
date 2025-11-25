@@ -165,7 +165,7 @@ const HallOfFame = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {currentMonthEntry && (
+          {currentMonthEntry && currentMonthEntry.user_profile && (
             <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg p-6 border-2 border-primary">
               <div className="flex items-center gap-4 mb-4">
                 <Avatar className="w-16 h-16 ring-2 ring-primary">
@@ -205,7 +205,7 @@ const HallOfFame = () => {
           ) : (
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-muted-foreground">Previous Winners</h4>
-              {hallOfFame.filter(entry => entry.id !== currentMonthEntry?.id).map((entry) => (
+              {hallOfFame.filter(entry => entry.id !== currentMonthEntry?.id && entry.user_profile).map((entry) => (
                 <div key={entry.id} className="flex items-center gap-3 p-3 bg-accent/30 rounded-lg">
                   <Avatar>
                     <AvatarImage src={entry.user_profile.avatar_url || undefined} />
