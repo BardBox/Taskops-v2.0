@@ -365,7 +365,7 @@ const TeamChat = () => {
                           </Button>
                         </div>
                       ) : (
-                        <div className="group relative">
+                        <div className="relative">
                           <div
                             className={`inline-block px-4 py-2 rounded-lg ${
                               isOwnMessage
@@ -381,20 +381,22 @@ const TeamChat = () => {
                             </p>
                           </div>
                           {isOwnMessage && (
-                            <div className="absolute -right-20 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <div className="flex gap-1 mt-1">
                               <Button
                                 size="icon"
                                 variant="ghost"
                                 className="h-7 w-7"
                                 onClick={() => startEdit(msg)}
+                                title="Edit message"
                               >
                                 <Pencil className="w-3 h-3" />
                               </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-7 w-7 text-destructive"
+                                className="h-7 w-7 text-destructive hover:text-destructive/80"
                                 onClick={() => setDeleteMessageId(msg.id)}
+                                title="Delete message"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>
