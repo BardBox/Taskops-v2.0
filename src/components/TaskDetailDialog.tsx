@@ -1492,23 +1492,13 @@ export function TaskDetailDialog({
                       >
                         <Pin className={`h-3 w-3 ${comment.is_pinned ? 'fill-current' : ''}`} />
                       </Button>
-                      {userRole === 'project_owner' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-muted-foreground hover:text-muted-foreground/80"
-                          onClick={() => handleDeleteComment(comment.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                      {comment.user_id === userId && (
+                      {(userRole === 'project_owner' || comment.user_id === userId) && (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
                           onClick={() => handleDeleteComment(comment.id)}
-                          title="Delete your comment"
+                          title="Delete comment"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
