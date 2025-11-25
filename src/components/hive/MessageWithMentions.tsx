@@ -1,4 +1,6 @@
+import React from "react";
 import { parseMessageIntoParts, MessagePart } from "@/utils/mentionParser";
+import { linkifyText } from "@/utils/linkify";
 
 interface MessageWithMentionsProps {
   text: string;
@@ -12,7 +14,8 @@ export const MessageWithMentions = ({ text, currentUserName }: MessageWithMentio
     <>
       {parts.map((part: MessagePart, idx: number) => {
         if (part.type === "text") {
-          return <span key={idx}>{part.content}</span>;
+          // Linkify URLs in regular text
+          return <span key={idx}>{linkifyText(part.content)}</span>;
         }
         
         if (part.type === "currentUserMention") {
