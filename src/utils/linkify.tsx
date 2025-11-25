@@ -1,6 +1,7 @@
 import React from 'react';
 
-const URL_REGEX = /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g;
+// Matches URLs with or without protocol (http:// or https://)
+const URL_REGEX = /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)|(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g;
 
 interface LinkifyOptions {
   className?: string;
@@ -18,10 +19,13 @@ export function linkifyText(text: string, options: LinkifyOptions = {}): React.R
   return parts.map((part, index) => {
     // Check if this part is a URL
     if (part.match(URL_REGEX)) {
+      // Add https:// if no protocol is present
+      const href = part.match(/^https?:\/\//) ? part : `https://${part}`;
+      
       return (
         <a
           key={index}
-          href={part}
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
           className={options.className || "text-primary underline hover:text-primary/80 transition-colors break-all"}
