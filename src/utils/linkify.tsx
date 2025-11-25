@@ -28,7 +28,7 @@ export function linkifyText(text: string, options: LinkifyOptions = {}): React.R
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className={options.className || "text-primary underline hover:text-primary/80 transition-colors break-all"}
+          className={options.className || "underline hover:opacity-80 transition-opacity break-all"}
           onClick={(e) => e.stopPropagation()}
         >
           {part}
