@@ -22,7 +22,7 @@ export const MessageWithMentions = ({ text, currentUserName }: MessageWithMentio
           return (
             <span
               key={idx}
-              className="font-semibold text-primary bg-primary/10 px-1 rounded"
+              className="font-semibold bg-background/20 px-1 rounded"
             >
               {part.content}
             </span>
@@ -33,7 +33,7 @@ export const MessageWithMentions = ({ text, currentUserName }: MessageWithMentio
         return (
           <span
             key={idx}
-            className="font-semibold text-blue-600 dark:text-blue-400"
+            className="font-semibold bg-background/10 px-1 rounded"
           >
             {part.content}
           </span>
