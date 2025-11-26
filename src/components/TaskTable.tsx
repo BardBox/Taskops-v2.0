@@ -236,21 +236,8 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         task_collaborators(user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url))
       `);
     
-    // Team members see tasks assigned to them OR where they are collaborators
-    if (userRole === "team_member") {
-      const { data: collaboratedTasks } = await supabase
-        .from("task_collaborators")
-        .select("task_id")
-        .eq("user_id", userId);
-      
-      const collaboratedTaskIds = collaboratedTasks?.map(ct => ct.task_id) || [];
-      
-      if (collaboratedTaskIds.length > 0) {
-        query = query.or(`assignee_id.eq.${userId},id.in.(${collaboratedTaskIds.join(',')})`);
-      } else {
-        query = query.eq("assignee_id", userId);
-      }
-    }
+    // Note: Team members can now see all tasks (via RLS) for self-assignment
+    // The RLS policies handle the security restrictions
     
     const { data, error } = await query.order("date", { ascending: false });
 
@@ -309,6 +296,25 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setDetailDialogOpen(true);
+  };
+
+  const handleSelfAssign = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ assignee_id: userId })
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      toast.success("Task assigned to you successfully!");
+      fetchTasks();
+    } catch (error: any) {
+      console.error("Error self-assigning task:", error);
+      toast.error("Failed to assign task");
+    }
   };
 
   const getTaskHighlightClass = (task: Task, delayDays: number | null) => {
@@ -960,13 +966,44 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     {columns.taskOwner && (
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
-                            <AvatarFallback className="text-xs">
-                              {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{task.assignee?.full_name || "-"}</span>
+                          {task.assignee_id === userId ? (
+                            <>
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                                <AvatarFallback className="text-xs">
+                                  {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{task.assignee?.full_name || "-"}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                                <AvatarFallback className="text-xs">
+                                  {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{task.assignee?.full_name || "-"}</span>
+                              {userRole === "team_member" && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => handleSelfAssign(task.id, e)}
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Assign to me</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     )}

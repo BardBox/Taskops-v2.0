@@ -146,6 +146,11 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
   const handleAddCollaborator = async () => {
     if (!selectedCollaborator) return;
     
+    if (collaborators.length >= 2) {
+      toast.error("Maximum 2 collaborators allowed per task");
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from("task_collaborators")
@@ -155,14 +160,21 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
           added_by_id: currentUserId,
         });
       
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('Maximum 2 collaborators')) {
+          toast.error("Maximum 2 collaborators allowed per task");
+        } else {
+          throw error;
+        }
+        return;
+      }
       
       toast.success("Collaborator added successfully!");
       setSelectedCollaborator("");
       fetchCollaborators();
     } catch (error: any) {
       console.error("Error adding collaborator:", error);
-      toast.error("Failed to add collaborator");
+      toast.error(error.message || "Failed to add collaborator");
     }
   };
 
@@ -480,14 +492,19 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
         <CardContent className="space-y-4">
           {/* Add Collaborator */}
           <div className="space-y-2">
-            <Label>Add Collaborator</Label>
+            <Label>Add Collaborator ({collaborators.length}/2)</Label>
             <div className="flex gap-2">
               <Select
                 value={selectedCollaborator}
                 onValueChange={setSelectedCollaborator}
+                disabled={collaborators.length >= 2}
               >
                 <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Select user to add" />
+                  <SelectValue placeholder={
+                    collaborators.length >= 2 
+                      ? "Max collaborators reached" 
+                      : "Select user to add"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
                   {users
@@ -505,7 +522,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
               <Button
                 type="button"
                 onClick={handleAddCollaborator}
-                disabled={!selectedCollaborator}
+                disabled={!selectedCollaborator || collaborators.length >= 2}
               >
                 Add
               </Button>
