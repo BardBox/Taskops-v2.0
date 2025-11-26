@@ -73,6 +73,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
   const [imagePreview, setImagePreview] = useState<string>("");
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [assignedBy, setAssignedBy] = useState<any>(null);
+  const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
   
   const { statuses, urgencies, isLoading: isLoadingSettings} = useStatusUrgency();
   
@@ -370,6 +371,50 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
     setImagePreview("");
   };
 
+  const handleAddCollaborators = async (taskId: string) => {
+    if (selectedCollaborators.length === 0) return;
+    
+    try {
+      const collaboratorsToAdd = selectedCollaborators.map(userId => ({
+        task_id: taskId,
+        user_id: userId,
+        added_by_id: currentUserId,
+      }));
+
+      const { error } = await supabase
+        .from("task_collaborators")
+        .insert(collaboratorsToAdd);
+
+      if (error) throw error;
+      
+      setSelectedCollaborators([]);
+      await fetchCollaborators(taskId);
+      toast.success("Collaborators added successfully!");
+    } catch (error: any) {
+      console.error("Error adding collaborators:", error);
+      toast.error("Failed to add collaborators");
+    }
+  };
+
+  const handleRemoveCollaborator = async (collaboratorId: string) => {
+    if (!task?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("task_collaborators")
+        .delete()
+        .eq("id", collaboratorId);
+
+      if (error) throw error;
+      
+      await fetchCollaborators(task.id);
+      toast.success("Collaborator removed");
+    } catch (error: any) {
+      console.error("Error removing collaborator:", error);
+      toast.error("Failed to remove collaborator");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent, keepOpen = false) => {
     e.preventDefault();
     setLoading(true);
@@ -419,6 +464,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
         if (error) throw error;
 
+        // Add collaborators for edited task
+        if (selectedCollaborators.length > 0) {
+          await handleAddCollaborators(task.id);
+        }
+
         toast.success("Task updated successfully!");
       } else {
         // Create new task
@@ -429,6 +479,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
           .single();
 
         if (error) throw error;
+
+        // Add collaborators for new task
+        if (newTask && selectedCollaborators.length > 0) {
+          await handleAddCollaborators(newTask.id);
+        }
 
         toast.success("Task created successfully!");
       }
@@ -586,28 +641,96 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                   </Select>
                 </div>
 
-                {/* Collaborators (Read-only display when editing) */}
-                {task && collaborators.length > 0 && (
-                  <div className="flex-1 min-w-[200px] space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1.5">
-                      <UsersRound className="h-3.5 w-3.5" />
-                      Collaborators
-                    </Label>
-                    <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30 min-h-[40px]">
-                      {collaborators.map((collab) => (
-                        <div key={collab.id} className="flex items-center gap-1.5">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={collab.profiles?.avatar_url} />
-                            <AvatarFallback className="text-xs">
-                              {collab.profiles?.full_name?.charAt(0) || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs font-medium">{collab.profiles?.full_name}</span>
-                        </div>
-                      ))}
+                {/* Collaborators */}
+                <div className="flex-1 min-w-[200px] space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <UsersRound className="h-3.5 w-3.5" />
+                    Add Collaborators
+                  </Label>
+                  <Select
+                    value={selectedCollaborators.length > 0 ? "selected" : ""}
+                    onValueChange={(value) => {
+                      if (!selectedCollaborators.includes(value) && value !== "selected") {
+                        setSelectedCollaborators([...selectedCollaborators, value]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select collaborators" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users
+                        .filter(user => 
+                          user.id !== formData.assignee_id && 
+                          !collaborators.some(c => c.user_id === user.id) &&
+                          !selectedCollaborators.includes(user.id)
+                        )
+                        .map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Selected Collaborators to Add */}
+                  {selectedCollaborators.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedCollaborators.map((userId) => {
+                        const user = users.find(u => u.id === userId);
+                        return user ? (
+                          <div key={userId} className="flex items-center gap-1.5 bg-secondary px-2 py-1 rounded-md">
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={user.avatar_url} />
+                              <AvatarFallback className="text-xs">
+                                {user.full_name?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs font-medium">{user.full_name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-destructive/20"
+                              onClick={() => setSelectedCollaborators(selectedCollaborators.filter(id => id !== userId))}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : null;
+                      })}
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  {/* Existing Collaborators */}
+                  {task && collaborators.length > 0 && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Current Collaborators</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {collaborators.map((collab) => (
+                          <div key={collab.id} className="flex items-center gap-1.5 bg-muted px-2 py-1 rounded-md">
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={collab.profiles?.avatar_url} />
+                              <AvatarFallback className="text-xs">
+                                {collab.profiles?.full_name?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs font-medium">{collab.profiles?.full_name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-destructive/20"
+                              onClick={() => handleRemoveCollaborator(collab.id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Project Manager (Assigned By) */}
                 {task && assignedBy && (

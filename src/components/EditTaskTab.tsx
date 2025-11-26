@@ -33,6 +33,8 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(task?.reference_image || "");
+  const [selectedCollaborator, setSelectedCollaborator] = useState<string>("");
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   
   const { statuses, urgencies } = useStatusUrgency();
   
@@ -53,6 +55,12 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
   });
 
   useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+    };
+    
+    getCurrentUser();
     fetchClients();
     fetchUsers();
     fetchCollaborators();
@@ -132,6 +140,29 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
       console.error("Upload error:", error);
       toast.error("Failed to upload reference image");
       return null;
+    }
+  };
+
+  const handleAddCollaborator = async () => {
+    if (!selectedCollaborator) return;
+    
+    try {
+      const { error } = await supabase
+        .from("task_collaborators")
+        .insert({
+          task_id: task.id,
+          user_id: selectedCollaborator,
+          added_by_id: currentUserId,
+        });
+      
+      if (error) throw error;
+      
+      toast.success("Collaborator added successfully!");
+      setSelectedCollaborator("");
+      fetchCollaborators();
+    } catch (error: any) {
+      console.error("Error adding collaborator:", error);
+      toast.error("Failed to add collaborator");
     }
   };
 
@@ -446,27 +477,65 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
             Collaborators
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {collaborators.map((collab) => (
-              <Badge key={collab.id} variant="secondary" className="flex items-center gap-2 py-1 px-3">
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={collab.profiles?.avatar_url} />
-                  <AvatarFallback>{collab.profiles?.full_name?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                {collab.profiles?.full_name}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveCollaborator(collab.id)}
-                  className="ml-1 hover:text-destructive"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-            {collaborators.length === 0 && (
-              <p className="text-sm text-muted-foreground">No collaborators added</p>
-            )}
+        <CardContent className="space-y-4">
+          {/* Add Collaborator */}
+          <div className="space-y-2">
+            <Label>Add Collaborator</Label>
+            <div className="flex gap-2">
+              <Select
+                value={selectedCollaborator}
+                onValueChange={setSelectedCollaborator}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select user to add" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users
+                    .filter(user => 
+                      user.id !== formData.assignee_id && 
+                      !collaborators.some(c => c.user_id === user.id)
+                    )
+                    .map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.full_name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                onClick={handleAddCollaborator}
+                disabled={!selectedCollaborator}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+
+          {/* Current Collaborators */}
+          <div className="space-y-2">
+            <Label>Current Collaborators</Label>
+            <div className="flex flex-wrap gap-2">
+              {collaborators.map((collab) => (
+                <Badge key={collab.id} variant="secondary" className="flex items-center gap-2 py-1 px-3">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={collab.profiles?.avatar_url} />
+                    <AvatarFallback>{collab.profiles?.full_name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  {collab.profiles?.full_name}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCollaborator(collab.id)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+              {collaborators.length === 0 && (
+                <p className="text-sm text-muted-foreground">No collaborators added yet</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
