@@ -374,6 +374,13 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
   const handleAddCollaborators = async (taskId: string) => {
     if (selectedCollaborators.length === 0) return;
     
+    // Check if adding these collaborators would exceed the limit
+    const totalAfterAdding = collaborators.length + selectedCollaborators.length;
+    if (totalAfterAdding > 2) {
+      toast.error(`Maximum 2 collaborators allowed per task. Currently ${collaborators.length} assigned.`);
+      return;
+    }
+    
     try {
       const collaboratorsToAdd = selectedCollaborators.map(userId => ({
         task_id: taskId,
@@ -385,14 +392,21 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         .from("task_collaborators")
         .insert(collaboratorsToAdd);
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('Maximum 2 collaborators')) {
+          toast.error("Maximum 2 collaborators allowed per task");
+        } else {
+          throw error;
+        }
+        return;
+      }
       
       setSelectedCollaborators([]);
       await fetchCollaborators(taskId);
       toast.success("Collaborators added successfully!");
     } catch (error: any) {
       console.error("Error adding collaborators:", error);
-      toast.error("Failed to add collaborators");
+      toast.error(error.message || "Failed to add collaborators");
     }
   };
 
@@ -645,18 +659,28 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                 <div className="flex-1 min-w-[200px] space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-1.5">
                     <UsersRound className="h-3.5 w-3.5" />
-                    Add Collaborators
+                    Add Collaborators ({collaborators.length + selectedCollaborators.length}/2)
                   </Label>
                   <Select
                     value={selectedCollaborators.length > 0 ? "selected" : ""}
                     onValueChange={(value) => {
+                      const totalAfterAdding = collaborators.length + selectedCollaborators.length + 1;
+                      if (totalAfterAdding > 2) {
+                        toast.error("Maximum 2 collaborators allowed per task");
+                        return;
+                      }
                       if (!selectedCollaborators.includes(value) && value !== "selected") {
                         setSelectedCollaborators([...selectedCollaborators, value]);
                       }
                     }}
+                    disabled={collaborators.length + selectedCollaborators.length >= 2}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select collaborators" />
+                      <SelectValue placeholder={
+                        collaborators.length + selectedCollaborators.length >= 2 
+                          ? "Max collaborators reached" 
+                          : "Select collaborators"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
                       {users
