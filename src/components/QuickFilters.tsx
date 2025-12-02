@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
-import { Calendar, Clock, AlertTriangle, RefreshCw, ListChecks, Bell } from "lucide-react";
+import { Calendar, Clock, AlertTriangle, RefreshCw, ListChecks, Bell, X } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface QuickFiltersProps {
   activeFilters: string[];
@@ -9,6 +11,7 @@ interface QuickFiltersProps {
 }
 
 export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId }: QuickFiltersProps) => {
+  const isMobile = useIsMobile();
   const timeBasedFilters = ["today", "this-month"];
   const additiveFilters = ["urgent", "revisions", "pending", "notified"];
   const exclusiveFilters = ["my-tasks", "most-busy", "least-busy"]; // These are mutually exclusive
@@ -125,27 +128,58 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
     }
   };
 
+  const FilterButton = ({ filter }: { filter: typeof quickFilters[0] }) => {
+    const isActive = activeFilters.includes(filter.id);
+    const Icon = filter.icon;
+    
+    return (
+      <button
+        onClick={() => handleFilterClick(filter.id)}
+        className={cn(
+          "flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-medium transition-colors hover:text-primary cursor-pointer whitespace-nowrap px-2 py-1.5 md:px-0 md:py-0 rounded-full md:rounded-none",
+          isActive 
+            ? "text-primary underline md:underline-offset-4 bg-primary/10 md:bg-transparent" 
+            : "text-muted-foreground bg-muted/50 md:bg-transparent"
+        )}
+        title={filter.description}
+      >
+        <Icon className={cn("h-3.5 w-3.5 md:h-4 md:w-4", filter.color)} />
+        {filter.label}
+      </button>
+    );
+  };
+
+  // Mobile: Horizontal scrollable pills
+  if (isMobile) {
+    return (
+      <div className="w-full">
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex gap-2 pb-2 px-1">
+            {quickFilters.map((filter) => (
+              <FilterButton key={filter.id} filter={filter} />
+            ))}
+            {activeFilters.length > 0 && (
+              <button
+                onClick={() => onFiltersChange([])}
+                className="flex items-center gap-1 text-xs font-medium text-destructive bg-destructive/10 px-2 py-1.5 rounded-full whitespace-nowrap"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            )}
+          </div>
+          <ScrollBar orientation="horizontal" className="h-1.5" />
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  // Desktop: Original layout
   return (
     <div className="flex flex-wrap gap-6 items-center">
-      {quickFilters.map((filter) => {
-        const isActive = activeFilters.includes(filter.id);
-        const Icon = filter.icon;
-        
-        return (
-          <button
-            key={filter.id}
-            onClick={() => handleFilterClick(filter.id)}
-            className={cn(
-              "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary cursor-pointer",
-              isActive ? "text-primary underline underline-offset-4" : "text-muted-foreground"
-            )}
-            title={filter.description}
-          >
-            <Icon className={cn("h-4 w-4", filter.color)} />
-            {filter.label}
-          </button>
-        );
-      })}
+      {quickFilters.map((filter) => (
+        <FilterButton key={filter.id} filter={filter} />
+      ))}
       
       <button
         onClick={() => onFiltersChange([])}

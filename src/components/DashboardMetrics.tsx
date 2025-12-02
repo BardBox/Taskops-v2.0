@@ -332,32 +332,32 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
   const inProgressRate = metrics.total > 0 ? (metrics.doing / metrics.total) * 100 : 0;
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-4">
       <Card className={cn(
         "hover-lift hover-glow overflow-hidden relative",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+          <CardTitle className="text-xs md:text-sm font-medium">Total Tasks</CardTitle>
+          <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold mb-2">
+        <CardContent className="p-3 md:p-6 pt-0">
+          <div className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">
             <AnimatedCounter value={metrics.total} />
           </div>
           {collaboratedCount > 0 && (
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-[10px] md:text-xs text-muted-foreground mb-1 md:mb-2">
               {collaboratedCount} as collaborator
             </p>
           )}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <CircularProgress 
               percentage={completionRate} 
-              size={60} 
-              strokeWidth={6}
+              size={48} 
+              strokeWidth={5}
               color="hsl(var(--primary))"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] md:text-xs text-muted-foreground">
               {metrics.approved} approved
             </p>
           </div>
@@ -368,22 +368,22 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
         "hover-lift hover-glow overflow-hidden relative",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-500/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-          <Clock className="h-4 w-4 text-blue-500 transition-transform duration-300 group-hover:scale-110" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+          <CardTitle className="text-xs md:text-sm font-medium">In Progress</CardTitle>
+          <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-500 transition-transform duration-300 group-hover:scale-110" />
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold mb-2 text-blue-600">
+        <CardContent className="p-3 md:p-6 pt-0">
+          <div className="text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-blue-600">
             <AnimatedCounter value={metrics.doing} />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <CircularProgress 
               percentage={inProgressRate} 
-              size={60} 
-              strokeWidth={6}
+              size={48} 
+              strokeWidth={5}
               color="hsl(210 100% 50%)"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] md:text-xs text-muted-foreground">
               {metrics.todo} to start
             </p>
           </div>
@@ -394,26 +394,26 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
         "hover-lift hover-glow overflow-hidden relative",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-green-500/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Completed</CardTitle>
-          <CheckCircle2 className="h-4 w-4 text-green-500 transition-transform duration-300 group-hover:scale-110" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+          <CardTitle className="text-xs md:text-sm font-medium">Completed</CardTitle>
+          <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-500 transition-transform duration-300 group-hover:scale-110" />
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold mb-2 text-green-600">
+        <CardContent className="p-3 md:p-6 pt-0">
+          <div className="text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-green-600">
             <AnimatedCounter value={metrics.done} />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 md:h-8 md:w-8 text-green-600" />
               </div>
             </div>
             <div className="flex flex-col">
-              <p className="text-sm font-semibold text-orange-600">
+              <p className="text-xs md:text-sm font-semibold text-orange-600">
                 <AnimatedCounter value={metrics.awaitingApproval} />
               </p>
-              <p className="text-xs text-muted-foreground">
-                Awaiting approval
+              <p className="text-[10px] md:text-xs text-muted-foreground">
+                Awaiting
               </p>
             </div>
           </div>
@@ -424,21 +424,21 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
         "hover-lift hover-glow overflow-hidden relative border-destructive/20",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-destructive/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Delayed</CardTitle>
-          <AlertCircle className="h-4 w-4 text-destructive animate-pulse-subtle" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+          <CardTitle className="text-xs md:text-sm font-medium">Delayed</CardTitle>
+          <AlertCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-destructive animate-pulse-subtle" />
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-destructive mb-2">
+        <CardContent className="p-3 md:p-6 pt-0">
+          <div className="text-2xl md:text-3xl font-bold text-destructive mb-1 md:mb-2">
             <AnimatedCounter value={metrics.delayed} />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center animate-pulse-subtle">
-                <AlertCircle className="h-8 w-8 text-destructive" />
+              <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center animate-pulse-subtle">
+                <AlertCircle className="h-5 w-5 md:h-8 md:w-8 text-destructive" />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] md:text-xs text-muted-foreground">
               Past deadline
             </p>
           </div>

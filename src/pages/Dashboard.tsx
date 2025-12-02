@@ -136,7 +136,7 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
         <Breadcrumbs />
         
         {preferences.showMetrics && <DashboardMetrics filters={filters} />}
@@ -146,7 +146,7 @@ const Dashboard = () => {
         )}
 
         {preferences.showQuickFilters && (
-          <div className="flex items-center justify-center py-4">
+          <div className="flex items-center justify-center py-2 md:py-4 overflow-hidden">
             <QuickFilters 
               activeFilters={filters.quickFilter} 
               onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
