@@ -4,8 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
-import { RotateCcw } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { RotateCcw, Filter, X } from "lucide-react";
 
 export interface FilterState {
   year: string;
@@ -62,10 +65,25 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   const [projectManagers, setProjectManagers] = useState<any[]>([]);
   const [userRole, setUserRole] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   const { statuses, urgencies } = useStatusUrgency();
   const statusOptions = statuses.map(s => s.label);
   const urgencyOptions = urgencies.map(u => u.label);
+
+  // Count active filters
+  const activeFilterCount = [
+    filters.year !== "all",
+    filters.month !== "all",
+    filters.status !== "all",
+    filters.urgency !== "all",
+    filters.delay !== "all",
+    filters.clientId !== "all",
+    filters.projectName !== "all",
+    filters.teamMemberId !== "all",
+    filters.projectManagerId !== "all",
+  ].filter(Boolean).length;
 
   useEffect(() => {
     getCurrentUser();
@@ -298,36 +316,47 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
     );
   }
 
-  return (
-    <Card className="p-6">
-      <div className="space-y-6">
-        {/* View Filters Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">View Filters</h3>
-            <button
-              onClick={() => {
-                onFiltersChange({
-                  ...filters,
-                  year: "all",
-                  month: "all",
-                  status: "all",
-                  urgency: "all",
-                  clientId: "all",
-                  projectName: "all",
-                  teamMemberId: "all",
-                  projectManagerId: "all",
-                  delay: "all",
-                });
-              }}
-              className="h-5 w-5 rounded-full bg-background border border-foreground/20 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12 group"
-              title="Reset Filters"
-            >
-              <RotateCcw className="h-3 w-3 text-foreground group-hover:text-background transition-transform" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
+  const resetViewFilters = () => {
+    onFiltersChange({
+      ...filters,
+      year: "all",
+      month: "all",
+      status: "all",
+      urgency: "all",
+      clientId: "all",
+      projectName: "all",
+      teamMemberId: "all",
+      projectManagerId: "all",
+      delay: "all",
+    });
+  };
+
+  const resetHighlights = () => {
+    onFiltersChange({
+      ...filters,
+      highlightToday: false,
+      highlightImmediate: false,
+      highlightDelayed: false,
+      highlightInApproval: false,
+    });
+  };
+
+  const FilterContent = () => (
+    <div className="space-y-6">
+      {/* View Filters Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">View Filters</h3>
+          <button
+            onClick={resetViewFilters}
+            className="h-5 w-5 rounded-full bg-background border border-foreground/20 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12 group"
+            title="Reset Filters"
+          >
+            <RotateCcw className="h-3 w-3 text-foreground group-hover:text-background transition-transform" />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-9 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium">Year</Label>
               <Select value={filters.year} onValueChange={(v) => updateFilter("year", v)}>
@@ -475,75 +504,112 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
           </div>
         </div>
 
-        {/* Highlight Tasks Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Highlight Tasks</h3>
-            <button
-              onClick={() => {
-                onFiltersChange({
-                  ...filters,
-                  highlightToday: false,
-                  highlightImmediate: false,
-                  highlightDelayed: false,
-                  highlightInApproval: false,
-                });
-              }}
-              className="h-5 w-5 rounded-full bg-background border border-foreground/20 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12 group"
-              title="Reset Highlights"
-            >
-              <RotateCcw className="h-3 w-3 text-foreground group-hover:text-background transition-transform" />
-            </button>
+      {/* Highlight Tasks Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">Highlight Tasks</h3>
+          <button
+            onClick={resetHighlights}
+            className="h-5 w-5 rounded-full bg-background border border-foreground/20 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12 group"
+            title="Reset Highlights"
+          >
+            <RotateCcw className="h-3 w-3 text-foreground group-hover:text-background transition-transform" />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-2 h-6">
+            <Switch
+              id="highlight-today"
+              checked={filters.highlightToday}
+              onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
+              className="data-[state=checked]:bg-blue-500"
+            />
+            <Label htmlFor="highlight-today" className="text-sm cursor-pointer leading-none">
+              Today
+            </Label>
           </div>
-          
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-today"
-                checked={filters.highlightToday}
-                onCheckedChange={(checked) => updateFilter("highlightToday", checked)}
-                className="data-[state=checked]:bg-blue-500"
-              />
-              <Label htmlFor="highlight-today" className="text-sm cursor-pointer leading-none">
-                Today
-              </Label>
-            </div>
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-immediate"
-                checked={filters.highlightImmediate}
-                onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
-                className="data-[state=checked]:bg-red-500"
-              />
-              <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer leading-none">
-                Immediate
-              </Label>
-            </div>
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-delayed"
-                checked={filters.highlightDelayed}
-                onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
-                className="data-[state=checked]:bg-orange-500"
-              />
-              <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer leading-none">
-                Delayed
-              </Label>
-            </div>
-            <div className="flex items-center gap-2 h-6">
-              <Switch
-                id="highlight-in-approval"
-                checked={filters.highlightInApproval}
-                onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
-                className="data-[state=checked]:bg-green-500"
-              />
-              <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer leading-none">
-                In Approval
-              </Label>
-            </div>
+          <div className="flex items-center gap-2 h-6">
+            <Switch
+              id="highlight-immediate"
+              checked={filters.highlightImmediate}
+              onCheckedChange={(checked) => updateFilter("highlightImmediate", checked)}
+              className="data-[state=checked]:bg-red-500"
+            />
+            <Label htmlFor="highlight-immediate" className="text-sm cursor-pointer leading-none">
+              Immediate
+            </Label>
+          </div>
+          <div className="flex items-center gap-2 h-6">
+            <Switch
+              id="highlight-delayed"
+              checked={filters.highlightDelayed}
+              onCheckedChange={(checked) => updateFilter("highlightDelayed", checked)}
+              className="data-[state=checked]:bg-orange-500"
+            />
+            <Label htmlFor="highlight-delayed" className="text-sm cursor-pointer leading-none">
+              Delayed
+            </Label>
+          </div>
+          <div className="flex items-center gap-2 h-6">
+            <Switch
+              id="highlight-in-approval"
+              checked={filters.highlightInApproval}
+              onCheckedChange={(checked) => updateFilter("highlightInApproval", checked)}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <Label htmlFor="highlight-in-approval" className="text-sm cursor-pointer leading-none">
+              In Approval
+            </Label>
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  // Mobile: Show filter button that opens sheet
+  if (isMobile) {
+    return (
+      <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+        <SheetTrigger asChild>
+          <Button variant="outline" className="w-full gap-2 h-11">
+            <Filter className="h-4 w-4" />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="ml-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="flex items-center justify-between">
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    resetViewFilters();
+                    resetHighlights();
+                  }}
+                  className="text-destructive"
+                >
+                  Clear All
+                </Button>
+              )}
+            </SheetTitle>
+          </SheetHeader>
+          <FilterContent />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Card className="p-4 md:p-6">
+      <FilterContent />
     </Card>
   );
 };

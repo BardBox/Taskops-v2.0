@@ -15,12 +15,14 @@ import { BadgeDropdown } from "./BadgeDropdown";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users, Plus, Settings } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { DashboardCustomization, DashboardPreferences } from "./DashboardCustomization";
 import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Task {
   id: string;
@@ -105,9 +107,17 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [taskAppreciations, setTaskAppreciations] = useState<Map<string, boolean>>(new Map());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">("table");
+  const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">(isMobile ? "cards" : "table");
   const [notifiedTaskIds, setNotifiedTaskIds] = useState<Set<string>>(new Set());
   const [collaboratorsExpanded, setCollaboratorsExpanded] = useState(false);
+
+  // Update view mode when mobile state changes
+  useEffect(() => {
+    if (isMobile && viewMode === "table") {
+      setViewMode("cards");
+    }
+  }, [isMobile]);
   
   const { statuses, urgencies } = useStatusUrgency();
 
@@ -691,48 +701,69 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   const filteredTasks = getFilteredAndSortedTasks();
 
+  const viewModeOptions = [
+    { value: "table", label: "Task Diary", icon: List },
+    { value: "cards", label: "White Board", icon: LayoutGrid },
+    { value: "kanban", label: "Sticky Notes", icon: Columns },
+    { value: "gantt", label: "Calendar", icon: GanttChartSquare },
+  ];
+
   return (
     <>
       {/* View Toggle and Bulk Actions Bar */}
-      <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
-        <div className="bg-muted/50 rounded-lg p-1 grid grid-cols-4 gap-1 w-full max-w-3xl">
-          <Button
-            variant={viewMode === "table" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("table")}
-            className="gap-2"
-          >
-            <List className="h-4 w-4" />
-            Task Diary
-          </Button>
-          <Button
-            variant={viewMode === "cards" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("cards")}
-            className="gap-2"
-          >
-            <LayoutGrid className="h-4 w-4" />
-            White Board
-          </Button>
-          <Button
-            variant={viewMode === "kanban" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("kanban")}
-            className="gap-2"
-          >
-            <Columns className="h-4 w-4" />
-            Sticky Notes
-          </Button>
-          <Button
-            variant={viewMode === "gantt" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("gantt")}
-            className="gap-2"
-          >
-            <GanttChartSquare className="h-4 w-4" />
-            Calendar
-          </Button>
-        </div>
+      <div className="mb-4 md:mb-6 flex items-center justify-between gap-2 md:gap-4 flex-wrap">
+        {/* Mobile: Dropdown | Desktop: Button Grid */}
+        {isMobile ? (
+          <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
+            <SelectTrigger className="w-full max-w-[200px] h-10">
+              <SelectValue>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const current = viewModeOptions.find(o => o.value === viewMode);
+                    const Icon = current?.icon || List;
+                    return (
+                      <>
+                        <Icon className="h-4 w-4" />
+                        <span>{current?.label}</span>
+                      </>
+                    );
+                  })()}
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {viewModeOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <SelectItem key={option.value} value={option.value}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span>{option.label}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="bg-muted/50 rounded-lg p-1 grid grid-cols-4 gap-1 w-full max-w-3xl">
+            {viewModeOptions.map((option) => {
+              const Icon = option.icon;
+              return (
+                <Button
+                  key={option.value}
+                  variant={viewMode === option.value ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode(option.value as typeof viewMode)}
+                  className="gap-2"
+                >
+                  <Icon className="h-4 w-4" />
+                  {option.label}
+                </Button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           {canCreateTasks && onCreateTask && (
@@ -755,17 +786,18 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         </div>
 
         {selectedTaskIds.size > 0 && userRole === "project_owner" && (
-          <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-2 animate-fade-in">
-            <span className="text-sm font-medium">
+          <div className="flex items-center gap-2 md:gap-3 bg-primary/5 border border-primary/20 rounded-lg px-3 md:px-4 py-2 animate-fade-in w-full md:w-auto">
+            <span className="text-xs md:text-sm font-medium">
               {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
             </span>
             <Button
               variant="destructive"
               size="sm"
               onClick={handleDeleteSelected}
+              className="text-xs md:text-sm"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Selected
+              <Trash2 className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Delete</span>
             </Button>
           </div>
         )}
