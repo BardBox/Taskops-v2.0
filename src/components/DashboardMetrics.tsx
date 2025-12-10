@@ -332,116 +332,85 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
   const inProgressRate = metrics.total > 0 ? (metrics.doing / metrics.total) * 100 : 0;
 
   return (
-    <div className="grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
       <Card className={cn(
-        "hover-lift hover-glow overflow-hidden relative",
+        "hover-lift overflow-hidden relative",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
-          <CardTitle className="text-xs md:text-sm font-medium">Total Tasks</CardTitle>
-          <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
-        </CardHeader>
-        <CardContent className="p-3 md:p-6 pt-0">
-          <div className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">
-            <AnimatedCounter value={metrics.total} />
+        <CardContent className="p-2 sm:p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Total Tasks</p>
+              <p className="text-lg font-bold leading-none"><AnimatedCounter value={metrics.total} /></p>
+            </div>
           </div>
-          {collaboratedCount > 0 && (
-            <p className="text-[10px] md:text-xs text-muted-foreground mb-1 md:mb-2">
-              {collaboratedCount} as collaborator
-            </p>
-          )}
-          <div className="flex items-center gap-2 md:gap-3">
-            <CircularProgress 
-              percentage={completionRate} 
-              size={48} 
-              strokeWidth={5}
-              color="hsl(var(--primary))"
-            />
-            <p className="text-[10px] md:text-xs text-muted-foreground">
-              {metrics.approved} approved
-            </p>
+          <div className="text-right">
+            <p className="text-xs font-semibold text-primary">{Math.round(completionRate)}%</p>
+            <p className="text-[9px] text-muted-foreground">{metrics.approved} done</p>
           </div>
         </CardContent>
       </Card>
 
       <Card className={cn(
-        "hover-lift hover-glow overflow-hidden relative",
+        "hover-lift overflow-hidden relative",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-500/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
-          <CardTitle className="text-xs md:text-sm font-medium">In Progress</CardTitle>
-          <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-500 transition-transform duration-300 group-hover:scale-110" />
-        </CardHeader>
-        <CardContent className="p-3 md:p-6 pt-0">
-          <div className="text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-blue-600">
-            <AnimatedCounter value={metrics.doing} />
+        <CardContent className="p-2 sm:p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground">In Progress</p>
+              <p className="text-lg font-bold leading-none text-blue-600"><AnimatedCounter value={metrics.doing} /></p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 md:gap-3">
-            <CircularProgress 
-              percentage={inProgressRate} 
-              size={48} 
-              strokeWidth={5}
-              color="hsl(210 100% 50%)"
-            />
-            <p className="text-[10px] md:text-xs text-muted-foreground">
-              {metrics.todo} to start
-            </p>
+          <div className="text-right">
+            <p className="text-xs font-semibold text-muted-foreground">{Math.round(inProgressRate)}%</p>
+            <p className="text-[9px] text-muted-foreground">{metrics.todo} to start</p>
           </div>
         </CardContent>
       </Card>
 
       <Card className={cn(
-        "hover-lift hover-glow overflow-hidden relative",
+        "hover-lift overflow-hidden relative",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-green-500/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
-          <CardTitle className="text-xs md:text-sm font-medium">Completed</CardTitle>
-          <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-500 transition-transform duration-300 group-hover:scale-110" />
-        </CardHeader>
-        <CardContent className="p-3 md:p-6 pt-0">
-          <div className="text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-green-600">
-            <AnimatedCounter value={metrics.done} />
+        <CardContent className="p-2 sm:p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Completed</p>
+              <p className="text-lg font-bold leading-none text-green-600"><AnimatedCounter value={metrics.done} /></p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
-                <CheckCircle2 className="h-5 w-5 md:h-8 md:w-8 text-green-600" />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <p className="text-xs md:text-sm font-semibold text-orange-600">
-                <AnimatedCounter value={metrics.awaitingApproval} />
-              </p>
-              <p className="text-[10px] md:text-xs text-muted-foreground">
-                Awaiting
-              </p>
-            </div>
+          <div className="text-right">
+            <p className="text-xs font-semibold text-orange-500">{metrics.awaitingApproval}</p>
+            <p className="text-[9px] text-muted-foreground">awaiting</p>
           </div>
         </CardContent>
       </Card>
 
       <Card className={cn(
-        "hover-lift hover-glow overflow-hidden relative border-destructive/20",
+        "hover-lift overflow-hidden relative border-destructive/20",
         "before:absolute before:inset-0 before:bg-gradient-to-br before:from-destructive/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
       )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
-          <CardTitle className="text-xs md:text-sm font-medium">Delayed</CardTitle>
-          <AlertCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-destructive animate-pulse-subtle" />
-        </CardHeader>
-        <CardContent className="p-3 md:p-6 pt-0">
-          <div className="text-2xl md:text-3xl font-bold text-destructive mb-1 md:mb-2">
-            <AnimatedCounter value={metrics.delayed} />
-          </div>
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center animate-pulse-subtle">
-                <AlertCircle className="h-5 w-5 md:h-8 md:w-8 text-destructive" />
-              </div>
+        <CardContent className="p-2 sm:p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-4 w-4 text-destructive animate-pulse-subtle" />
             </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground">
-              Past deadline
-            </p>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Delayed</p>
+              <p className="text-lg font-bold leading-none text-destructive"><AnimatedCounter value={metrics.delayed} /></p>
+            </div>
           </div>
+          <p className="text-[9px] text-muted-foreground">past deadline</p>
         </CardContent>
       </Card>
     </div>
