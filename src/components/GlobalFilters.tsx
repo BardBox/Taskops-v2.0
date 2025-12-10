@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { RotateCcw, Filter, X } from "lucide-react";
+import { RotateCcw, Filter, ChevronDown } from "lucide-react";
 
 export interface FilterState {
   year: string;
@@ -66,6 +67,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   const [userRole, setUserRole] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useIsMobile();
   
   const { statuses, urgencies } = useStatusUrgency();
@@ -346,7 +348,7 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
       {/* View Filters Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">View Filters</h3>
+          <h3 className="text-sm font-semibold">{isMobile ? 'View Filters' : ''}</h3>
           <button
             onClick={resetViewFilters}
             className="h-5 w-5 rounded-full bg-background border border-foreground/20 hover:bg-foreground flex items-center justify-center transition-all active:scale-90 active:rotate-180 hover:rotate-12 group"
@@ -608,8 +610,26 @@ export const GlobalFilters = ({ filters, onFiltersChange, compact = false }: Glo
   }
 
   return (
-    <Card className="p-4 md:p-6">
-      <FilterContent />
-    </Card>
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <Card className="p-3 md:p-4">
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between text-left">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-semibold">View Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </div>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <FilterContent />
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };

@@ -157,73 +157,18 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
     .toUpperCase() || "U";
 
   return (
-    <header className="sticky top-0 z-50 h-14 border-b bg-background shadow-sm flex items-center px-2 sm:px-4">
-      {/* Left Section: Profile - hidden on mobile */}
+    <header className="sticky top-0 z-50 h-14 border-b bg-background shadow-sm flex items-center justify-between px-2 sm:px-4">
+      {/* Left Section: Status & Mood icons */}
       <motion.div 
-        className="hidden sm:flex items-center gap-3 cursor-pointer flex-shrink-0"
-        onClick={() => navigate("/profile")}
+        className="flex items-center gap-1 flex-shrink-0"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
       >
-        <motion.div
-          whileHover={{ rotate: [0, -5, 5, -5, 0] }}
-          transition={{ duration: 0.5 }}
-        >
-          <Avatar className="h-9 w-9 ring-2 ring-primary/20 transition-all hover:ring-primary/40">
-            {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-        </motion.div>
-        <div className="hidden md:flex flex-col">
-          <span className="text-sm font-medium">{userName}</span>
-          {userRole && (
-            <span className="text-xs text-muted-foreground capitalize">
-              {userRole.replace(/_/g, " ")}
-            </span>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Center Section: Logo - flex-1 on mobile to center properly */}
-      <div className="flex-1 sm:absolute sm:left-1/2 sm:-translate-x-1/2 sm:transform flex justify-center sm:justify-start">
-        <motion.div
-          className="flex items-center gap-1.5 sm:gap-2 cursor-pointer"
-          onClick={() => navigate("/dashboard")}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-          whileHover={{ scale: 1.05 }}
-        >
-          <img
-            src="/bardbox-logo.png"
-            alt="BardBox"
-            className="h-7 sm:h-8 w-auto object-contain"
-          />
-          <h1 className="text-sm sm:text-base font-semibold whitespace-nowrap">
-            TaskOPS<sup className="text-[10px] sm:text-xs">™</sup>
-          </h1>
-          {showRoleBadge && userRole && (
-            <div className="hidden sm:block">
-              <RoleBadge role={userRole as "project_owner" | "project_manager" | "team_member"} />
-            </div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Right Section: Status/Mood, Notifications & Burger Menu */}
-      <motion.div 
-        className="flex items-center gap-1 sm:gap-2 flex-shrink-0"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-      >
-        {/* Status Selector - icon only on mobile */}
+        {/* Status Selector */}
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" className="h-9 w-9 sm:w-auto px-2 gap-2">
+            <Button variant="ghost" className="h-8 px-2 gap-1.5">
               {(() => {
                 const StatusIcon = getStatusIcon(status);
                 return (
@@ -239,10 +184,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                   />
                 );
               })()}
-              <span className="text-xs text-muted-foreground/60 hidden md:block">{status || "Set Status"}</span>
+              <span className="text-xs text-muted-foreground hidden sm:inline">{status || "Status"}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-2 bg-background border shadow-lg z-[60]" align="end">
+          <PopoverContent className="w-48 p-2 bg-background border shadow-lg z-[60]" align="start">
             <div className="space-y-1">
               {statuses.map((s) => (
                 <Button
@@ -259,6 +204,66 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             </div>
           </PopoverContent>
         </Popover>
+
+        {/* Mood Selector */}
+        <Popover open={moodOpen} onOpenChange={setMoodOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" className="h-8 px-2 gap-1.5">
+              {mood ? <span className="text-base">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4" />}
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                {mood ? mood.split(" ")[1] || "" : "Mood"}
+              </span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-[60]" align="start">
+            <div className="grid grid-cols-2 gap-1">
+              {moods.map((m) => (
+                <Button
+                  key={m}
+                  variant="ghost"
+                  size="sm"
+                  className="justify-center text-sm h-auto py-2.5 px-2 whitespace-nowrap"
+                  onClick={() => updateMood(m)}
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </motion.div>
+
+      {/* Center Section: Logo */}
+      <motion.div
+        className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 cursor-pointer"
+        onClick={() => navigate("/dashboard")}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+        whileHover={{ scale: 1.05 }}
+      >
+        <img
+          src="/bardbox-logo.png"
+          alt="BardBox"
+          className="h-7 sm:h-8 w-auto object-contain"
+        />
+        <h1 className="text-sm sm:text-base font-semibold whitespace-nowrap">
+          TaskOPS<sup className="text-[10px] sm:text-xs">™</sup>
+        </h1>
+        {showRoleBadge && userRole && (
+          <div className="hidden sm:block">
+            <RoleBadge role={userRole as "project_owner" | "project_manager" | "team_member"} />
+          </div>
+        )}
+      </motion.div>
+
+      {/* Right Section: Notifications & Burger Menu */}
+      <motion.div 
+        className="flex items-center gap-1 flex-shrink-0"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+      >
 
         {/* Mood Selector - icon only on mobile */}
         <Popover open={moodOpen} onOpenChange={setMoodOpen}>
