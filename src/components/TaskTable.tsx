@@ -711,7 +711,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   return (
     <>
       {/* View Toggle and Bulk Actions Bar - Sticky */}
-      <div className="sticky top-[5.5rem] z-30 bg-muted/50 py-2 -mx-3 md:-mx-4 px-3 md:px-4 mb-2 flex items-center justify-between gap-2 md:gap-4 flex-wrap shadow-sm">
+      <div className="sticky top-[5.5rem] z-30 bg-background py-2 -mx-3 md:-mx-4 px-3 md:px-4 mb-2 flex items-center justify-between gap-2 md:gap-4 flex-wrap border-b border-border/30">
         {/* Mobile: Dropdown | Desktop: Button Grid */}
         {isMobile ? (
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
@@ -807,8 +807,8 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       {viewMode === "table" && (
         <div className="rounded-lg border bg-card animate-fade-in">
           <Table>
-            <TableHeader className="sticky top-[8.5rem] z-20 bg-muted/70 shadow-sm [&_tr]:border-b-0">
-              <TableRow className="hover:bg-transparent">
+            <TableHeader className="sticky top-[8.5rem] z-20 bg-card shadow-sm">
+              <TableRow>
                 {userRole === "project_owner" && (
                   <TableHead className="w-12">
                     <Checkbox
