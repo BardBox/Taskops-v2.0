@@ -146,7 +146,7 @@ const Dashboard = () => {
         )}
 
         {preferences.showQuickFilters && (
-          <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
+          <div className="sticky top-14 z-40 bg-muted/50 py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 shadow-sm">
             <div className="flex items-center justify-center overflow-hidden">
               <QuickFilters 
                 activeFilters={filters.quickFilter} 
