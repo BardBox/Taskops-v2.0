@@ -157,34 +157,39 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
     .toUpperCase() || "U";
 
   return (
-    <header className="sticky top-0 z-50 h-14 border-b bg-background shadow-sm flex items-center justify-between px-2 sm:px-4">
+    <header className="sticky top-0 z-50 h-14 border-b border-border/50 bg-gradient-to-r from-background via-background to-background shadow-sm flex items-center justify-between px-2 sm:px-4">
       {/* Left Section: User Profile, Status & Mood icons */}
       <motion.div 
-        className="flex items-center gap-2 flex-shrink-0"
+        className="flex items-center gap-3 flex-shrink-0"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         {/* User Profile - clickable to open profile */}
-        <div 
-          className="hidden md:flex items-center gap-2 pr-3 border-r border-border/50 cursor-pointer hover:opacity-80 transition-opacity"
+        <motion.div 
+          className="hidden md:flex items-center gap-3 pr-4 border-r border-border/30 cursor-pointer group"
           onClick={() => navigate("/profile")}
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={avatarUrl} alt={userName} />
-            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-11 w-11 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
+              <AvatarImage src={avatarUrl} alt={userName} />
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-sm font-bold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${getStatusDotColor(status)}`} />
+          </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium leading-tight">{userName || "User"}</span>
+            <span className="text-sm font-semibold leading-tight group-hover:text-primary transition-colors">{userName || "User"}</span>
             {userRole && (
-              <span className="text-[10px] text-muted-foreground capitalize">
+              <span className="text-[10px] text-muted-foreground capitalize font-medium">
                 {userRole.replace(/_/g, ' ')}
               </span>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Status Selector */}
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
@@ -256,26 +261,34 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
 
       {/* Center Section: Logo */}
       <motion.div
-        className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 cursor-pointer"
+        className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 cursor-pointer group"
         onClick={() => navigate("/dashboard")}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.03 }}
       >
-        <img
-          src="/bardbox-logo.png"
-          alt="BardBox"
-          className="h-7 sm:h-8 w-auto object-contain"
-        />
-        <h1 className="text-sm sm:text-base font-semibold whitespace-nowrap">
-          TaskOPS<sup className="text-[10px] sm:text-xs">™</sup>
-        </h1>
-        {showRoleBadge && userRole && (
-          <div className="hidden sm:block">
-            <RoleBadge role={userRole as "project_owner" | "project_manager" | "team_member"} />
-          </div>
-        )}
+        <motion.div 
+          className="relative"
+          whileHover={{ rotate: [0, -5, 5, 0] }}
+          transition={{ duration: 0.5 }}
+        >
+          <img
+            src="/bardbox-logo.png"
+            alt="BardBox"
+            className="h-8 sm:h-9 w-auto object-contain drop-shadow-sm"
+          />
+        </motion.div>
+        <div className="flex flex-col items-start">
+          <h1 className="text-sm sm:text-base font-bold whitespace-nowrap tracking-tight group-hover:text-primary transition-colors">
+            TaskOPS<sup className="text-[8px] sm:text-[10px] text-primary">™</sup>
+          </h1>
+          {showRoleBadge && userRole && (
+            <div className="hidden sm:block -mt-0.5">
+              <RoleBadge role={userRole as "project_owner" | "project_manager" | "team_member"} />
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Right Section: Notifications & Burger Menu */}

@@ -807,8 +807,8 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       {viewMode === "table" && (
         <div className="rounded-lg border bg-card animate-fade-in">
           <Table>
-            <TableHeader className="sticky top-[8.5rem] z-20 bg-card shadow-sm">
-              <TableRow>
+            <TableHeader className="sticky top-[8.5rem] z-20 bg-card border-b-2 border-primary/20 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]">
+              <TableRow className="hover:bg-transparent">
                 {userRole === "project_owner" && (
                   <TableHead className="w-12">
                     <Checkbox
@@ -1144,7 +1144,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       </TableCell>
                     )}
                     {columns.status && (
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+                      <TableCell onClick={(e) => e.stopPropagation()} className="bg-transparent">
                         {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
                           <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
                             {task.status}
@@ -1164,7 +1164,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       </TableCell>
                     )}
                       {columns.urgency && (
-                        <TableCell onClick={(e) => e.stopPropagation()}>
+                        <TableCell onClick={(e) => e.stopPropagation()} className="bg-transparent">
                           {userRole === "team_member" ? (
                             <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
                               {task.urgency}
