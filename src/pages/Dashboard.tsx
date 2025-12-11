@@ -146,7 +146,7 @@ const Dashboard = () => {
         )}
 
         {preferences.showQuickFilters && (
-          <div className="sticky top-14 z-40 bg-background py-2 md:py-4 -mx-3 md:-mx-4 px-3 md:px-4">
+          <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
             <div className="flex items-center justify-center overflow-hidden">
               <QuickFilters 
                 activeFilters={filters.quickFilter} 
@@ -158,7 +158,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-4 mt-2">
           <TaskTable
             filters={filters} 
             userRole={userRole} 
