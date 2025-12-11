@@ -264,34 +264,6 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
       >
-
-        {/* Mood Selector - icon only on mobile */}
-        <Popover open={moodOpen} onOpenChange={setMoodOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" className="h-9 w-9 sm:w-auto px-2 gap-2">
-              {mood ? <span className="text-base">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4" />}
-              <span className="text-xs text-muted-foreground/60 hidden md:block">
-                {mood ? mood.split(" ")[1] || "Mood" : "Set Mood"}
-              </span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-56 p-2 bg-background border shadow-lg z-[60]" align="end">
-            <div className="grid grid-cols-2 gap-1">
-              {moods.map((m) => (
-                <Button
-                  key={m}
-                  variant="ghost"
-                  size="sm"
-                  className="justify-center text-sm h-auto py-2.5 px-2 whitespace-nowrap"
-                  onClick={() => updateMood(m)}
-                >
-                  {m}
-                </Button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-
         <motion.div
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -315,7 +287,24 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             <SheetHeader>
               <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
-            <div className="flex flex-col gap-2 mt-6">
+            
+            {/* User Profile Section */}
+            <div className="flex items-center gap-3 py-4 border-b mb-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={avatarUrl} alt={userName} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-medium text-sm">{userName || "User"}</span>
+                {userRole && (
+                  <RoleBadge role={userRole as "project_owner" | "project_manager" | "team_member"} />
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Button
                 variant="ghost"
                 className={`justify-start ${
