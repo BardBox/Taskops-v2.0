@@ -1144,7 +1144,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       </TableCell>
                     )}
                     {columns.status && (
-                      <TableCell onClick={(e) => e.stopPropagation()} className="bg-transparent">
+                      <TableCell onClick={(e) => e.stopPropagation()} style={{ background: 'transparent' }}>
                         {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
                           <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
                             {task.status}
@@ -1163,22 +1163,22 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         )}
                       </TableCell>
                     )}
-                      {columns.urgency && (
-                        <TableCell onClick={(e) => e.stopPropagation()} className="bg-transparent">
-                          {userRole === "team_member" ? (
-                            <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
-                              {task.urgency}
-                            </Badge>
-                          ) : (
-                            <BadgeDropdown
-                              value={task.urgency}
-                              options={urgencies}
-                              onChange={(value) => handleUrgencyChange(task.id, value)}
-                              disabled={!canEdit(task)}
-                            />
-                          )}
-                        </TableCell>
-                      )}
+                    {columns.urgency && (
+                      <TableCell onClick={(e) => e.stopPropagation()} style={{ background: 'transparent' }}>
+                        {userRole === "team_member" ? (
+                          <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
+                            {task.urgency}
+                          </Badge>
+                        ) : (
+                          <BadgeDropdown
+                            value={task.urgency}
+                            options={urgencies}
+                            onChange={(value) => handleUrgencyChange(task.id, value)}
+                            disabled={!canEdit(task)}
+                          />
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
