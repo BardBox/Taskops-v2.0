@@ -257,13 +257,31 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         )}
       </motion.div>
 
-      {/* Right Section: Notifications & Burger Menu */}
+      {/* Right Section: User Profile, Notifications & Burger Menu */}
       <motion.div 
-        className="flex items-center gap-1 flex-shrink-0"
+        className="flex items-center gap-2 flex-shrink-0"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
       >
+        {/* User Profile - visible on desktop */}
+        <div className="hidden md:flex items-center gap-2 pr-2 border-r border-border/50">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={avatarUrl} alt={userName} />
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="text-xs font-medium leading-tight">{userName || "User"}</span>
+            {userRole && (
+              <span className="text-[10px] text-muted-foreground capitalize">
+                {userRole.replace(/_/g, ' ')}
+              </span>
+            )}
+          </div>
+        </div>
+
         <motion.div
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
