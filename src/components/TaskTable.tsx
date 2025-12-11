@@ -710,8 +710,8 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   return (
     <>
-      {/* View Toggle and Bulk Actions Bar */}
-      <div className="mb-4 md:mb-6 flex items-center justify-between gap-2 md:gap-4 flex-wrap">
+      {/* View Toggle and Bulk Actions Bar - Sticky */}
+      <div className="sticky top-14 z-30 bg-background py-2 -mx-3 md:-mx-4 px-3 md:px-4 mb-4 md:mb-6 flex items-center justify-between gap-2 md:gap-4 flex-wrap">
         {/* Mobile: Dropdown | Desktop: Button Grid */}
         {isMobile ? (
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
@@ -807,7 +807,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       {viewMode === "table" && (
         <div className="rounded-lg border bg-card overflow-hidden animate-fade-in">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-[7.5rem] z-20 bg-card">
               <TableRow>
                 {userRole === "project_owner" && (
                   <TableHead className="w-12">
@@ -818,66 +818,60 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.date && (
-                  <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("date")}>
+                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("date")}>
                     <div className="flex items-center gap-2">
                       Date
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "date" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "date" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "date" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="min-w-[180px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("task")}>
+                <TableHead className="min-w-[180px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("task")}>
                   <div className="flex items-center gap-2">
                     Task
-                    <div className="flex flex-col">
-                      <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "task" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      <ArrowDown className={`h-3 w-3 ${sortField === "task" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                    </div>
+                    {sortField === "task" && (
+                      sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                    )}
                   </div>
                 </TableHead>
                 {columns.client && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("client")}>
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("client")}>
                     <div className="flex items-center gap-2">
                       Client
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "client" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "client" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "client" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
                 {columns.project && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("project")}>
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("project")}>
                     <div className="flex items-center gap-2">
                       Project
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "project" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "project" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "project" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
                 {columns.taskOwner && (
-                  <TableHead className="w-[130px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assignee")}>
+                  <TableHead className="w-[130px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("assignee")}>
                     <div className="flex items-center gap-2">
                       Task Owner
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assignee" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "assignee" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "assignee" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
                 {columns.pm && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("assigned_by")}>
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("assigned_by")}>
                     <div className="flex items-center gap-2">
                       PM
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "assigned_by" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "assigned_by" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "assigned_by" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
@@ -901,57 +895,52 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.deadline && (
-                  <TableHead className="w-[95px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("deadline")}>
+                  <TableHead className="w-[95px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("deadline")}>
                     <div className="flex items-center gap-2">
                       Deadline
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "deadline" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "deadline" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "deadline" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
                 {columns.submission && (
-                  <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("submission")}>
+                  <TableHead className="w-[100px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("submission")}>
                     <div className="flex items-center gap-2">
                       Submission
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "submission" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "submission" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "submission" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
                 {columns.delay && (
-                  <TableHead className="w-[75px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("delay")}>
+                  <TableHead className="w-[75px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("delay")}>
                     <div className="flex items-center gap-2">
                       Delay
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "delay" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "delay" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "delay" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
                 {columns.status && (
-                  <TableHead className="w-[105px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("status")}>
+                  <TableHead className="w-[105px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("status")}>
                     <div className="flex items-center gap-2">
                       Status
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "status" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "status" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "status" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
                 {columns.urgency && (
-                  <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => toggleSort("urgency")}>
+                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("urgency")}>
                     <div className="flex items-center gap-2">
                       Urgency
-                      <div className="flex flex-col">
-                        <ArrowUp className={`h-3 w-3 -mb-1 ${sortField === "urgency" && sortDirection === "asc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <ArrowDown className={`h-3 w-3 ${sortField === "urgency" && sortDirection === "desc" ? "text-primary" : "text-muted-foreground/40"}`} />
-                      </div>
+                      {sortField === "urgency" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
                     </div>
                   </TableHead>
                 )}
