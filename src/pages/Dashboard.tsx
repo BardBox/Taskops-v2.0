@@ -146,18 +146,20 @@ const Dashboard = () => {
         )}
 
         {preferences.showQuickFilters && (
-          <div className="flex items-center justify-center py-2 md:py-4 overflow-hidden">
-            <QuickFilters 
-              activeFilters={filters.quickFilter} 
-              onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
-              userRole={userRole}
-              userId={user?.id}
-            />
+          <div className="sticky top-14 z-40 bg-background py-2 md:py-4 -mx-3 md:-mx-4 px-3 md:px-4">
+            <div className="flex items-center justify-center overflow-hidden">
+              <QuickFilters 
+                activeFilters={filters.quickFilter} 
+                onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
+                userRole={userRole}
+                userId={user?.id}
+              />
+            </div>
           </div>
         )}
 
         <div className="space-y-4">
-          <TaskTable 
+          <TaskTable
             filters={filters} 
             userRole={userRole} 
             userId={user?.id || ""}
