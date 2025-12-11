@@ -313,8 +313,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                <Menu className="h-5 w-5" />
+              <Button variant="ghost" size="sm" className="relative">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary">
+                  <Menu className="h-6 w-6 text-secondary" strokeWidth={3} />
+                </div>
               </Button>
             </motion.div>
           </SheetTrigger>
