@@ -805,12 +805,12 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
       {/* Task Diary View */}
       {viewMode === "table" && (
-        <div className="rounded-lg border bg-card animate-fade-in">
+        <div className="rounded-lg border bg-card animate-fade-in overflow-x-auto">
           <Table>
-            <TableHeader className="sticky top-[8.5rem] z-20 bg-card border-b-2 border-primary/20 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]">
-              <TableRow className="hover:bg-transparent">
+            <TableHeader className="sticky top-0 z-20">
+              <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 shadow-[0_4px_8px_-2px_rgba(0,0,0,0.15)]">
                 {userRole === "project_owner" && (
-                  <TableHead className="w-12">
+                  <TableHead className="w-12 bg-card">
                     <Checkbox
                       checked={selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0}
                       onCheckedChange={handleSelectAll}
@@ -818,7 +818,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.date && (
-                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("date")}>
+                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("date")}>
                     <div className="flex items-center gap-2">
                       Date
                       {sortField === "date" && (
@@ -827,7 +827,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="min-w-[180px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("task")}>
+                <TableHead className="min-w-[180px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("task")}>
                   <div className="flex items-center gap-2">
                     Task
                     {sortField === "task" && (
@@ -836,7 +836,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </div>
                 </TableHead>
                 {columns.client && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("client")}>
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("client")}>
                     <div className="flex items-center gap-2">
                       Client
                       {sortField === "client" && (
@@ -846,7 +846,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.project && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("project")}>
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("project")}>
                     <div className="flex items-center gap-2">
                       Project
                       {sortField === "project" && (
@@ -856,7 +856,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.taskOwner && (
-                  <TableHead className="w-[130px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("assignee")}>
+                  <TableHead className="w-[130px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assignee")}>
                     <div className="flex items-center gap-2">
                       Task Owner
                       {sortField === "assignee" && (
@@ -866,7 +866,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.pm && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("assigned_by")}>
+                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assigned_by")}>
                     <div className="flex items-center gap-2">
                       PM
                       {sortField === "assigned_by" && (
@@ -876,7 +876,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.collaborators && (
-                  <TableHead className="w-10 text-center">
+                  <TableHead className="w-10 text-center bg-card">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -895,7 +895,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.deadline && (
-                  <TableHead className="w-[95px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("deadline")}>
+                  <TableHead className="w-[95px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("deadline")}>
                     <div className="flex items-center gap-2">
                       Deadline
                       {sortField === "deadline" && (
@@ -905,7 +905,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.submission && (
-                  <TableHead className="w-[100px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("submission")}>
+                  <TableHead className="w-[100px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("submission")}>
                     <div className="flex items-center gap-2">
                       Submission
                       {sortField === "submission" && (
@@ -915,7 +915,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.delay && (
-                  <TableHead className="w-[75px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("delay")}>
+                  <TableHead className="w-[75px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("delay")}>
                     <div className="flex items-center gap-2">
                       Delay
                       {sortField === "delay" && (
@@ -925,7 +925,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.status && (
-                  <TableHead className="w-[105px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("status")}>
+                  <TableHead className="w-[105px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("status")}>
                     <div className="flex items-center gap-2">
                       Status
                       {sortField === "status" && (
@@ -935,7 +935,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.urgency && (
-                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleSort("urgency")}>
+                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("urgency")}>
                     <div className="flex items-center gap-2">
                       Urgency
                       {sortField === "urgency" && (
@@ -1144,7 +1144,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       </TableCell>
                     )}
                     {columns.status && (
-                      <TableCell onClick={(e) => e.stopPropagation()} style={{ background: 'transparent' }}>
+                      <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent">
                         {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
                           <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
                             {task.status}
@@ -1164,7 +1164,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       </TableCell>
                     )}
                     {columns.urgency && (
-                      <TableCell onClick={(e) => e.stopPropagation()} style={{ background: 'transparent' }}>
+                      <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent">
                         {userRole === "team_member" ? (
                           <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
                             {task.urgency}
