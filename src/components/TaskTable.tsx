@@ -805,7 +805,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
       {/* Task Diary View */}
       {viewMode === "table" && (
-        <div className="rounded-lg border bg-card animate-fade-in overflow-x-auto max-h-[calc(100vh-280px)]">
+        <div className="rounded-lg border bg-card animate-fade-in overflow-x-auto">
           <Table>
             <TableHeader className="sticky top-0 z-20 bg-card">
               <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]">
