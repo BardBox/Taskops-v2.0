@@ -805,10 +805,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
       {/* Task Diary View */}
       {viewMode === "table" && (
-        <div className="rounded-lg border bg-card animate-fade-in overflow-auto max-h-[calc(100vh-280px)]">
+        <div className="rounded-lg border bg-card animate-fade-in overflow-x-auto">
           <Table>
-            <TableHeader className="sticky top-0 z-20 bg-card">
-              <TableRow className="hover:bg-transparent border-b-2 border-primary/30 shadow-[0_6px_12px_-4px_rgba(0,0,0,0.2)]">
+            <TableHeader className="sticky top-0 z-20">
+              <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 shadow-[0_4px_8px_-2px_rgba(0,0,0,0.15)]">
                 {userRole === "project_owner" && (
                   <TableHead className="w-12 bg-card">
                     <Checkbox
