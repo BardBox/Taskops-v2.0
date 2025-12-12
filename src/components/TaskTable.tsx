@@ -808,7 +808,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         <div className="rounded-lg border bg-card animate-fade-in overflow-auto max-h-[70vh]">
           <Table>
             <TableHeader className="sticky top-0 z-20 bg-card">
-              <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]">
+              <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
                 {userRole === "project_owner" && (
                   <TableHead className="w-12 bg-card">
                     <Checkbox
@@ -935,7 +935,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.urgency && (
-                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("urgency")}>
+                  <TableHead className="min-w-[90px] w-full cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("urgency")}>
                     <div className="flex items-center gap-2">
                       Urgency
                       {sortField === "urgency" && (
