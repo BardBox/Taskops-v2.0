@@ -923,6 +923,70 @@ export type Database = {
           },
         ]
       }
+      task_time_tracking: {
+        Row: {
+          created_at: string
+          id: string
+          last_active_at: string | null
+          paused_at: string | null
+          started_at: string | null
+          stopped_at: string | null
+          task_id: string
+          total_seconds: number
+          tracking_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_active_at?: string | null
+          paused_at?: string | null
+          started_at?: string | null
+          stopped_at?: string | null
+          task_id: string
+          total_seconds?: number
+          tracking_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_active_at?: string | null
+          paused_at?: string | null
+          started_at?: string | null
+          stopped_at?: string | null
+          task_id?: string
+          total_seconds?: number
+          tracking_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_time_tracking_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "taskops_filtered_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_time_tracking_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_time_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           actual_delivery: string | null

@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText, Maximize2, Minimize2, FileEdit, Copy } from "lucide-react";
+import { Paperclip, Send, X, ExternalLink, Edit2, Plus, Trash2, ThumbsUp, Loader2, Pin, Eye, Smile, Lock, Wand2, User, UsersRound, Activity, Zap, MessageSquare, Clock, GitBranch, FileText, Maximize2, Minimize2, FileEdit, Copy, Timer } from "lucide-react";
 import { TaskTimeline } from "@/components/TaskTimeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -30,6 +30,8 @@ import { RequestRevisionDialog } from "@/components/RequestRevisionDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MentionInput } from "@/components/hive/MentionInput";
 import { MessageWithMentions } from "@/components/hive/MessageWithMentions";
+import { useTaskTimeTracking } from "@/hooks/useTaskTimeTracking";
+import { TimeTrackingBadge } from "@/components/TimeTrackingBadge";
 
 interface Task {
   id: string;
@@ -139,6 +141,9 @@ export function TaskDetailDialog({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const typingChannelRef = useRef<any>(null);
+
+  // Time tracking hook
+  const { records: timeRecords, isLoading: timeLoading } = useTaskTimeTracking({ taskId: taskId || undefined });
 
   const reactionEmojis = [
     { type: 'thumbs_up', emoji: '👍', label: 'Like' },
@@ -1096,6 +1101,19 @@ export function TaskDetailDialog({
                 deadline={task.deadline || new Date().toISOString()}
                 dateSubmitted={task.actual_delivery}
               />
+
+              {/* Time Tracking Display */}
+              {timeRecords.length > 0 && (
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border">
+                  <div className="flex items-center gap-2">
+                    <Timer className="h-4 w-4 text-primary" />
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                      Time Tracked
+                    </Label>
+                  </div>
+                  <TimeTrackingBadge records={timeRecords} variant="card" showStatus />
+                </div>
+              )}
               
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
