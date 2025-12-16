@@ -16,13 +16,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users, Plus, Settings } from "lucide-react";
+import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users, Plus, Settings, Timer } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { DashboardCustomization, DashboardPreferences } from "./DashboardCustomization";
 import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMultipleTasksTimeTracking, formatTimeTracking } from "@/hooks/useTaskTimeTracking";
 
 interface Task {
   id: string;
