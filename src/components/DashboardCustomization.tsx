@@ -28,6 +28,7 @@ export interface DashboardPreferences {
     deadline: boolean;
     submission: boolean;
     delay: boolean;
+    time: boolean;
     collaborators: boolean;
     status: boolean;
     urgency: boolean;
@@ -252,6 +253,17 @@ export const DashboardCustomization = ({
                 />
                 <Label htmlFor="delay" className="cursor-pointer text-sm">
                   Delay
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="time"
+                  checked={localPreferences.visibleColumns.time}
+                  onCheckedChange={() => toggleColumn('time')}
+                />
+                <Label htmlFor="time" className="cursor-pointer text-sm">
+                  Time Spent
                 </Label>
               </div>
 
