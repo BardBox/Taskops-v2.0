@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Award, TrendingUp, Trophy, Medal, BarChart3, Star, Calendar, Download } from "lucide-react";
+import { Award, TrendingUp, Trophy, Medal, BarChart3, Star, Calendar, Download, Timer } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -412,7 +412,7 @@ const Analytics = () => {
             </div>
 
             {/* Quick Navigation Cards */}
-            <div className="grid gap-4 md:grid-cols-3 mb-8">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
                 onClick={() => navigate('/analytics/overview')}
@@ -454,6 +454,21 @@ const Analytics = () => {
                   </CardTitle>
                   <CardDescription>
                     Team rankings across performance, speed, quality, and more
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                onClick={() => navigate('/analytics/time-tracking')}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Timer className="h-5 w-5 text-primary" />
+                    Time Tracking
+                  </CardTitle>
+                  <CardDescription>
+                    Track time spent on tasks, projects, and clients
                   </CardDescription>
                 </CardHeader>
               </Card>
