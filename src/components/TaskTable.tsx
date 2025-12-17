@@ -813,7 +813,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       {/* Task Diary View */}
       {viewMode === "table" && (
         <div className="rounded-lg border bg-card animate-fade-in overflow-auto max-h-[70vh]">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader className="sticky top-0 z-20 bg-card">
               <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
                 {userRole === "project_owner" && (
@@ -834,7 +834,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="min-w-[180px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("task")}>
+                <TableHead className="w-[140px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("task")}>
                   <div className="flex items-center gap-2">
                     Task
                     {sortField === "task" && (
@@ -843,7 +843,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </div>
                 </TableHead>
                 {columns.client && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("client")}>
+                  <TableHead className="w-[80px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("client")}>
                     <div className="flex items-center gap-2">
                       Client
                       {sortField === "client" && (
@@ -853,7 +853,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.project && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("project")}>
+                  <TableHead className="w-[70px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("project")}>
                     <div className="flex items-center gap-2">
                       Project
                       {sortField === "project" && (
@@ -863,7 +863,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.taskOwner && (
-                  <TableHead className="w-[130px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assignee")}>
+                  <TableHead className="w-[100px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assignee")}>
                     <div className="flex items-center gap-2">
                       Task Owner
                       {sortField === "assignee" && (
@@ -873,7 +873,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.pm && (
-                  <TableHead className="w-[110px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assigned_by")}>
+                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assigned_by")}>
                     <div className="flex items-center gap-2">
                       PM
                       {sortField === "assigned_by" && (
@@ -988,39 +988,39 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       </TableCell>
                     )}
                     <TableCell className="font-medium">
-                      <div className="relative flex items-center gap-2 group/name">
-                        <span>{task.task_name}</span>
+                      <div className="relative flex items-center gap-2 group/name max-w-[140px]">
+                        <span className="truncate" title={task.task_name}>{task.task_name}</span>
                         {task.revision_count > 0 && (
-                          <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[10px] font-semibold">
+                          <div className="flex-shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[10px] font-semibold">
                             {task.revision_count}
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    {columns.client && <TableCell>{task.clients?.name || "-"}</TableCell>}
-                    {columns.project && <TableCell>{task.projects?.name || "-"}</TableCell>}
+                    {columns.client && <TableCell><span className="truncate block max-w-[80px]" title={task.clients?.name || "-"}>{task.clients?.name || "-"}</span></TableCell>}
+                    {columns.project && <TableCell><span className="truncate block max-w-[70px]" title={task.projects?.name || "-"}>{task.projects?.name || "-"}</span></TableCell>}
                     {columns.taskOwner && (
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 max-w-[100px]">
                           {task.assignee_id === userId ? (
                             <>
-                              <Avatar className="h-6 w-6">
+                              <Avatar className="h-5 w-5 flex-shrink-0">
                                 <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
-                                <AvatarFallback className="text-xs">
+                                <AvatarFallback className="text-[10px]">
                                   {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                                 </AvatarFallback>
                               </Avatar>
-                              <span>{task.assignee?.full_name || "-"}</span>
+                              <span className="truncate text-sm" title={task.assignee?.full_name}>{task.assignee?.full_name || "-"}</span>
                             </>
                           ) : (
                             <>
-                              <Avatar className="h-6 w-6">
+                              <Avatar className="h-5 w-5 flex-shrink-0">
                                 <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
-                                <AvatarFallback className="text-xs">
+                                <AvatarFallback className="text-[10px]">
                                   {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                                 </AvatarFallback>
                               </Avatar>
-                              <span>{task.assignee?.full_name || "-"}</span>
+                              <span className="truncate text-sm" title={task.assignee?.full_name}>{task.assignee?.full_name || "-"}</span>
                               {userRole === "team_member" && (
                                 <TooltipProvider>
                                   <Tooltip>
@@ -1028,10 +1028,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                                         onClick={(e) => handleSelfAssign(task.id, e)}
                                       >
-                                        <Plus className="h-3.5 w-3.5" />
+                                        <Plus className="h-3 w-3" />
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Assign to me</TooltipContent>
@@ -1045,14 +1045,14 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     )}
                     {columns.pm && (
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
+                        <div className="flex items-center gap-1.5 max-w-[90px]">
+                          <Avatar className="h-5 w-5 flex-shrink-0">
                             <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
-                            <AvatarFallback className="text-xs">
+                            <AvatarFallback className="text-[10px]">
                               {task.assigned_by?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                             </AvatarFallback>
                           </Avatar>
-                          <span>{task.assigned_by?.full_name || "-"}</span>
+                          <span className="truncate text-sm" title={task.assigned_by?.full_name}>{task.assigned_by?.full_name || "-"}</span>
                         </div>
                       </TableCell>
                     )}
