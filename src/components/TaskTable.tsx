@@ -87,20 +87,20 @@ interface ColumnWidths {
   urgency: number;
 }
 
-const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
-  date: 90,
-  task: 140,
-  client: 80,
-  project: 70,
-  taskOwner: 100,
-  pm: 90,
-  collaborators: 40,
-  deadline: 95,
-  submission: 100,
-  delay: 75,
-  time: 70,
-  status: 105,
-  urgency: 90,
+export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
+  date: 100,
+  task: 200,
+  client: 120,
+  project: 120,
+  taskOwner: 140,
+  pm: 130,
+  collaborators: 60,
+  deadline: 110,
+  submission: 110,
+  delay: 80,
+  time: 80,
+  status: 130,
+  urgency: 110,
 };
 
 interface TaskTableProps {
@@ -114,9 +114,11 @@ interface TaskTableProps {
   preferences?: DashboardPreferences;
   onPreferencesChange?: (preferences: DashboardPreferences) => void;
   onResetPreferences?: () => void;
+  columnWidths?: ColumnWidths;
+  onColumnWidthsChange?: (widths: ColumnWidths) => void;
 }
 
-export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange, onResetPreferences }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange, onResetPreferences, columnWidths: externalColumnWidths, onColumnWidthsChange }: TaskTableProps) => {
   const columns = visibleColumns ?? {
     date: true,
     client: true,
@@ -132,7 +134,19 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     urgency: true,
   };
   
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(DEFAULT_COLUMN_WIDTHS);
+  const [internalColumnWidths, setInternalColumnWidths] = useState<ColumnWidths>(DEFAULT_COLUMN_WIDTHS);
+  const columnWidths = externalColumnWidths ?? internalColumnWidths;
+  const setColumnWidths = (widths: ColumnWidths | ((prev: ColumnWidths) => ColumnWidths)) => {
+    if (typeof widths === 'function') {
+      const newWidths = widths(columnWidths);
+      setInternalColumnWidths(newWidths);
+      onColumnWidthsChange?.(newWidths);
+    } else {
+      setInternalColumnWidths(widths);
+      onColumnWidthsChange?.(widths);
+    }
+  };
+  
   const [resizingColumn, setResizingColumn] = useState<keyof ColumnWidths | null>(null);
   const [startX, setStartX] = useState(0);
   const [startWidth, setStartWidth] = useState(0);
@@ -144,6 +158,15 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     setStartX(e.clientX);
     setStartWidth(columnWidths[column]);
   };
+
+  // Render resize handle for column headers
+  const renderResizeHandle = (column: keyof ColumnWidths) => (
+    <div 
+      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+      onMouseDown={(e) => handleResizeStart(column, e)}
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
 
   useEffect(() => {
     if (!resizingColumn) return;
@@ -858,7 +881,6 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   <Button
                     onClick={() => {
                       onResetPreferences();
-                      setColumnWidths(DEFAULT_COLUMN_WIDTHS);
                       toast.success("Dashboard reset to defaults");
                     }}
                     size="icon"
@@ -925,10 +947,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('date', e)}
-                    />
+                    {renderResizeHandle('date')}
                   </TableHead>
                 )}
                 <TableHead 
@@ -942,10 +961,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                     )}
                   </div>
-                  <div 
-                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                    onMouseDown={(e) => handleResizeStart('task', e)}
-                  />
+                    {renderResizeHandle('task')}
                 </TableHead>
                 {columns.client && (
                   <TableHead 
@@ -959,10 +975,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('client', e)}
-                    />
+                    {renderResizeHandle('client')}
                   </TableHead>
                 )}
                 {columns.project && (
@@ -977,10 +990,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('project', e)}
-                    />
+                    {renderResizeHandle('project')}
                   </TableHead>
                 )}
                 {columns.taskOwner && (
@@ -995,10 +1005,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('taskOwner', e)}
-                    />
+                    {renderResizeHandle('taskOwner')}
                   </TableHead>
                 )}
                 {columns.pm && (
@@ -1013,10 +1020,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('pm', e)}
-                    />
+                    {renderResizeHandle('pm')}
                   </TableHead>
                 )}
                 {columns.collaborators && (
@@ -1036,10 +1040,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         <TooltipContent>{collaboratorsExpanded ? "Hide" : "Show"} Collaborators</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('collaborators', e)}
-                    />
+                    {renderResizeHandle('collaborators')}
                   </TableHead>
                 )}
                 {columns.deadline && (
@@ -1054,10 +1055,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('deadline', e)}
-                    />
+                    {renderResizeHandle('deadline')}
                   </TableHead>
                 )}
                 {columns.submission && (
@@ -1072,10 +1070,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('submission', e)}
-                    />
+                    {renderResizeHandle('submission')}
                   </TableHead>
                 )}
                 {columns.delay && (
@@ -1090,10 +1085,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('delay', e)}
-                    />
+                    {renderResizeHandle('delay')}
                   </TableHead>
                 )}
                 {columns.time && (
@@ -1105,10 +1097,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       <Timer className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>Time</span>
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('time', e)}
-                    />
+                    {renderResizeHandle('time')}
                   </TableHead>
                 )}
                 {columns.status && (
@@ -1123,10 +1112,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('status', e)}
-                    />
+                    {renderResizeHandle('status')}
                   </TableHead>
                 )}
                 {columns.urgency && (
@@ -1141,10 +1127,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
-                    <div 
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
-                      onMouseDown={(e) => handleResizeStart('urgency', e)}
-                    />
+                    {renderResizeHandle('urgency')}
                   </TableHead>
                 )}
               </TableRow>

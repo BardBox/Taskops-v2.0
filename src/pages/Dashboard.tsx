@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
-import { TaskTable } from "@/components/TaskTable";
+import { TaskTable, DEFAULT_COLUMN_WIDTHS } from "@/components/TaskTable";
 import { TaskDialog } from "@/components/TaskDialog";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
@@ -14,6 +14,22 @@ import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
 
+interface ColumnWidths {
+  date: number;
+  task: number;
+  client: number;
+  project: number;
+  taskOwner: number;
+  pm: number;
+  collaborators: number;
+  deadline: number;
+  submission: number;
+  delay: number;
+  time: number;
+  status: number;
+  urgency: number;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -22,6 +38,7 @@ const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [duplicateData, setDuplicateData] = useState<any>(null);
   const [preferences, setPreferences] = useState<DashboardPreferences>(DEFAULT_PREFERENCES);
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(DEFAULT_COLUMN_WIDTHS);
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
@@ -84,6 +101,11 @@ const Dashboard = () => {
         showQuickFilters: dashboardView.showQuickFilters ?? true,
         visibleColumns: dashboardView.visibleColumns ?? preferences.visibleColumns,
       });
+      
+      // Load column widths if saved
+      if (dashboardView.columnWidths) {
+        setColumnWidths({ ...DEFAULT_COLUMN_WIDTHS, ...dashboardView.columnWidths });
+      }
     }
   };
 
@@ -119,6 +141,7 @@ const Dashboard = () => {
 
   const handleResetPreferences = async () => {
     setPreferences(DEFAULT_PREFERENCES);
+    setColumnWidths(DEFAULT_COLUMN_WIDTHS);
     
     // Save reset to database
     if (user?.id) {
@@ -131,7 +154,28 @@ const Dashboard = () => {
           dashboard_view: JSON.stringify({
             showQuickFilters: DEFAULT_PREFERENCES.showQuickFilters,
             visibleColumns: DEFAULT_PREFERENCES.visibleColumns,
+            columnWidths: DEFAULT_COLUMN_WIDTHS,
           }),
+        }, { onConflict: "user_id" });
+    }
+  };
+
+  const handleColumnWidthsChange = async (widths: ColumnWidths) => {
+    setColumnWidths(widths);
+    
+    // Debounce save to database
+    if (user?.id) {
+      const currentDashboardView = {
+        showQuickFilters: preferences.showQuickFilters,
+        visibleColumns: preferences.visibleColumns,
+        columnWidths: widths,
+      };
+      
+      await supabase
+        .from("user_preferences")
+        .upsert({
+          user_id: user.id,
+          dashboard_view: JSON.stringify(currentDashboardView),
         }, { onConflict: "user_id" });
     }
   };
@@ -171,6 +215,8 @@ const Dashboard = () => {
             preferences={preferences}
             onPreferencesChange={setPreferences}
             onResetPreferences={handleResetPreferences}
+            columnWidths={columnWidths}
+            onColumnWidthsChange={handleColumnWidthsChange}
             onDuplicate={(data) => {
               setDuplicateData(data);
               setDialogOpen(true);
