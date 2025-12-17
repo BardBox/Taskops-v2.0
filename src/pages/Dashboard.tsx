@@ -34,6 +34,7 @@ const Dashboard = () => {
       deadline: true,
       submission: true,
       delay: true,
+      time: true,
       collaborators: true,
       status: true,
       urgency: true,

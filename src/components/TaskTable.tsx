@@ -65,6 +65,7 @@ interface VisibleColumns {
   deadline: boolean;
   submission: boolean;
   delay: boolean;
+  time: boolean;
   collaborators: boolean;
   status: boolean;
   urgency: boolean;
@@ -92,6 +93,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     deadline: true,
     submission: true,
     delay: true,
+    time: true,
     collaborators: true,
     status: true,
     urgency: true,
@@ -121,6 +123,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   }, [isMobile]);
   
   const { statuses, urgencies } = useStatusUrgency();
+  
+  // Get task IDs for time tracking
+  const taskIds = tasks.map(t => t.id);
+  const { getTaskTotalTime, isTaskActive } = useMultipleTasksTimeTracking(taskIds);
 
   const toggleCollaboratorsColumn = () => {
     setCollaboratorsExpanded(prev => !prev);
@@ -925,6 +931,14 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     </div>
                   </TableHead>
                 )}
+                {columns.time && (
+                  <TableHead className="w-[70px] bg-card">
+                    <div className="flex items-center gap-1">
+                      <Timer className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>Time</span>
+                    </div>
+                  </TableHead>
+                )}
                 {columns.status && (
                   <TableHead className="w-[105px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("status")}>
                     <div className="flex items-center gap-2">
@@ -1142,6 +1156,33 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                             {delayDays > 0 ? `+${delayDays}d` : delayDays < 0 ? `${delayDays}d` : "On time"}
                           </span>
                         ) : "-"}
+                      </TableCell>
+                    )}
+                    {columns.time && (
+                      <TableCell>
+                        {(() => {
+                          const totalSeconds = getTaskTotalTime(task.id);
+                          const isActive = isTaskActive(task.id);
+                          if (totalSeconds === 0 && !isActive) return <span className="text-muted-foreground">-</span>;
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <div className={`flex items-center justify-center h-7 w-14 rounded-full text-xs font-medium ${
+                                    isActive 
+                                      ? "bg-green-500/20 text-green-700 dark:text-green-400" 
+                                      : "bg-muted text-muted-foreground"
+                                  }`}>
+                                    {formatTimeTracking(totalSeconds)}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{isActive ? "Timer active" : "Time spent on task"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
                       </TableCell>
                     )}
                     {columns.status && (
