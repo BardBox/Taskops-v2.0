@@ -9,7 +9,7 @@ import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { GlobalFilters, FilterState } from "@/components/GlobalFilters";
 import { QuickFilters } from "@/components/QuickFilters";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { DashboardPreferences } from "@/components/DashboardCustomization";
+import { DashboardPreferences, DEFAULT_PREFERENCES } from "@/components/DashboardCustomization";
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
@@ -21,25 +21,7 @@ const Dashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [duplicateData, setDuplicateData] = useState<any>(null);
-  const [preferences, setPreferences] = useState<DashboardPreferences>({
-    showMetrics: true,
-    showFilters: true,
-    showQuickFilters: true,
-    visibleColumns: {
-      date: true,
-      client: true,
-      project: true,
-      taskOwner: true,
-      pm: true,
-      deadline: true,
-      submission: true,
-      delay: true,
-      time: true,
-      collaborators: true,
-      status: true,
-      urgency: true,
-    },
-  });
+  const [preferences, setPreferences] = useState<DashboardPreferences>(DEFAULT_PREFERENCES);
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
@@ -135,6 +117,25 @@ const Dashboard = () => {
 
   const canCreateTasks = userRole === "project_owner" || userRole === "project_manager";
 
+  const handleResetPreferences = async () => {
+    setPreferences(DEFAULT_PREFERENCES);
+    
+    // Save reset to database
+    if (user?.id) {
+      await supabase
+        .from("user_preferences")
+        .upsert({
+          user_id: user.id,
+          show_metrics: DEFAULT_PREFERENCES.showMetrics,
+          show_filters: DEFAULT_PREFERENCES.showFilters,
+          dashboard_view: JSON.stringify({
+            showQuickFilters: DEFAULT_PREFERENCES.showQuickFilters,
+            visibleColumns: DEFAULT_PREFERENCES.visibleColumns,
+          }),
+        }, { onConflict: "user_id" });
+    }
+  };
+
   return (
     <MainLayout>
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
@@ -169,6 +170,7 @@ const Dashboard = () => {
             onCreateTask={() => setDialogOpen(true)}
             preferences={preferences}
             onPreferencesChange={setPreferences}
+            onResetPreferences={handleResetPreferences}
             onDuplicate={(data) => {
               setDuplicateData(data);
               setDialogOpen(true);

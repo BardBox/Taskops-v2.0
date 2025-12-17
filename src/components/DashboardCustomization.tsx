@@ -35,6 +35,26 @@ export interface DashboardPreferences {
   };
 }
 
+export const DEFAULT_PREFERENCES: DashboardPreferences = {
+  showMetrics: true,
+  showFilters: true,
+  showQuickFilters: true,
+  visibleColumns: {
+    date: true,
+    client: true,
+    project: true,
+    taskOwner: true,
+    pm: true,
+    deadline: true,
+    submission: true,
+    delay: true,
+    time: true,
+    collaborators: true,
+    status: true,
+    urgency: true,
+  },
+};
+
 interface DashboardCustomizationProps {
   userId: string;
   preferences: DashboardPreferences;
