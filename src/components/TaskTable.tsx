@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users, Plus, Settings, Timer } from "lucide-react";
+import { Trash2, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Star, Edit, FileText, Upload, Columns, GanttChartSquare, Users, Plus, Settings, Timer, RotateCcw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
@@ -71,6 +71,38 @@ interface VisibleColumns {
   urgency: boolean;
 }
 
+interface ColumnWidths {
+  date: number;
+  task: number;
+  client: number;
+  project: number;
+  taskOwner: number;
+  pm: number;
+  collaborators: number;
+  deadline: number;
+  submission: number;
+  delay: number;
+  time: number;
+  status: number;
+  urgency: number;
+}
+
+const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
+  date: 90,
+  task: 140,
+  client: 80,
+  project: 70,
+  taskOwner: 100,
+  pm: 90,
+  collaborators: 40,
+  deadline: 95,
+  submission: 100,
+  delay: 75,
+  time: 70,
+  status: 105,
+  urgency: 90,
+};
+
 interface TaskTableProps {
   userRole: string;
   userId: string;
@@ -81,9 +113,10 @@ interface TaskTableProps {
   onCreateTask?: () => void;
   preferences?: DashboardPreferences;
   onPreferencesChange?: (preferences: DashboardPreferences) => void;
+  onResetPreferences?: () => void;
 }
 
-export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange, onResetPreferences }: TaskTableProps) => {
   const columns = visibleColumns ?? {
     date: true,
     client: true,
@@ -98,6 +131,41 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     status: true,
     urgency: true,
   };
+  
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(DEFAULT_COLUMN_WIDTHS);
+  const [resizingColumn, setResizingColumn] = useState<keyof ColumnWidths | null>(null);
+  const [startX, setStartX] = useState(0);
+  const [startWidth, setStartWidth] = useState(0);
+
+  const handleResizeStart = (column: keyof ColumnWidths, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(column);
+    setStartX(e.clientX);
+    setStartWidth(columnWidths[column]);
+  };
+
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(50, startWidth + diff);
+      setColumnWidths(prev => ({ ...prev, [resizingColumn]: newWidth }));
+    };
+
+    const handleMouseUp = () => {
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn, startX, startWidth]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -783,6 +851,27 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
             </Button>
           )}
           
+          {onResetPreferences && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      onResetPreferences();
+                      setColumnWidths(DEFAULT_COLUMN_WIDTHS);
+                      toast.success("Dashboard reset to defaults");
+                    }}
+                    size="icon"
+                    className="h-10 w-10 rounded-full bg-foreground hover:bg-foreground/90 text-background"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Reset to Defaults</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
           {preferences && onPreferencesChange && (
             <DashboardCustomization
               userId={userId}
@@ -825,65 +914,113 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   </TableHead>
                 )}
                 {columns.date && (
-                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("date")}>
+                  <TableHead 
+                    style={{ width: columnWidths.date }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("date")}
+                  >
                     <div className="flex items-center gap-2">
                       Date
                       {sortField === "date" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('date', e)}
+                    />
                   </TableHead>
                 )}
-                <TableHead className="w-[140px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("task")}>
+                <TableHead 
+                  style={{ width: columnWidths.task }} 
+                  className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                  onClick={() => toggleSort("task")}
+                >
                   <div className="flex items-center gap-2">
                     Task
                     {sortField === "task" && (
                       sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                     )}
                   </div>
+                  <div 
+                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                    onMouseDown={(e) => handleResizeStart('task', e)}
+                  />
                 </TableHead>
                 {columns.client && (
-                  <TableHead className="w-[80px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("client")}>
+                  <TableHead 
+                    style={{ width: columnWidths.client }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("client")}
+                  >
                     <div className="flex items-center gap-2">
                       Client
                       {sortField === "client" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('client', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.project && (
-                  <TableHead className="w-[70px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("project")}>
+                  <TableHead 
+                    style={{ width: columnWidths.project }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("project")}
+                  >
                     <div className="flex items-center gap-2">
                       Project
                       {sortField === "project" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('project', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.taskOwner && (
-                  <TableHead className="w-[100px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assignee")}>
+                  <TableHead 
+                    style={{ width: columnWidths.taskOwner }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("assignee")}
+                  >
                     <div className="flex items-center gap-2">
                       Task Owner
                       {sortField === "assignee" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('taskOwner', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.pm && (
-                  <TableHead className="w-[90px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("assigned_by")}>
+                  <TableHead 
+                    style={{ width: columnWidths.pm }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("assigned_by")}
+                  >
                     <div className="flex items-center gap-2">
                       PM
                       {sortField === "assigned_by" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('pm', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.collaborators && (
-                  <TableHead className="w-10 text-center bg-card">
+                  <TableHead style={{ width: columnWidths.collaborators }} className="text-center bg-card relative group/col">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -899,64 +1036,115 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         <TooltipContent>{collaboratorsExpanded ? "Hide" : "Show"} Collaborators</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('collaborators', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.deadline && (
-                  <TableHead className="w-[95px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("deadline")}>
+                  <TableHead 
+                    style={{ width: columnWidths.deadline }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("deadline")}
+                  >
                     <div className="flex items-center gap-2">
                       Deadline
                       {sortField === "deadline" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('deadline', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.submission && (
-                  <TableHead className="w-[100px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("submission")}>
+                  <TableHead 
+                    style={{ width: columnWidths.submission }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("submission")}
+                  >
                     <div className="flex items-center gap-2">
                       Submission
                       {sortField === "submission" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('submission', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.delay && (
-                  <TableHead className="w-[75px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("delay")}>
+                  <TableHead 
+                    style={{ width: columnWidths.delay }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("delay")}
+                  >
                     <div className="flex items-center gap-2">
                       Delay
                       {sortField === "delay" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('delay', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.time && (
-                  <TableHead className="w-[70px] bg-card">
+                  <TableHead 
+                    style={{ width: columnWidths.time }} 
+                    className="bg-card relative group/col"
+                  >
                     <div className="flex items-center gap-1">
                       <Timer className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>Time</span>
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('time', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.status && (
-                  <TableHead className="w-[105px] cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("status")}>
+                  <TableHead 
+                    style={{ width: columnWidths.status }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("status")}
+                  >
                     <div className="flex items-center gap-2">
                       Status
                       {sortField === "status" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('status', e)}
+                    />
                   </TableHead>
                 )}
                 {columns.urgency && (
-                  <TableHead className="min-w-[90px] w-full cursor-pointer hover:bg-secondary/30 transition-colors bg-card" onClick={() => toggleSort("urgency")}>
+                  <TableHead 
+                    style={{ width: columnWidths.urgency, minWidth: 90 }} 
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
+                    onClick={() => toggleSort("urgency")}
+                  >
                     <div className="flex items-center gap-2">
                       Urgency
                       {sortField === "urgency" && (
                         sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                       )}
                     </div>
+                    <div 
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
+                      onMouseDown={(e) => handleResizeStart('urgency', e)}
+                    />
                   </TableHead>
                 )}
               </TableRow>
