@@ -12,7 +12,7 @@ interface QuickFiltersProps {
 
 export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId }: QuickFiltersProps) => {
   const isMobile = useIsMobile();
-  const timeBasedFilters = ["today", "this-month"];
+  const timeBasedFilters = ["today", "7-days", "30-days", "this-month"];
   const additiveFilters = ["urgent", "revisions", "pending", "notified"];
   const exclusiveFilters = ["my-tasks", "most-busy", "least-busy"]; // These are mutually exclusive
   
@@ -31,6 +31,22 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
       type: "time",
       icon: Clock,
       color: "text-blue-500"
+    },
+    {
+      id: "7-days",
+      label: "7 Days",
+      description: "Last 7 days & pending tasks (time-based)",
+      type: "time",
+      icon: Calendar,
+      color: "text-indigo-500"
+    },
+    {
+      id: "30-days",
+      label: "30 Days",
+      description: "Last 30 days & pending tasks (time-based)",
+      type: "time",
+      icon: Calendar,
+      color: "text-violet-500"
     },
     {
       id: "this-month",

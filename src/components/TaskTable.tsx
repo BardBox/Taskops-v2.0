@@ -533,8 +533,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        // Apply time-based filter first (today or this-month)
+        // Apply time-based filter first (today, 7-days, 30-days, or this-month)
         const hasToday = filters.quickFilter.includes("today");
+        const has7Days = filters.quickFilter.includes("7-days");
+        const has30Days = filters.quickFilter.includes("30-days");
         const hasThisMonth = filters.quickFilter.includes("this-month");
         
         if (hasToday) {
@@ -544,6 +546,26 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
             const isToday = taskDate.getTime() === today.getTime();
             const isPending = !["Approved", "Cancelled"].includes(task.status);
             return isToday || isPending;
+          });
+        } else if (has7Days) {
+          const sevenDaysAgo = new Date(today);
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          filtered = filtered.filter(task => {
+            const taskDate = new Date(task.date);
+            taskDate.setHours(0, 0, 0, 0);
+            const isWithin7Days = taskDate >= sevenDaysAgo && taskDate <= today;
+            const isPending = !["Approved", "Cancelled"].includes(task.status);
+            return isWithin7Days || isPending;
+          });
+        } else if (has30Days) {
+          const thirtyDaysAgo = new Date(today);
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          filtered = filtered.filter(task => {
+            const taskDate = new Date(task.date);
+            taskDate.setHours(0, 0, 0, 0);
+            const isWithin30Days = taskDate >= thirtyDaysAgo && taskDate <= today;
+            const isPending = !["Approved", "Cancelled"].includes(task.status);
+            return isWithin30Days || isPending;
           });
         } else if (hasThisMonth) {
           filtered = filtered.filter(task => {
