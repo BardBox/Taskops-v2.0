@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -39,6 +39,7 @@ const Dashboard = () => {
   const [duplicateData, setDuplicateData] = useState<any>(null);
   const [preferences, setPreferences] = useState<DashboardPreferences>(DEFAULT_PREFERENCES);
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(DEFAULT_COLUMN_WIDTHS);
+  const columnWidthSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
@@ -62,6 +63,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     checkAuth();
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (columnWidthSaveTimerRef.current) {
+        clearTimeout(columnWidthSaveTimerRef.current);
+      }
+    };
   }, []);
 
   const checkAuth = async () => {
@@ -160,25 +170,33 @@ const Dashboard = () => {
     }
   };
 
-  const handleColumnWidthsChange = async (widths: ColumnWidths) => {
+
+  const handleColumnWidthsChange = useCallback((widths: ColumnWidths) => {
     setColumnWidths(widths);
     
-    // Debounce save to database
-    if (user?.id) {
-      const currentDashboardView = {
-        showQuickFilters: preferences.showQuickFilters,
-        visibleColumns: preferences.visibleColumns,
-        columnWidths: widths,
-      };
-      
-      await supabase
-        .from("user_preferences")
-        .upsert({
-          user_id: user.id,
-          dashboard_view: JSON.stringify(currentDashboardView),
-        }, { onConflict: "user_id" });
+    // Clear existing timer
+    if (columnWidthSaveTimerRef.current) {
+      clearTimeout(columnWidthSaveTimerRef.current);
     }
-  };
+    
+    // Debounce save to database (500ms delay)
+    columnWidthSaveTimerRef.current = setTimeout(async () => {
+      if (user?.id) {
+        const currentDashboardView = {
+          showQuickFilters: preferences.showQuickFilters,
+          visibleColumns: preferences.visibleColumns,
+          columnWidths: widths,
+        };
+        
+        await supabase
+          .from("user_preferences")
+          .upsert({
+            user_id: user.id,
+            dashboard_view: JSON.stringify(currentDashboardView),
+          }, { onConflict: "user_id" });
+      }
+    }, 500);
+  }, [user?.id, preferences.showQuickFilters, preferences.visibleColumns]);
 
   return (
     <MainLayout>
