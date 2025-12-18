@@ -587,7 +587,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         }
         
         if (filters.quickFilter.includes("pending")) {
-          filtered = filtered.filter(task => ["In Progress", "Doing"].includes(task.status));
+          filtered = filtered.filter(task => ["Not Started", "In Progress", "Doing"].includes(task.status));
         }
         
         if (filters.quickFilter.includes("notified")) {
