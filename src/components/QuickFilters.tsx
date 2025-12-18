@@ -75,7 +75,7 @@ export const QuickFilters = ({ activeFilters, onFiltersChange, userRole, userId 
     {
       id: "pending",
       label: "Pending",
-      description: "In Progress and Doing tasks (can combine)",
+      description: "Not Started & In Progress tasks (can combine)",
       type: "additive",
       icon: ListChecks,
       color: "text-yellow-500"
