@@ -945,7 +945,12 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
       {/* Task Diary View */}
       {viewMode === "table" && (
-        <div className="rounded-lg border bg-card animate-fade-in overflow-auto max-h-[70vh]">
+        <div className="rounded-lg border bg-card animate-fade-in relative group/scroll">
+          {/* Scroll edge indicators */}
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
+          <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-6 bg-gradient-to-r from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
+          <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-6 bg-gradient-to-l from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
+          <div className="overflow-auto max-h-[70vh]">
           <Table className="table-fixed">
             <TableHeader className="sticky top-0 z-20 bg-card">
               <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
@@ -1419,6 +1424,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               })}
             </TableBody>
           </Table>
+          </div>
         </div>
       )}
 
