@@ -227,6 +227,22 @@ export const DashboardMetrics = ({ filters }: DashboardMetricsProps) => {
             query = query.or(`deadline.eq.${todayStr},status.in.("Not Started","In Progress","Waiting for Approval")`);
           }
           
+          if (quickFilters.includes("7-days")) {
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const startDate = sevenDaysAgo.toISOString().split('T')[0];
+            const endDate = today.toISOString().split('T')[0];
+            query = query.gte("date", startDate).lte("date", endDate);
+          }
+          
+          if (quickFilters.includes("30-days")) {
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            const endDate = today.toISOString().split('T')[0];
+            query = query.gte("date", startDate).lte("date", endDate);
+          }
+          
           if (quickFilters.includes("this-month")) {
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
             const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
