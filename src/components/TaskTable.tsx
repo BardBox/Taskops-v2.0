@@ -1020,7 +1020,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     {renderResizeHandle('project')}
                   </TableHead>
                 )}
-                {columns.taskOwner && (
+                {columns.taskOwner && userRole !== "team_member" && (
                   <TableHead 
                     style={{ width: columnWidths.taskOwner }} 
                     className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
@@ -1197,7 +1197,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     </TableCell>
                     {columns.client && <TableCell><span className="truncate block max-w-[80px]" title={task.clients?.name || "-"}>{task.clients?.name || "-"}</span></TableCell>}
                     {columns.project && <TableCell><span className="truncate block max-w-[70px]" title={task.projects?.name || "-"}>{task.projects?.name || "-"}</span></TableCell>}
-                    {columns.taskOwner && (
+                    {columns.taskOwner && userRole !== "team_member" && (
                       <TableCell>
                         <div className="flex items-center gap-1.5 max-w-[100px]">
                           {task.assignee_id === userId ? (
@@ -1219,23 +1219,6 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                                 </AvatarFallback>
                               </Avatar>
                               <span className="truncate text-sm" title={task.assignee?.full_name}>{task.assignee?.full_name || "-"}</span>
-                              {userRole === "team_member" && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                                        onClick={(e) => handleSelfAssign(task.id, e)}
-                                      >
-                                        <Plus className="h-3 w-3" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Assign to me</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
                             </>
                           )}
                         </div>
@@ -1256,7 +1239,31 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     )}
                     {columns.collaborators && (
                       <TableCell className="p-0 relative">
-                        {task.collaborators && task.collaborators.length > 0 ? (
+                        {/* Show task owner icon for TM collaboration tasks */}
+                        {userRole === "team_member" && task.assignee_id !== userId && task.collaborators?.some((c: any) => c.user_id === userId) ? (
+                          <div className="w-10 flex items-center justify-center py-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="relative">
+                                    <Avatar className="h-6 w-6 border-2 border-primary/50">
+                                      <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                                      <AvatarFallback className="text-xs bg-primary/10">
+                                        {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-primary flex items-center justify-center">
+                                      <Star className="h-2 w-2 text-primary-foreground" />
+                                    </div>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Task Owner: {task.assignee?.full_name || "Unknown"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        ) : task.collaborators && task.collaborators.length > 0 ? (
                           <Collapsible
                             open={collaboratorsExpanded}
                             onOpenChange={() => {}}
