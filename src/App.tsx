@@ -67,7 +67,7 @@ function AnimatedRoutes() {
         <Route path="/team" element={<PageTransition><Team /></PageTransition>} />
         <Route path="/hive" element={<PageTransition><TheHive /></PageTransition>} />
         <Route path="/posting-status" element={<PageTransition><PostingStatus /></PageTransition>} />
-        
+
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<PageTransition><AdminOverview /></PageTransition>} />
@@ -80,7 +80,6 @@ function AnimatedRoutes() {
           <Route path="settings" element={<PageTransition><AdminSettings /></PageTransition>} />
         </Route>
 
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
@@ -92,12 +91,12 @@ const App = () => {
     // Set up session refresh interval
     const refreshInterval = setInterval(async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (session) {
         const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
         const now = Date.now();
         const timeUntilExpiry = expiresAt - now;
-        
+
         // Refresh if less than 20% of session time remaining (typically 12 minutes for 1-hour sessions)
         if (timeUntilExpiry < 12 * 60 * 1000) {
           await supabase.auth.refreshSession();
@@ -117,9 +116,9 @@ const App = () => {
           <BrowserRouter>
             <AnimatedRoutes />
           </BrowserRouter>
-    </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 
