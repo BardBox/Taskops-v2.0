@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
-import { X, ClipboardList, Users, AlertCircle, Link2, StickyNote, Calendar, Activity, User, UsersRound, Wand2, Zap, Link, Paperclip, Bookmark } from "lucide-react";
+import { X, ClipboardList, Users, AlertCircle, Link2, StickyNote, Calendar, Activity, User, UsersRound, Wand2, Zap, Link, Paperclip } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskTimeline } from "@/components/TaskTimeline";
 
@@ -74,12 +74,18 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [assignedBy, setAssignedBy] = useState<any>(null);
   const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
-  
-  const { statuses, urgencies, isLoading: isLoadingSettings} = useStatusUrgency();
-  
+
+  // New State for List UIs
+  const [referenceLinks, setReferenceLinks] = useState<string[]>([]);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [newLink, setNewLink] = useState("");
+  const [showCollaboratorInput, setShowCollaboratorInput] = useState(false);
+
+  const { statuses, urgencies, isLoading: isLoadingSettings } = useStatusUrgency();
+
   const effectiveRole = userRole || currentUserRole;
   const canEditNotes = effectiveRole === "project_manager" || effectiveRole === "project_owner";
-  
+
   const [formData, setFormData] = useState({
     task_name: "",
     client_id: "",
@@ -99,7 +105,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
       const initializeDialog = async () => {
         setCurrentUserRole(userRole || "");
         await getCurrentUser();
-        
+
         // Fetch all data first
         await Promise.all([
           fetchClients(),
@@ -111,12 +117,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
           if (task.client_id) {
             await fetchProjects(task.client_id);
           }
-          
+
           // Fetch collaborators and assigned by user
           await fetchCollaborators(task.id);
           await fetchAssignedBy(task.assigned_by_id);
 
-          // Set form data AFTER projects are loaded
           setFormData({
             task_name: task.task_name || "",
             client_id: task.client_id || "",
@@ -130,7 +135,14 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
             reference_link_3: task.reference_link_3 || "",
             notes: task.notes || "",
           });
-          
+
+          // Populate reference links array
+          const links = [];
+          if (task.reference_link_1) links.push(task.reference_link_1);
+          if (task.reference_link_2) links.push(task.reference_link_2);
+          if (task.reference_link_3) links.push(task.reference_link_3);
+          setReferenceLinks(links);
+
           setExistingImageUrl(task.reference_image || "");
           setImagePreview(task.reference_image || "");
         } else {
@@ -138,13 +150,21 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
           const tomorrow = new Date();
           tomorrow.setDate(tomorrow.getDate() + 1);
           const tomorrowStr = tomorrow.toISOString().split('T')[0];
-          
+
+          setReferenceLinks([]);
+
           // Check if we have duplicate data
           if (duplicateData) {
             setReferenceImage(null);
             setExistingImageUrl(duplicateData.reference_image || "");
             setImagePreview(duplicateData.reference_image || "");
-            
+
+            const links = [];
+            if (duplicateData.reference_link_1) links.push(duplicateData.reference_link_1);
+            if (duplicateData.reference_link_2) links.push(duplicateData.reference_link_2);
+            if (duplicateData.reference_link_3) links.push(duplicateData.reference_link_3);
+            setReferenceLinks(links);
+
             setFormData({
               task_name: `Copy of ${duplicateData.task_name}`,
               client_id: duplicateData.client_id || "",
@@ -158,8 +178,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
               reference_link_3: duplicateData.reference_link_3 || "",
               notes: duplicateData.notes || "",
             });
-            
-            // Fetch projects for the duplicate's client
+
             if (duplicateData.client_id) {
               await fetchProjects(duplicateData.client_id);
             }
@@ -167,8 +186,8 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
             setReferenceImage(null);
             setExistingImageUrl("");
             setImagePreview("");
-            
-            // Fetch default project and set it in form
+            setReferenceLinks([]);
+
             const defaultProject = await fetchDefaultProject();
             setFormData({
               task_name: "",
@@ -183,8 +202,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
               reference_link_3: "",
               notes: "",
             });
-            
-            // Fetch projects for the default client
+
             if (defaultProject?.client_id) {
               await fetchProjects(defaultProject.client_id);
             }
@@ -194,7 +212,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
       initializeDialog();
 
-      // Set up real-time subscription for profiles
       const profilesChannel = supabase
         .channel("profiles-changes")
         .on(
@@ -208,7 +225,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         )
         .subscribe();
 
-      // Set up real-time subscription for user_roles
       const rolesChannel = supabase
         .channel("user-roles-changes")
         .on(
@@ -254,7 +270,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
   const fetchClients = async () => {
     try {
-      const { data, error} = await supabase
+      const { data, error } = await supabase
         .from("clients")
         .select("*")
         .eq("is_archived", false)
@@ -290,7 +306,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
       .from("profiles")
       .select("*, user_roles!inner(role)")
       .order("full_name");
-    
+
     if (data) {
       setUsers(data);
     }
@@ -302,7 +318,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         .from("task_collaborators")
         .select("*, profiles(id, full_name, avatar_url)")
         .eq("task_id", taskId);
-      
+
       if (error) throw error;
       setCollaborators(data || []);
     } catch (error) {
@@ -317,12 +333,36 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         .select("id, full_name, avatar_url")
         .eq("id", userId)
         .single();
-      
+
       if (error) throw error;
       setAssignedBy(data);
     } catch (error) {
       console.error("Error fetching assigned by user:", error);
     }
+  };
+
+  const handleAddLink = () => {
+    if (!newLink) return;
+
+    const urlPattern = /^(https?:\/\/)[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/;
+    if (!urlPattern.test(newLink)) {
+      toast.error("Invalid URL format. Must start with http:// or https://");
+      return;
+    }
+
+    if (referenceLinks.length >= 3) {
+      toast.error("Maximum 3 reference links allowed");
+      return;
+    }
+    setReferenceLinks([...referenceLinks, newLink]);
+    setNewLink("");
+    setShowLinkInput(false);
+  };
+
+  const handleRemoveLink = (index: number) => {
+    const newLinks = [...referenceLinks];
+    newLinks.splice(index, 1);
+    setReferenceLinks(newLinks);
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -333,7 +373,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         return;
       }
       setReferenceImage(file);
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -369,19 +408,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
   const handleRemoveImage = () => {
     setReferenceImage(null);
     setImagePreview("");
+    setExistingImageUrl("");
   };
 
   const handleAddCollaborators = async (taskId: string) => {
-    if (selectedCollaborators.length === 0) return;
-    
-    // Check if adding these collaborators would exceed the limit
-    const totalAfterAdding = collaborators.length + selectedCollaborators.length;
-    if (totalAfterAdding > 2) {
-      toast.error(`Maximum 2 collaborators allowed per task. Currently ${collaborators.length} assigned.`);
-      return;
-    }
-    
-    try {
+    if (selectedCollaborators.length > 0) {
       const collaboratorsToAdd = selectedCollaborators.map(userId => ({
         task_id: taskId,
         user_id: userId,
@@ -393,26 +424,13 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         .insert(collaboratorsToAdd);
 
       if (error) {
-        if (error.message.includes('Maximum 2 collaborators')) {
-          toast.error("Maximum 2 collaborators allowed per task");
-        } else {
-          throw error;
-        }
-        return;
+        console.error("Error adding collaborators:", error);
       }
-      
-      setSelectedCollaborators([]);
-      await fetchCollaborators(taskId);
-      toast.success("Collaborators added successfully!");
-    } catch (error: any) {
-      console.error("Error adding collaborators:", error);
-      toast.error(error.message || "Failed to add collaborators");
     }
   };
 
   const handleRemoveCollaborator = async (collaboratorId: string) => {
     if (!task?.id) return;
-    
     try {
       const { error } = await supabase
         .from("task_collaborators")
@@ -420,7 +438,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         .eq("id", collaboratorId);
 
       if (error) throw error;
-      
       await fetchCollaborators(task.id);
       toast.success("Collaborator removed");
     } catch (error: any) {
@@ -434,15 +451,25 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
     setLoading(true);
 
     try {
-      const validated = taskSchema.parse(formData);
+      // Map links array back to individual fields
+      const submitData = {
+        ...formData,
+        reference_link_1: referenceLinks[0] || "",
+        reference_link_2: referenceLinks[1] || "",
+        reference_link_3: referenceLinks[2] || "",
+      };
 
-      // Upload reference image if new one is selected
+      const validated = taskSchema.parse(submitData);
+
       let referenceImageUrl = existingImageUrl;
       if (referenceImage) {
         const uploadedUrl = await uploadReferenceImage(referenceImage);
         if (uploadedUrl) {
           referenceImageUrl = uploadedUrl;
         }
+      } else if (!existingImageUrl && !imagePreview) {
+        // Explicitly cleared
+        referenceImageUrl = "";
       }
 
       const taskData: any = {
@@ -470,7 +497,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
       }
 
       if (task) {
-        // Update existing task
         const { error } = await supabase
           .from("tasks")
           .update(taskData)
@@ -478,14 +504,12 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
         if (error) throw error;
 
-        // Add collaborators for edited task
         if (selectedCollaborators.length > 0) {
           await handleAddCollaborators(task.id);
         }
 
         toast.success("Task updated successfully!");
       } else {
-        // Create new task
         const { data: newTask, error } = await supabase
           .from("tasks")
           .insert([taskData])
@@ -494,7 +518,6 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
         if (error) throw error;
 
-        // Add collaborators for new task
         if (newTask && selectedCollaborators.length > 0) {
           await handleAddCollaborators(newTask.id);
         }
@@ -503,15 +526,16 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
       }
 
       if (keepOpen) {
-        // Reset form for next task with auto-set deadline
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        
+
         setReferenceImage(null);
         setExistingImageUrl("");
         setImagePreview("");
-        
+        setReferenceLinks([]);
+        setSelectedCollaborators([]);
+
         setFormData({
           task_name: "",
           client_id: "",
@@ -571,7 +595,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                   required
                 />
               </div>
-              
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="client_id" className="text-sm font-medium">Client</Label>
@@ -659,101 +683,96 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                 <div className="flex-1 min-w-[200px] space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-1.5">
                     <UsersRound className="h-3.5 w-3.5" />
-                    Add Collaborators ({collaborators.length + selectedCollaborators.length}/2)
+                    Collaborators ({collaborators.length + selectedCollaborators.length}/2)
                   </Label>
-                  <Select
-                    value={selectedCollaborators.length > 0 ? "selected" : ""}
-                    onValueChange={(value) => {
-                      const totalAfterAdding = collaborators.length + selectedCollaborators.length + 1;
-                      if (totalAfterAdding > 2) {
-                        toast.error("Maximum 2 collaborators allowed per task");
-                        return;
-                      }
-                      if (!selectedCollaborators.includes(value) && value !== "selected") {
-                        setSelectedCollaborators([...selectedCollaborators, value]);
-                      }
-                    }}
-                    disabled={collaborators.length + selectedCollaborators.length >= 2}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        collaborators.length + selectedCollaborators.length >= 2 
-                          ? "Max collaborators reached" 
-                          : "Select collaborators"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users
-                        .filter(user => 
-                          user.id !== formData.assignee_id && 
-                          !collaborators.some(c => c.user_id === user.id) &&
-                          !selectedCollaborators.includes(user.id)
-                        )
-                        .map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.full_name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {/* Selected Collaborators to Add */}
-                  {selectedCollaborators.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="space-y-2">
+                    {/* Existing Collaborators List */}
+                    <div className="flex flex-wrap gap-2">
+                      {collaborators.map((collab) => (
+                        <div key={collab.id} className="flex items-center gap-1.5 bg-muted px-2 py-1.5 rounded-md border text-sm">
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={collab.profiles?.avatar_url} />
+                            <AvatarFallback className="text-xs">
+                              {collab.profiles?.full_name?.charAt(0) || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium text-xs">{collab.profiles?.full_name}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCollaborator(collab.id)}
+                            className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
                       {selectedCollaborators.map((userId) => {
                         const user = users.find(u => u.id === userId);
-                        return user ? (
-                          <div key={userId} className="flex items-center gap-1.5 bg-secondary px-2 py-1 rounded-md">
+                        if (!user) return null;
+                        return (
+                          <div key={userId} className="flex items-center gap-1.5 bg-secondary px-2 py-1.5 rounded-md border text-sm">
                             <Avatar className="h-5 w-5">
                               <AvatarImage src={user.avatar_url} />
                               <AvatarFallback className="text-xs">
                                 {user.full_name?.charAt(0) || "?"}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-xs font-medium">{user.full_name}</span>
-                            <Button
+                            <span className="font-medium text-xs">{user.full_name}</span>
+                            <button
                               type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 hover:bg-destructive/20"
                               onClick={() => setSelectedCollaborators(selectedCollaborators.filter(id => id !== userId))}
+                              className="text-muted-foreground hover:text-destructive transition-colors ml-1"
                             >
-                              <X className="h-3 w-3" />
-                            </Button>
+                              <X className="h-3.5 w-3.5" />
+                            </button>
                           </div>
-                        ) : null;
+                        )
                       })}
                     </div>
-                  )}
-                  
-                  {/* Existing Collaborators */}
-                  {task && collaborators.length > 0 && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">Current Collaborators</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {collaborators.map((collab) => (
-                          <div key={collab.id} className="flex items-center gap-1.5 bg-muted px-2 py-1 rounded-md">
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage src={collab.profiles?.avatar_url} />
-                              <AvatarFallback className="text-xs">
-                                {collab.profiles?.full_name?.charAt(0) || "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs font-medium">{collab.profiles?.full_name}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 hover:bg-destructive/20"
-                              onClick={() => handleRemoveCollaborator(collab.id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
+
+                    {(collaborators.length + selectedCollaborators.length) < 2 && !showCollaboratorInput ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowCollaboratorInput(true)}
+                        className="w-full border-dashed h-9"
+                      >
+                        + Add Collaborator
+                      </Button>
+                    ) : (collaborators.length + selectedCollaborators.length) < 2 && showCollaboratorInput ? (
+                      <div className="flex gap-2">
+                        <Select
+                          value=""
+                          onValueChange={(value) => {
+                            if (value) {
+                              setSelectedCollaborators([...selectedCollaborators, value]);
+                              setShowCollaboratorInput(false);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full h-9">
+                            <SelectValue placeholder="Select collaborator" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {users
+                              .filter(user =>
+                                user.id !== formData.assignee_id &&
+                                !collaborators.some(c => c.user_id === user.id) &&
+                                !selectedCollaborators.includes(user.id)
+                              )
+                              .map((user) => (
+                                <SelectItem key={user.id} value={user.id}>
+                                  {user.full_name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowCollaboratorInput(false)}>
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </div>
-                  )}
+                    ) : null}
+                  </div>
                 </div>
 
                 {/* Project Manager (Assigned By) */}
@@ -763,7 +782,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                       <Wand2 className="h-3.5 w-3.5 text-purple-500" />
                       Project Manager
                     </Label>
-                    <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30 min-h-[40px]">
+                    <div className="flex items-center gap-2 p-2 px-3 border rounded-md bg-muted/30 h-10">
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={assignedBy.avatar_url} />
                         <AvatarFallback className="text-xs">
@@ -778,7 +797,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
               {/* Timeline Bar */}
               {task && task.date && task.deadline && (
-                <TaskTimeline 
+                <TaskTimeline
                   dateAssigned={task.date}
                   deadline={task.deadline}
                   dateSubmitted={task.actual_delivery}
@@ -858,78 +877,95 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Reference Links */}
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="reference_link_1" className="text-sm font-medium flex items-center gap-1.5">
-                    <Link className="h-3.5 w-3.5 text-blue-500" />
-                    Reference Link 1
-                  </Label>
-                  <Input
-                    id="reference_link_1"
-                    type="url"
-                    value={formData.reference_link_1}
-                    onChange={(e) => setFormData({ ...formData, reference_link_1: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="reference_link_2" className="text-sm font-medium flex items-center gap-1.5">
-                    <Paperclip className="h-3.5 w-3.5 text-emerald-500" />
-                    Reference Link 2
-                  </Label>
-                  <Input
-                    id="reference_link_2"
-                    type="url"
-                    value={formData.reference_link_2}
-                    onChange={(e) => setFormData({ ...formData, reference_link_2: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="reference_link_3" className="text-sm font-medium flex items-center gap-1.5">
-                    <Bookmark className="h-3.5 w-3.5 text-violet-500" />
-                    Reference Link 3
-                  </Label>
-                  <Input
-                    id="reference_link_3"
-                    type="url"
-                    value={formData.reference_link_3}
-                    onChange={(e) => setFormData({ ...formData, reference_link_3: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="reference_image" className="text-sm font-medium">Reference Image (Max 5MB)</Label>
-                  <Input
-                    id="reference_image"
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                    onChange={handleImageSelect}
-                    className="cursor-pointer"
-                  />
-                  {imagePreview && (
-                    <div className="relative mt-2 inline-block">
-                      <img 
-                        src={imagePreview} 
-                        alt="Reference preview" 
-                        className="max-w-xs max-h-40 rounded-lg border-2 shadow-sm"
-                      />
-                      <Button
+                  {referenceLinks.map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-muted p-2 rounded-md border text-sm">
+                      <Link className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate flex-1 hover:underline cursor-pointer font-medium" title={link}>
+                        {link}
+                      </span>
+                      <button
                         type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md"
-                        onClick={handleRemoveImage}
+                        onClick={() => handleRemoveLink(idx)}
+                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
                       >
                         <X className="h-4 w-4" />
-                      </Button>
+                      </button>
+                    </div>
+                  ))}
+
+                  {referenceLinks.length < 3 && !showLinkInput && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowLinkInput(true)}
+                      className="w-full py-6 bg-muted/20 border-dashed"
+                    >
+                      <Link className="mr-2 h-4 w-4" />
+                      Add Reference Link
+                    </Button>
+                  )}
+
+                  {showLinkInput && (
+                    <div className="flex gap-2 animate-in fade-in slide-in-from-top-2">
+                      <Input
+                        placeholder="https://"
+                        value={newLink}
+                        onChange={(e) => setNewLink(e.target.value)}
+                        autoFocus
+                        className="flex-1"
+                      />
+                      <Button type="button" onClick={handleAddLink} size="sm">Add</Button>
+                      <Button type="button" variant="ghost" onClick={() => setShowLinkInput(false)} size="icon"><X className="h-4 w-4" /></Button>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Reference Image */}
+              <div className="space-y-2">
+                {!imagePreview ? (
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <Label
+                      htmlFor="file-upload"
+                      className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-2 pb-2">
+                        <Paperclip className="w-5 h-5 mb-1 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground font-medium">Add Reference File</p>
+                        <p className="text-xs text-muted-foreground mt-1">Max 5MB (Images only)</p>
+                      </div>
+                    </Label>
+                  </div>
+                ) : (
+                  <div className="relative mt-2 inline-block group">
+                    <img
+                      src={imagePreview}
+                      alt="Reference preview"
+                      className="max-w-xs max-h-40 rounded-lg border shadow-sm aspect-video object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
             </CardContent>
           </Card>
 

@@ -133,7 +133,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     status: true,
     urgency: true,
   };
-  
+
   const [internalColumnWidths, setInternalColumnWidths] = useState<ColumnWidths>(DEFAULT_COLUMN_WIDTHS);
   const columnWidths = externalColumnWidths ?? internalColumnWidths;
   const setColumnWidths = (widths: ColumnWidths | ((prev: ColumnWidths) => ColumnWidths)) => {
@@ -146,7 +146,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       onColumnWidthsChange?.(widths);
     }
   };
-  
+
   const [resizingColumn, setResizingColumn] = useState<keyof ColumnWidths | null>(null);
   const [startX, setStartX] = useState(0);
   const [startWidth, setStartWidth] = useState(0);
@@ -161,7 +161,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   // Render resize handle for column headers
   const renderResizeHandle = (column: keyof ColumnWidths) => (
-    <div 
+    <div
       className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 opacity-0 group-hover/col:opacity-100 transition-opacity"
       onMouseDown={(e) => handleResizeStart(column, e)}
       onClick={(e) => e.stopPropagation()}
@@ -212,9 +212,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       setViewMode("cards");
     }
   }, [isMobile]);
-  
+
   const { statuses, urgencies } = useStatusUrgency();
-  
+
   // Get task IDs for time tracking
   const taskIds = tasks.map(t => t.id);
   const { getTaskTotalTime, isTaskActive } = useMultipleTasksTimeTracking(taskIds);
@@ -262,7 +262,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [filters]);
+  }, [filters, userRole, userId]);
 
 
   const fetchAppreciations = async () => {
@@ -270,7 +270,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       .from("task_appreciations" as any)
       .select("task_id, given_by_id")
       .eq("given_by_id", userId);
-      
+
     const appreciationMap = new Map<string, boolean>();
     data?.forEach((app: any) => {
       appreciationMap.set(app.task_id, true);
@@ -283,7 +283,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       .from("notifications")
       .select("task_id")
       .eq("user_id", userId);
-      
+
     const notifiedIds = new Set<string>();
     data?.forEach((notif) => {
       if (notif.task_id) {
@@ -295,22 +295,22 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   const toggleAppreciation = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // PMs can't give appreciation
     if (userRole === "project_manager") {
       toast.error("Project Managers cannot give appreciation");
       return;
     }
-    
+
     const hasAppreciation = taskAppreciations.get(taskId);
-    
+
     if (hasAppreciation) {
       const { error } = await supabase
         .from("task_appreciations" as any)
         .delete()
         .eq("task_id", taskId)
         .eq("given_by_id", userId);
-        
+
       if (!error) {
         const newMap = new Map(taskAppreciations);
         newMap.delete(taskId);
@@ -321,7 +321,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       const { error } = await supabase
         .from("task_appreciations" as any)
         .insert({ task_id: taskId, given_by_id: userId } as any);
-        
+
       if (!error) {
         const newMap = new Map(taskAppreciations);
         newMap.set(taskId, true);
@@ -343,10 +343,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         task_comments(message, created_at),
         task_collaborators(user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url))
       `);
-    
+
     // Note: Team members can now see all tasks (via RLS) for self-assignment
     // The RLS policies handle the security restrictions
-    
+
     const { data, error } = await query.order("date", { ascending: false });
 
     if (error) {
@@ -355,17 +355,29 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     }
 
     // Sort comments by created_at descending to get the latest one first
-    const tasksWithSortedComments = (data as any || []).map((task: any) => ({
+    let processedTasks = (data as any || []).map((task: any) => ({
       ...task,
-      task_comments: task.task_comments?.sort((a: any, b: any) => 
+      task_comments: task.task_comments?.sort((a: any, b: any) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ) || [],
       collaborators: task.task_collaborators || []
     }));
 
+    // STRICT FILTERING: SECURE BY DEFAULT
+    // Only Project Managers and Owners can see all tasks.
+    // Everyone else (Team Members, or if role is loading/undefined) sees ONLY their assigned/collaborating tasks.
+    const isManagerOrOwner = userRole === "project_manager" || userRole === "project_owner";
+
+    if (!isManagerOrOwner) {
+      processedTasks = processedTasks.filter((task: any) =>
+        (userId && task.assignee_id === userId) ||
+        (userId && task.collaborators?.some((c: any) => c.user_id === userId))
+      );
+    }
+
     // Extract all user IDs including collaborators and fetch roles
     const userIds = new Set<string>();
-    tasksWithSortedComments.forEach(task => {
+    processedTasks.forEach((task: any) => {
       if (task.assignee_id) userIds.add(task.assignee_id);
       if (task.assigned_by_id) userIds.add(task.assigned_by_id);
       task.collaborators?.forEach((c: any) => {
@@ -373,7 +385,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       });
     });
 
-    setTasks(tasksWithSortedComments);
+    setTasks(processedTasks);
   };
 
   const getStatusColor = (status: string) => {
@@ -408,7 +420,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   const handleSelfAssign = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     try {
       const { error } = await supabase
         .from("tasks")
@@ -427,35 +439,35 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   const getTaskHighlightClass = (task: Task, delayDays: number | null) => {
     if (!filters) return "";
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (filters.highlightToday) {
       if (task.deadline) {
         const deadline = new Date(task.deadline);
         deadline.setHours(0, 0, 0, 0);
         const isDeadlineToday = deadline.getTime() === today.getTime();
         const isOverdue = deadline.getTime() < today.getTime() && !["Approved", "Cancelled"].includes(task.status);
-        
+
         if (isDeadlineToday || isOverdue) {
           return "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-950/30";
         }
       }
     }
-    
+
     if (filters.highlightImmediate && task.urgency === "Immediate") {
       return "bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100/50 dark:hover:bg-red-950/30";
     }
-    
+
     if (filters.highlightDelayed && delayDays !== null && delayDays > 0) {
       return "bg-orange-50/50 dark:bg-orange-950/20 hover:bg-orange-100/50 dark:hover:bg-orange-950/30";
     }
-    
+
     if (filters.highlightInApproval && task.status === "In Approval") {
       return "bg-green-50/50 dark:bg-green-950/20 hover:bg-green-100/50 dark:hover:bg-green-950/30";
     }
-    
+
     return "";
   };
 
@@ -514,7 +526,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         filtered = filtered.filter(task => {
           const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
           if (delayDays === null) return false;
-          
+
           switch (filters.delay) {
             case "on-time":
               return delayDays === 0;
@@ -532,13 +544,13 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       if (filters.quickFilter && filters.quickFilter.length > 0) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         // Apply time-based filter first (today, 7-days, 30-days, or this-month)
         const hasToday = filters.quickFilter.includes("today");
         const has7Days = filters.quickFilter.includes("7-days");
         const has30Days = filters.quickFilter.includes("30-days");
         const hasThisMonth = filters.quickFilter.includes("this-month");
-        
+
         if (hasToday) {
           filtered = filtered.filter(task => {
             const taskDate = new Date(task.date);
@@ -570,40 +582,40 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         } else if (hasThisMonth) {
           filtered = filtered.filter(task => {
             const taskDate = new Date(task.date);
-            const isThisMonth = taskDate.getMonth() === today.getMonth() && 
-                               taskDate.getFullYear() === today.getFullYear();
+            const isThisMonth = taskDate.getMonth() === today.getMonth() &&
+              taskDate.getFullYear() === today.getFullYear();
             const isPending = !["Approved", "Cancelled"].includes(task.status);
             return isThisMonth || isPending;
           });
         }
-        
+
         // Apply additive filters (urgent, revisions, and pending)
         if (filters.quickFilter.includes("urgent")) {
           filtered = filtered.filter(task => task.urgency === "Immediate");
         }
-        
+
         if (filters.quickFilter.includes("revisions")) {
           filtered = filtered.filter(task => task.revision_count > 0);
         }
-        
+
         if (filters.quickFilter.includes("pending")) {
           filtered = filtered.filter(task => ["Not Started", "In Progress", "Doing"].includes(task.status));
         }
-        
+
         if (filters.quickFilter.includes("notified")) {
           filtered = filtered.filter(task => notifiedTaskIds.has(task.id));
         }
-        
+
         // Handle exclusive filters (my-tasks, most-busy, least-busy)
         if (filters.quickFilter.includes("my-tasks")) {
-          filtered = filtered.filter(task => 
+          filtered = filtered.filter(task =>
             task.assignee_id === userId || task.assigned_by_id === userId
           );
         } else if (filters.quickFilter.includes("most-busy") || filters.quickFilter.includes("least-busy")) {
           // These filters only work for PM/PO
           // We need to find the team member with most/least pending tasks
           const pendingTasksByMember = new Map<string, number>();
-          
+
           // Count pending tasks per team member
           tasks.forEach(task => {
             if (!["Approved", "Cancelled"].includes(task.status)) {
@@ -611,15 +623,15 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               pendingTasksByMember.set(task.assignee_id, count + 1);
             }
           });
-          
+
           if (pendingTasksByMember.size > 0) {
             const sortedMembers = Array.from(pendingTasksByMember.entries())
               .sort((a, b) => b[1] - a[1]);
-            
+
             const targetMemberId = filters.quickFilter.includes("most-busy")
               ? sortedMembers[0][0]
               : sortedMembers[sortedMembers.length - 1][0];
-            
+
             filtered = filtered.filter(task => task.assignee_id === targetMemberId);
           }
         }
@@ -895,7 +907,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               <Plus className="h-5 w-5" />
             </Button>
           )}
-          
+
           {onResetPreferences && (
             <TooltipProvider>
               <Tooltip>
@@ -915,7 +927,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               </Tooltip>
             </TooltipProvider>
           )}
-          
+
           {preferences && onPreferencesChange && (
             <DashboardCustomization
               userId={userId}
@@ -951,486 +963,485 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
           <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-6 bg-gradient-to-r from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
           <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-6 bg-gradient-to-l from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
           <div className="overflow-auto max-h-[70vh]">
-          <Table className="table-fixed">
-            <TableHeader className="sticky top-0 z-20 bg-card">
-              <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
-                {userRole === "project_owner" && (
-                  <TableHead className="w-12 bg-card">
-                    <Checkbox
-                      checked={selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                )}
-                {columns.date && (
-                  <TableHead 
-                    style={{ width: columnWidths.date }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("date")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Date
-                      {sortField === "date" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('date')}
-                  </TableHead>
-                )}
-                <TableHead 
-                  style={{ width: columnWidths.task }} 
-                  className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                  onClick={() => toggleSort("task")}
-                >
-                  <div className="flex items-center gap-2">
-                    Task
-                    {sortField === "task" && (
-                      sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                    )}
-                  </div>
-                    {renderResizeHandle('task')}
-                </TableHead>
-                {columns.client && (
-                  <TableHead 
-                    style={{ width: columnWidths.client }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("client")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Client
-                      {sortField === "client" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('client')}
-                  </TableHead>
-                )}
-                {columns.project && (
-                  <TableHead 
-                    style={{ width: columnWidths.project }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("project")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Project
-                      {sortField === "project" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('project')}
-                  </TableHead>
-                )}
-                {columns.taskOwner && userRole !== "team_member" && (
-                  <TableHead 
-                    style={{ width: columnWidths.taskOwner }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("assignee")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Task Owner
-                      {sortField === "assignee" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('taskOwner')}
-                  </TableHead>
-                )}
-                {columns.pm && (
-                  <TableHead 
-                    style={{ width: columnWidths.pm }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("assigned_by")}
-                  >
-                    <div className="flex items-center gap-2">
-                      PM
-                      {sortField === "assigned_by" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('pm')}
-                  </TableHead>
-                )}
-                {columns.collaborators && (
-                  <TableHead style={{ width: columnWidths.collaborators }} className="text-center bg-card relative group/col">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={toggleCollaboratorsColumn}
-                            className="h-8 w-8 p-0 hover:bg-muted"
-                          >
-                            <Users className={`h-3.5 w-3.5 transition-colors ${collaboratorsExpanded ? "text-primary" : "text-muted-foreground"}`} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{collaboratorsExpanded ? "Hide" : "Show"} Collaborators</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    {renderResizeHandle('collaborators')}
-                  </TableHead>
-                )}
-                {columns.deadline && (
-                  <TableHead 
-                    style={{ width: columnWidths.deadline }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("deadline")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Deadline
-                      {sortField === "deadline" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('deadline')}
-                  </TableHead>
-                )}
-                {columns.submission && (
-                  <TableHead 
-                    style={{ width: columnWidths.submission }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("submission")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Submission
-                      {sortField === "submission" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('submission')}
-                  </TableHead>
-                )}
-                {columns.delay && (
-                  <TableHead 
-                    style={{ width: columnWidths.delay }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("delay")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Delay
-                      {sortField === "delay" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('delay')}
-                  </TableHead>
-                )}
-                {columns.time && (
-                  <TableHead 
-                    style={{ width: columnWidths.time }} 
-                    className="bg-card relative group/col"
-                  >
-                    <div className="flex items-center gap-1">
-                      <Timer className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>Time</span>
-                    </div>
-                    {renderResizeHandle('time')}
-                  </TableHead>
-                )}
-                {columns.status && (
-                  <TableHead 
-                    style={{ width: columnWidths.status }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("status")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Status
-                      {sortField === "status" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('status')}
-                  </TableHead>
-                )}
-                {columns.urgency && (
-                  <TableHead 
-                    style={{ width: columnWidths.urgency, minWidth: 90 }} 
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col" 
-                    onClick={() => toggleSort("urgency")}
-                  >
-                    <div className="flex items-center gap-2">
-                      Urgency
-                      {sortField === "urgency" && (
-                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      )}
-                    </div>
-                    {renderResizeHandle('urgency')}
-                  </TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.map((task) => {
-                const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
-                const highlightClass = getTaskHighlightClass(task, delayDays);
-                return (
-                  <TableRow 
-                    key={task.id} 
-                    className={`cursor-pointer transition-all group ${highlightClass}`}
-                    onClick={() => handleTaskClick(task.id)}
-                  >
-                    {userRole === "project_owner" && (
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedTaskIds.has(task.id)}
-                          onCheckedChange={(checked) => handleSelectTask(task.id, checked as boolean)}
-                        />
-                      </TableCell>
-                    )}
-                    {columns.date && (
-                      <TableCell>
-                        <div className="relative">
-                          <div className="status-indicator" style={{ backgroundColor: getStatusColor(task.status).split(' ')[0].replace('bg-[', '').replace(']', '') }} />
-                          {new Date(task.date).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                    )}
-                    <TableCell className="font-medium">
-                      <div className="relative flex items-center gap-2 group/name max-w-[140px]">
-                        <span className="truncate" title={task.task_name}>{task.task_name}</span>
-                        {task.revision_count > 0 && (
-                          <div className="flex-shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[10px] font-semibold">
-                            {task.revision_count}
-                          </div>
+            <Table className="table-fixed">
+              <TableHeader className="sticky top-0 z-20 bg-card">
+                <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
+                  {userRole === "project_owner" && (
+                    <TableHead className="w-12 bg-card">
+                      <Checkbox
+                        checked={selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
+                  )}
+                  {columns.date && (
+                    <TableHead
+                      style={{ width: columnWidths.date }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("date")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date
+                        {sortField === "date" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                         )}
                       </div>
-                    </TableCell>
-                    {columns.client && <TableCell><span className="truncate block max-w-[80px]" title={task.clients?.name || "-"}>{task.clients?.name || "-"}</span></TableCell>}
-                    {columns.project && <TableCell><span className="truncate block max-w-[70px]" title={task.projects?.name || "-"}>{task.projects?.name || "-"}</span></TableCell>}
-                    {columns.taskOwner && userRole !== "team_member" && (
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 max-w-[100px]">
-                          {task.assignee_id === userId ? (
-                            <>
-                              <Avatar className="h-5 w-5 flex-shrink-0">
-                                <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
-                                <AvatarFallback className="text-[10px]">
-                                  {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="truncate text-sm" title={task.assignee?.full_name}>{task.assignee?.full_name || "-"}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Avatar className="h-5 w-5 flex-shrink-0">
-                                <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
-                                <AvatarFallback className="text-[10px]">
-                                  {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="truncate text-sm" title={task.assignee?.full_name}>{task.assignee?.full_name || "-"}</span>
-                            </>
+                      {renderResizeHandle('date')}
+                    </TableHead>
+                  )}
+                  <TableHead
+                    style={{ width: columnWidths.task }}
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                    onClick={() => toggleSort("task")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Task
+                      {sortField === "task" && (
+                        sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                      )}
+                    </div>
+                    {renderResizeHandle('task')}
+                  </TableHead>
+                  {columns.client && (
+                    <TableHead
+                      style={{ width: columnWidths.client }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("client")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Client
+                        {sortField === "client" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('client')}
+                    </TableHead>
+                  )}
+                  {columns.project && (
+                    <TableHead
+                      style={{ width: columnWidths.project }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("project")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Project
+                        {sortField === "project" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('project')}
+                    </TableHead>
+                  )}
+                  {columns.taskOwner && userRole !== "team_member" && (
+                    <TableHead
+                      style={{ width: columnWidths.taskOwner }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("assignee")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Task Owner
+                        {sortField === "assignee" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('taskOwner')}
+                    </TableHead>
+                  )}
+                  {columns.pm && (
+                    <TableHead
+                      style={{ width: columnWidths.pm }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("assigned_by")}
+                    >
+                      <div className="flex items-center gap-2">
+                        PM
+                        {sortField === "assigned_by" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('pm')}
+                    </TableHead>
+                  )}
+                  {columns.collaborators && (
+                    <TableHead style={{ width: columnWidths.collaborators }} className="text-center bg-card relative group/col">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={toggleCollaboratorsColumn}
+                              className="h-8 w-8 p-0 hover:bg-muted"
+                            >
+                              <Users className={`h-3.5 w-3.5 transition-colors ${collaboratorsExpanded ? "text-primary" : "text-muted-foreground"}`} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{collaboratorsExpanded ? "Hide" : "Show"} Collaborators</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      {renderResizeHandle('collaborators')}
+                    </TableHead>
+                  )}
+                  {columns.deadline && (
+                    <TableHead
+                      style={{ width: columnWidths.deadline }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("deadline")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Deadline
+                        {sortField === "deadline" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('deadline')}
+                    </TableHead>
+                  )}
+                  {columns.submission && (
+                    <TableHead
+                      style={{ width: columnWidths.submission }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("submission")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Submission
+                        {sortField === "submission" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('submission')}
+                    </TableHead>
+                  )}
+                  {columns.delay && (
+                    <TableHead
+                      style={{ width: columnWidths.delay }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("delay")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Delay
+                        {sortField === "delay" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('delay')}
+                    </TableHead>
+                  )}
+                  {columns.time && (
+                    <TableHead
+                      style={{ width: columnWidths.time }}
+                      className="bg-card relative group/col"
+                    >
+                      <div className="flex items-center gap-1">
+                        <Timer className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>Time</span>
+                      </div>
+                      {renderResizeHandle('time')}
+                    </TableHead>
+                  )}
+                  {columns.status && (
+                    <TableHead
+                      style={{ width: columnWidths.status }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("status")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Status
+                        {sortField === "status" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('status')}
+                    </TableHead>
+                  )}
+                  {columns.urgency && (
+                    <TableHead
+                      style={{ width: columnWidths.urgency, minWidth: 90 }}
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      onClick={() => toggleSort("urgency")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Urgency
+                        {sortField === "urgency" && (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {renderResizeHandle('urgency')}
+                    </TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTasks.map((task) => {
+                  const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
+                  const highlightClass = getTaskHighlightClass(task, delayDays);
+                  return (
+                    <TableRow
+                      key={task.id}
+                      className={`cursor-pointer transition-all group ${highlightClass}`}
+                      onClick={() => handleTaskClick(task.id)}
+                    >
+                      {userRole === "project_owner" && (
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedTaskIds.has(task.id)}
+                            onCheckedChange={(checked) => handleSelectTask(task.id, checked as boolean)}
+                          />
+                        </TableCell>
+                      )}
+                      {columns.date && (
+                        <TableCell>
+                          <div className="relative">
+                            <div className="status-indicator" style={{ backgroundColor: getStatusColor(task.status).split(' ')[0].replace('bg-[', '').replace(']', '') }} />
+                            {new Date(task.date).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                      )}
+                      <TableCell className="font-medium">
+                        <div className="relative flex items-center gap-2 group/name max-w-[140px]">
+                          <span className="truncate" title={task.task_name}>{task.task_name}</span>
+                          {task.revision_count > 0 && (
+                            <div className="flex-shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[10px] font-semibold">
+                              {task.revision_count}
+                            </div>
                           )}
                         </div>
                       </TableCell>
-                    )}
-                    {columns.pm && (
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 max-w-[90px]">
-                          <Avatar className="h-5 w-5 flex-shrink-0">
-                            <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
-                            <AvatarFallback className="text-[10px]">
-                              {task.assigned_by?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate text-sm" title={task.assigned_by?.full_name}>{task.assigned_by?.full_name || "-"}</span>
-                        </div>
-                      </TableCell>
-                    )}
-                    {columns.collaborators && (
-                      <TableCell className="p-0 relative">
-                        {/* Show task owner icon for TM collaboration tasks */}
-                        {userRole === "team_member" && task.assignee_id !== userId && task.collaborators?.some((c: any) => c.user_id === userId) ? (
-                          <div className="w-10 flex items-center justify-center py-2">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="relative">
-                                    <Avatar className="h-6 w-6 border-2 border-primary/50">
-                                      <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
-                                      <AvatarFallback className="text-xs bg-primary/10">
-                                        {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-primary flex items-center justify-center">
-                                      <Star className="h-2 w-2 text-primary-foreground" />
-                                    </div>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs">Task Owner: {task.assignee?.full_name || "Unknown"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                      {columns.client && <TableCell><span className="truncate block max-w-[80px]" title={task.clients?.name || "-"}>{task.clients?.name || "-"}</span></TableCell>}
+                      {columns.project && <TableCell><span className="truncate block max-w-[70px]" title={task.projects?.name || "-"}>{task.projects?.name || "-"}</span></TableCell>}
+                      {columns.taskOwner && userRole !== "team_member" && (
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 max-w-[100px]">
+                            {task.assignee_id === userId ? (
+                              <>
+                                <Avatar className="h-5 w-5 flex-shrink-0">
+                                  <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                                  <AvatarFallback className="text-[10px]">
+                                    {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="truncate text-sm" title={task.assignee?.full_name}>{task.assignee?.full_name || "-"}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Avatar className="h-5 w-5 flex-shrink-0">
+                                  <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                                  <AvatarFallback className="text-[10px]">
+                                    {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="truncate text-sm" title={task.assignee?.full_name}>{task.assignee?.full_name || "-"}</span>
+                              </>
+                            )}
                           </div>
-                        ) : task.collaborators && task.collaborators.length > 0 ? (
-                          <Collapsible
-                            open={collaboratorsExpanded}
-                            onOpenChange={() => {}}
-                          >
-                            <div className="flex items-center">
-                              {!collaboratorsExpanded ? (
-                                <div className="w-10 flex items-center justify-center py-2">
-                                  <div className="flex -space-x-2">
-                                    {task.collaborators.slice(0, 2).map((collab: any, idx: number) => (
-                                      <TooltipProvider key={idx}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Avatar className="h-6 w-6 border-2 border-background">
-                                              <AvatarImage 
-                                                src={collab.profiles?.avatar_url || undefined} 
-                                                alt={collab.profiles?.full_name} 
-                                              />
-                                              <AvatarFallback className="text-xs">
-                                                {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                              </AvatarFallback>
-                                            </Avatar>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>{collab.profiles?.full_name || "Unknown"}</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    ))}
-                                    {task.collaborators.length > 2 && (
-                                      <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                                        <span className="text-[10px] font-medium">+{task.collaborators.length - 2}</span>
+                        </TableCell>
+                      )}
+                      {columns.pm && (
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 max-w-[90px]">
+                            <Avatar className="h-5 w-5 flex-shrink-0">
+                              <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
+                              <AvatarFallback className="text-[10px]">
+                                {task.assigned_by?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate text-sm" title={task.assigned_by?.full_name}>{task.assigned_by?.full_name || "-"}</span>
+                          </div>
+                        </TableCell>
+                      )}
+                      {columns.collaborators && (
+                        <TableCell className="p-0 relative">
+                          {/* Show task owner icon for TM collaboration tasks */}
+                          {userRole === "team_member" && task.assignee_id !== userId && task.collaborators?.some((c: any) => c.user_id === userId) ? (
+                            <div className="w-10 flex items-center justify-center py-2">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="relative">
+                                      <Avatar className="h-6 w-6 border-2 border-primary/50">
+                                        <AvatarImage src={task.assignee?.avatar_url || undefined} alt={task.assignee?.full_name} />
+                                        <AvatarFallback className="text-xs bg-primary/10">
+                                          {task.assignee?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-primary flex items-center justify-center">
+                                        <Star className="h-2 w-2 text-primary-foreground" />
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <CollapsibleContent className="w-full">
-                                  <div className="px-2 py-2 w-full min-w-[200px]">
-                                    <div className="flex flex-wrap gap-2">
-                                      {task.collaborators.map((collab: any, idx: number) => {
-                                        const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
-                                        return (
-                                          <TooltipProvider key={idx}>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors">
-                                                  <Avatar className="h-5 w-5">
-                                                    <AvatarImage 
-                                                      src={collab.profiles?.avatar_url || undefined} 
-                                                      alt={collab.profiles?.full_name} 
-                                                    />
-                                                    <AvatarFallback className="text-[10px]">
-                                                      {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                                                    </AvatarFallback>
-                                                  </Avatar>
-                                                  <span className="text-xs font-medium">
-                                                    {firstName}
-                                                  </span>
-                                                </div>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                <p>{collab.profiles?.full_name || "Unknown"}</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
-                                        );
-                                      })}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="text-xs">Task Owner: {task.assignee?.full_name || "Unknown"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          ) : task.collaborators && task.collaborators.length > 0 ? (
+                            <Collapsible
+                              open={collaboratorsExpanded}
+                              onOpenChange={() => { }}
+                            >
+                              <div className="flex items-center">
+                                {!collaboratorsExpanded ? (
+                                  <div className="w-10 flex items-center justify-center py-2">
+                                    <div className="flex -space-x-2">
+                                      {task.collaborators.slice(0, 2).map((collab: any, idx: number) => (
+                                        <TooltipProvider key={idx}>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Avatar className="h-6 w-6 border-2 border-background">
+                                                <AvatarImage
+                                                  src={collab.profiles?.avatar_url || undefined}
+                                                  alt={collab.profiles?.full_name}
+                                                />
+                                                <AvatarFallback className="text-xs">
+                                                  {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      ))}
+                                      {task.collaborators.length > 2 && (
+                                        <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                                          <span className="text-[10px] font-medium">+{task.collaborators.length - 2}</span>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
-                                </CollapsibleContent>
-                              )}
+                                ) : (
+                                  <CollapsibleContent className="w-full">
+                                    <div className="px-2 py-2 w-full min-w-[200px]">
+                                      <div className="flex flex-wrap gap-2">
+                                        {task.collaborators.map((collab: any, idx: number) => {
+                                          const firstName = collab.profiles?.full_name?.split(" ")[0] || "Unknown";
+                                          return (
+                                            <TooltipProvider key={idx}>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors">
+                                                    <Avatar className="h-5 w-5">
+                                                      <AvatarImage
+                                                        src={collab.profiles?.avatar_url || undefined}
+                                                        alt={collab.profiles?.full_name}
+                                                      />
+                                                      <AvatarFallback className="text-[10px]">
+                                                        {collab.profiles?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                                                      </AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="text-xs font-medium">
+                                                      {firstName}
+                                                    </span>
+                                                  </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  <p>{collab.profiles?.full_name || "Unknown"}</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </TooltipProvider>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  </CollapsibleContent>
+                                )}
+                              </div>
+                            </Collapsible>
+                          ) : (
+                            <div className="w-10 flex items-center justify-center">
+                              <span className="text-muted-foreground text-xs">-</span>
                             </div>
-                          </Collapsible>
-                        ) : (
-                          <div className="w-10 flex items-center justify-center">
-                            <span className="text-muted-foreground text-xs">-</span>
-                          </div>
-                        )}
-                      </TableCell>
-                    )}
-                    {columns.deadline && (
-                      <TableCell>
-                        {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}
-                      </TableCell>
-                    )}
-                    {columns.submission && (
-                      <TableCell>
-                        {task.actual_delivery ? new Date(task.actual_delivery).toLocaleDateString() : "-"}
-                      </TableCell>
-                    )}
-                    {columns.delay && (
-                      <TableCell>
-                        {delayDays !== null ? (
-                          <span className={delayDays > 0 ? "text-destructive font-medium" : delayDays < 0 ? "text-green-600 font-medium" : ""}>
-                            {delayDays > 0 ? `+${delayDays}d` : delayDays < 0 ? `${delayDays}d` : "On time"}
-                          </span>
-                        ) : "-"}
-                      </TableCell>
-                    )}
-                    {columns.time && (
-                      <TableCell>
-                        {(() => {
-                          const totalSeconds = getTaskTotalTime(task.id);
-                          const isActive = isTaskActive(task.id);
-                          if (totalSeconds === 0 && !isActive) return <span className="text-muted-foreground">-</span>;
-                          return (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <div className={`flex items-center justify-center h-7 w-14 rounded-full text-xs font-medium ${
-                                    isActive 
-                                      ? "bg-green-500/20 text-green-700 dark:text-green-400" 
+                          )}
+                        </TableCell>
+                      )}
+                      {columns.deadline && (
+                        <TableCell>
+                          {task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}
+                        </TableCell>
+                      )}
+                      {columns.submission && (
+                        <TableCell>
+                          {task.actual_delivery ? new Date(task.actual_delivery).toLocaleDateString() : "-"}
+                        </TableCell>
+                      )}
+                      {columns.delay && (
+                        <TableCell>
+                          {delayDays !== null ? (
+                            <span className={delayDays > 0 ? "text-destructive font-medium" : delayDays < 0 ? "text-green-600 font-medium" : ""}>
+                              {delayDays > 0 ? `+${delayDays}d` : delayDays < 0 ? `${delayDays}d` : "On time"}
+                            </span>
+                          ) : "-"}
+                        </TableCell>
+                      )}
+                      {columns.time && (
+                        <TableCell>
+                          {(() => {
+                            const totalSeconds = getTaskTotalTime(task.id);
+                            const isActive = isTaskActive(task.id);
+                            if (totalSeconds === 0 && !isActive) return <span className="text-muted-foreground">-</span>;
+                            return (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <div className={`flex items-center justify-center h-7 w-14 rounded-full text-xs font-medium ${isActive
+                                      ? "bg-green-500/20 text-green-700 dark:text-green-400"
                                       : "bg-muted text-muted-foreground"
-                                  }`}>
-                                    {formatTimeTracking(totalSeconds)}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{isActive ? "Timer active" : "Time spent on task"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          );
-                        })()}
-                      </TableCell>
-                    )}
-                    {columns.status && (
-                      <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent">
-                        {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
-                          <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
-                            {task.status}
-                          </Badge>
-                        ) : (
-                          <BadgeDropdown
-                            value={task.status}
-                            options={
-                              userRole === "team_member"
-                                ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
-                                : statuses
-                            }
-                            onChange={(value) => handleStatusChange(task.id, value)}
-                            disabled={!canEdit(task)}
-                          />
-                        )}
-                      </TableCell>
-                    )}
-                    {columns.urgency && (
-                      <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent">
-                        {userRole === "team_member" ? (
-                          <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
-                            {task.urgency}
-                          </Badge>
-                        ) : (
-                          <BadgeDropdown
-                            value={task.urgency}
-                            options={urgencies}
-                            onChange={(value) => handleUrgencyChange(task.id, value)}
-                            disabled={!canEdit(task)}
-                          />
-                        )}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                                      }`}>
+                                      {formatTimeTracking(totalSeconds)}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{isActive ? "Timer active" : "Time spent on task"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+                          })()}
+                        </TableCell>
+                      )}
+                      {columns.status && (
+                        <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent">
+                          {userRole === "team_member" && !canTeamMemberChangeStatus(task.status) ? (
+                            <Badge className={statuses.find(s => s.label === task.status)?.color || "bg-muted"}>
+                              {task.status}
+                            </Badge>
+                          ) : (
+                            <BadgeDropdown
+                              value={task.status}
+                              options={
+                                userRole === "team_member"
+                                  ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
+                                  : statuses
+                              }
+                              onChange={(value) => handleStatusChange(task.id, value)}
+                              disabled={!canEdit(task)}
+                            />
+                          )}
+                        </TableCell>
+                      )}
+                      {columns.urgency && (
+                        <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent">
+                          {userRole === "team_member" ? (
+                            <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
+                              {task.urgency}
+                            </Badge>
+                          ) : (
+                            <BadgeDropdown
+                              value={task.urgency}
+                              options={urgencies}
+                              onChange={(value) => handleUrgencyChange(task.id, value)}
+                              disabled={!canEdit(task)}
+                            />
+                          )}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -1442,46 +1453,46 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
             const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
             const highlightClass = getTaskHighlightClass(task, delayDays);
             return (
-              <div 
+              <div
                 key={task.id}
-                style={{ 
+                style={{
                   animationDelay: `${index * 50}ms`,
                   animationFillMode: 'both'
                 }}
                 className={`animate-fade-in-up rounded-lg ${highlightClass}`}
               >
-              <TaskCard
-                task={task}
-                userRole={userRole}
-                isSelected={selectedTaskIds.has(task.id)}
-                isAppreciated={taskAppreciations.get(task.id)}
-                statuses={
-                  userRole === "team_member"
-                    ? statuses.filter(s => ["Not Started", "In Progress", "Waiting for Approval"].includes(s.label))
-                    : statuses
-                }
-                urgencies={urgencies}
-                onSelect={(checked) => handleSelectTask(task.id, checked)}
-                onEdit={() => handleEditTask(task)}
-                onClick={() => handleTaskClick(task.id)}
-                onStatusChange={
-                  userRole === "team_member" && task.status && !canTeamMemberChangeStatus(task.status)
-                    ? undefined
-                    : (newStatus) => handleStatusChange(task.id, newStatus)
-                }
-                onUrgencyChange={userRole !== "team_member" ? (newUrgency) => handleUrgencyChange(task.id, newUrgency) : undefined}
-                onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
-                onSubmit={() => {
-                  setSelectedTaskForSubmit(task);
-                  setSubmitDialogOpen(true);
-                }}
-                onNotesClick={() => {
-                  setSelectedTask(task);
-                  setNotesDialogOpen(true);
-                }}
-              />
-            </div>
-          );
+                <TaskCard
+                  task={task}
+                  userRole={userRole}
+                  isSelected={selectedTaskIds.has(task.id)}
+                  isAppreciated={taskAppreciations.get(task.id)}
+                  statuses={
+                    userRole === "team_member"
+                      ? statuses.filter(s => ["Not Started", "In Progress", "Waiting for Approval"].includes(s.label))
+                      : statuses
+                  }
+                  urgencies={urgencies}
+                  onSelect={(checked) => handleSelectTask(task.id, checked)}
+                  onEdit={() => handleEditTask(task)}
+                  onClick={() => handleTaskClick(task.id)}
+                  onStatusChange={
+                    userRole === "team_member" && task.status && !canTeamMemberChangeStatus(task.status)
+                      ? undefined
+                      : (newStatus) => handleStatusChange(task.id, newStatus)
+                  }
+                  onUrgencyChange={userRole !== "team_member" ? (newUrgency) => handleUrgencyChange(task.id, newUrgency) : undefined}
+                  onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
+                  onSubmit={() => {
+                    setSelectedTaskForSubmit(task);
+                    setSubmitDialogOpen(true);
+                  }}
+                  onNotesClick={() => {
+                    setSelectedTask(task);
+                    setNotesDialogOpen(true);
+                  }}
+                />
+              </div>
+            );
           })}
         </div>
       )}
@@ -1500,19 +1511,19 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
           onSelectTask={handleSelectTask}
           onEditTask={handleEditTask}
           onStatusChange={
-            userRole === "team_member" 
+            userRole === "team_member"
               ? (taskId: string, newStatus: string) => {
-                  const task = tasks.find(t => t.id === taskId);
-                  if (task && canTeamMemberChangeStatus(task.status)) {
-                    const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
-                    if (allowedStatuses.includes(newStatus)) {
-                      handleStatusChange(taskId, newStatus);
-                    }
+                const task = tasks.find(t => t.id === taskId);
+                if (task && canTeamMemberChangeStatus(task.status)) {
+                  const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
+                  if (allowedStatuses.includes(newStatus)) {
+                    handleStatusChange(taskId, newStatus);
                   }
                 }
+              }
               : handleStatusChange
           }
-          onUrgencyChange={userRole !== "team_member" ? handleUrgencyChange : () => {}}
+          onUrgencyChange={userRole !== "team_member" ? handleUrgencyChange : () => { }}
           onAppreciationToggle={toggleAppreciation}
           onSubmit={(taskData: any) => {
             setSelectedTaskForSubmit(taskData);
@@ -1570,7 +1581,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
           }
         }}
       />
-      
+
       <SubmitDialog
         open={submitDialogOpen}
         onOpenChange={setSubmitDialogOpen}
