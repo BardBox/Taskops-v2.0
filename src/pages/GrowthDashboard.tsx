@@ -1,12 +1,3 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Loader2 } from "lucide-react";
-import { LeadTable, Lead } from "@/components/sales/LeadTable";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { LeadDialog } from "@/components/sales/LeadDialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
