@@ -40,9 +40,10 @@ interface LeadTableProps {
     onEdit: (lead: Lead) => void;
     onDelete: (leadId: string) => void;
     onAddToCalendar: (lead: Lead) => void;
+    onLeadClick: (lead: Lead) => void;
 }
 
-export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar }: LeadTableProps) => {
+export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClick }: LeadTableProps) => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'New': return 'bg-blue-100 text-blue-800';
@@ -70,7 +71,11 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar }: LeadTabl
                 </TableHeader>
                 <TableBody>
                     {leads.map((lead) => (
-                        <TableRow key={lead.id}>
+                        <TableRow
+                            key={lead.id}
+                            className="cursor-pointer hover:bg-slate-50 transition-colors"
+                            onClick={() => onLeadClick(lead)}
+                        >
                             <TableCell className="font-medium">{lead.title}</TableCell>
                             <TableCell>
                                 {lead.contact ? (
@@ -94,7 +99,7 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar }: LeadTabl
                                     ? format(new Date(lead.next_follow_up), 'MMM d, yyyy')
                                     : '-'}
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0">
