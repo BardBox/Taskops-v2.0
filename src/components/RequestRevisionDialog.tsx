@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { FileEdit } from "lucide-react";
+import { FileEdit, Paperclip, X } from "lucide-react";
 
 interface RequestRevisionDialogProps {
   open: boolean;
@@ -36,23 +36,29 @@ export function RequestRevisionDialog({
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image must be less than 5MB");
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        toast.error("File must be less than 50MB");
         return;
       }
       setReferenceImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+
+      // Create preview
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setImagePreview("");
+      }
     }
   };
 
-  const uploadReferenceImage = async (file: File): Promise<string | null> => {
+  const uploadReferenceFile = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `revision-${taskId}-${Date.now()}.${fileExt}`;
@@ -66,7 +72,7 @@ export function RequestRevisionDialog({
       return publicUrl;
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload reference image");
+      toast.error("Failed to upload reference file");
       return null;
     }
   };
@@ -84,7 +90,7 @@ export function RequestRevisionDialog({
 
       let imageUrl = null;
       if (referenceImage) {
-        imageUrl = await uploadReferenceImage(referenceImage);
+        imageUrl = await uploadReferenceFile(referenceImage);
       }
 
       const { error } = await supabase
@@ -103,13 +109,13 @@ export function RequestRevisionDialog({
       if (error) throw error;
 
       toast.success("Revision requested successfully");
-      
+
       // Reset form
       setComment("");
       setReferenceLink("");
       setReferenceImage(null);
       setImagePreview("");
-      
+
       onOpenChange(false);
       onRevisionRequested();
     } catch (error: any) {
@@ -158,20 +164,58 @@ export function RequestRevisionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="revision-image">Reference Image (Optional)</Label>
-            <Input
-              id="revision-image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-            />
-            {imagePreview && (
-              <div className="mt-2">
-                <img
-                  src={imagePreview}
-                  alt="Revision reference"
-                  className="max-w-xs max-h-40 rounded border"
+            <Label htmlFor="revision-file">Reference File (Optional)</Label>
+            {!imagePreview && !referenceImage ? (
+              <div className="relative">
+                <Input
+                  id="revision-file"
+                  type="file"
+                  accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                  onChange={handleFileSelect}
+                  className="hidden"
                 />
+                <Label
+                  htmlFor="revision-file"
+                  className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <Paperclip className="h-5 w-5 mb-1 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground font-medium">Add Image, Video or Doc</span>
+                  <span className="text-[10px] text-muted-foreground">Max 50MB</span>
+                </Label>
+              </div>
+            ) : (
+              <div className="relative mt-2 inline-block group">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Review reference"
+                    className="max-w-xs max-h-40 rounded-lg border shadow-sm aspect-video object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted max-w-xs">
+                    <Paperclip className="h-5 w-5 text-blue-500" />
+                    <div className="grid gap-0.5">
+                      <span className="text-sm font-medium truncate max-w-[180px]">
+                        {referenceImage?.name || "Attached File"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {referenceImage ? `${(referenceImage.size / 1024 / 1024).toFixed(2)} MB` : "File attached"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 p-1"
+                  onClick={() => {
+                    setReferenceImage(null);
+                    setImagePreview("");
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
               </div>
             )}
           </div>

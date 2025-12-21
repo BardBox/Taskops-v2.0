@@ -365,23 +365,31 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
     setReferenceLinks(newLinks);
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* File Upload Logic */
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image must be less than 5MB");
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        toast.error("File must be less than 50MB");
         return;
       }
       setReferenceImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+
+      // Create preview
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // For non-images, we don't set imagePreview, we rely on referenceImage state
+        setImagePreview("");
+      }
     }
   };
 
-  const uploadReferenceImage = async (file: File): Promise<string | null> => {
+  const uploadReferenceFile = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
@@ -400,12 +408,12 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
       return publicUrl;
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload reference image");
+      toast.error("Failed to upload reference file");
       return null;
     }
   };
 
-  const handleRemoveImage = () => {
+  const handleRemoveFile = () => {
     setReferenceImage(null);
     setImagePreview("");
     setExistingImageUrl("");
@@ -463,11 +471,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
       let referenceImageUrl = existingImageUrl;
       if (referenceImage) {
-        const uploadedUrl = await uploadReferenceImage(referenceImage);
+        const uploadedUrl = await uploadReferenceFile(referenceImage);
         if (uploadedUrl) {
           referenceImageUrl = uploadedUrl;
         }
-      } else if (!existingImageUrl && !imagePreview) {
+      } else if (!existingImageUrl && !referenceImage) {
         // Explicitly cleared
         referenceImageUrl = "";
       }
@@ -924,14 +932,14 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                 </div>
               </div>
 
-              {/* Reference Image */}
+              {/* Reference File */}
               <div className="space-y-2">
-                {!imagePreview ? (
+                {!imagePreview && !existingImageUrl && !referenceImage ? (
                   <div className="relative">
                     <Input
                       type="file"
-                      accept="image/*"
-                      onChange={handleImageSelect}
+                      accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                      onChange={handleFileSelect}
                       className="hidden"
                       id="file-upload"
                     />
@@ -942,23 +950,37 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                       <div className="flex flex-col items-center justify-center pt-2 pb-2">
                         <Paperclip className="w-5 h-5 mb-1 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground font-medium">Add Reference File</p>
-                        <p className="text-xs text-muted-foreground mt-1">Max 5MB (Images only)</p>
+                        <p className="text-xs text-muted-foreground mt-1">Image, Video, or Doc (Max 50MB)</p>
                       </div>
                     </Label>
                   </div>
                 ) : (
                   <div className="relative mt-2 inline-block group">
-                    <img
-                      src={imagePreview}
-                      alt="Reference preview"
-                      className="max-w-xs max-h-40 rounded-lg border shadow-sm aspect-video object-cover"
-                    />
+                    {imagePreview || (existingImageUrl && existingImageUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) ? (
+                      <img
+                        src={imagePreview || existingImageUrl}
+                        alt="Reference preview"
+                        className="max-w-xs max-h-40 rounded-lg border shadow-sm aspect-video object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted max-w-xs">
+                        <Paperclip className="h-8 w-8 text-blue-500" />
+                        <div className="grid gap-0.5">
+                          <span className="text-sm font-medium truncate max-w-[180px]">
+                            {referenceImage?.name || existingImageUrl.split('/').pop() || "Attached File"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {referenceImage ? `${(referenceImage.size / 1024 / 1024).toFixed(2)} MB` : "File attached"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     <Button
                       type="button"
                       variant="destructive"
                       size="icon"
                       className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={handleRemoveImage}
+                      onClick={handleRemoveFile}
                     >
                       <X className="h-3 w-3" />
                     </Button>

@@ -62,7 +62,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
       .select("status, mood")
       .eq("id", id)
       .single();
-    
+
     if (data) {
       setStatus(data.status);
       setMood(data.mood);
@@ -159,14 +159,14 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
   return (
     <header className="sticky top-0 z-50 h-14 border-b border-border/50 bg-gradient-to-r from-background via-background to-background shadow-sm flex items-center justify-between px-2 sm:px-4">
       {/* Left Section: User Profile, Status & Mood icons */}
-      <motion.div 
+      <motion.div
         className="flex items-center gap-3 flex-shrink-0"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         {/* User Profile - clickable to open profile */}
-        <motion.div 
+        <motion.div
           className="hidden md:flex items-center gap-3 pr-4 border-r border-border/30 cursor-pointer group"
           onClick={() => navigate("/profile")}
           whileHover={{ scale: 1.02 }}
@@ -199,14 +199,13 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                 const StatusIcon = getStatusIcon(status);
                 return (
                   <StatusIcon
-                    className={`h-4 w-4 ${
-                      status === "Available" ? "text-green-500" :
+                    className={`h-4 w-4 ${status === "Available" ? "text-green-500" :
                       status === "Busy" ? "text-red-500" :
-                      status === "Out of Office" ? "text-orange-500" :
-                      status === "Do Not Disturb" ? "text-purple-500" :
-                      status === "On Leave" ? "text-gray-500" :
-                      "text-muted-foreground"
-                    }`}
+                        status === "Out of Office" ? "text-orange-500" :
+                          status === "Do Not Disturb" ? "text-purple-500" :
+                            status === "On Leave" ? "text-gray-500" :
+                              "text-muted-foreground"
+                      }`}
                   />
                 );
               })()}
@@ -268,7 +267,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
         whileHover={{ scale: 1.03 }}
       >
-        <motion.div 
+        <motion.div
           className="relative"
           whileHover={{ rotate: [0, -5, 5, 0] }}
           transition={{ duration: 0.5 }}
@@ -292,7 +291,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
       </motion.div>
 
       {/* Right Section: Notifications & Burger Menu */}
-      <motion.div 
+      <motion.div
         className="flex items-center gap-2 flex-shrink-0"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -305,7 +304,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
         >
           {userId && <NotificationCenter userId={userId} />}
         </motion.div>
-        
+
         <Sheet>
           <SheetTrigger asChild>
             <motion.div
@@ -324,7 +323,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             <SheetHeader>
               <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
-            
+
             {/* User Profile Section */}
             <div className="flex items-center gap-3 py-4 border-b mb-4">
               <Avatar className="h-12 w-12">
@@ -344,11 +343,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             <div className="flex flex-col gap-2">
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname === "/dashboard" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname === "/dashboard"
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/dashboard")}
               >
                 <Home className="mr-2 h-4 w-4" />
@@ -356,11 +354,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname === "/profile" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname === "/profile"
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/profile")}
               >
                 <User className="mr-2 h-4 w-4" />
@@ -368,11 +365,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname === "/team" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname === "/team"
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/team")}
               >
                 <Users className="mr-2 h-4 w-4" />
@@ -380,11 +376,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname === "/hive" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname === "/hive"
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/hive")}
               >
                 <Hexagon className="mr-2 h-4 w-4" />
@@ -392,11 +387,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname.startsWith("/analytics") 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname.startsWith("/analytics")
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/analytics")}
               >
                 <BarChart3 className="mr-2 h-4 w-4" />
@@ -404,11 +398,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname === "/posting-status" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname === "/posting-status"
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/posting-status")}
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -416,11 +409,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname === "/preferences" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname === "/preferences"
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/preferences")}
               >
                 <Sliders className="mr-2 h-4 w-4" />
@@ -428,11 +420,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${
-                  location.pathname === "/about" 
-                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                    : ""
-                }`}
+                className={`justify-start ${location.pathname === "/about"
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                  : ""
+                  }`}
                 onClick={() => navigate("/about")}
               >
                 <Info className="mr-2 h-4 w-4" />
@@ -443,16 +434,28 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                   <div className="border-t my-2" />
                   <Button
                     variant="ghost"
-                    className={`justify-start ${
-                      location.pathname.startsWith("/admin") 
-                        ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" 
-                        : ""
-                    }`}
+                    className={`justify-start ${location.pathname.startsWith("/admin")
+                      ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                      : ""
+                      }`}
                     onClick={() => navigate("/admin")}
                   >
                     <Shield className="mr-2 h-4 w-4" />
                     Admin Panel
                   </Button>
+                  {userRole === "project_owner" && (
+                    <Button
+                      variant="ghost"
+                      className={`justify-start ${location.search.includes("view=growth")
+                        ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                        : ""
+                        }`}
+                      onClick={() => navigate("/dashboard?view=growth")}
+                    >
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Growth Engine
+                    </Button>
+                  )}
                 </>
               )}
               <div className="border-t my-2" />

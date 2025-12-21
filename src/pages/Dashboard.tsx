@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ import { DashboardPreferences, DEFAULT_PREFERENCES } from "@/components/Dashboar
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
+import { GrowthDashboard } from "./GrowthDashboard";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface ColumnWidths {
   date: number;
@@ -32,6 +35,13 @@ interface ColumnWidths {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = (searchParams.get("view") as "ops" | "growth") || "ops";
+
+  const setViewMode = (mode: "ops" | "growth") => {
+    setSearchParams({ view: mode });
+  };
+
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,7 +53,7 @@ const Dashboard = () => {
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
-  
+
   const [filters, setFilters] = useState<FilterState>({
     year: "all",
     month: "all",
@@ -99,10 +109,10 @@ const Dashboard = () => {
     }
 
     if (data) {
-      const dashboardView = data.dashboard_view 
-        ? (typeof data.dashboard_view === 'string' 
-            ? JSON.parse(data.dashboard_view) 
-            : data.dashboard_view)
+      const dashboardView = data.dashboard_view
+        ? (typeof data.dashboard_view === 'string'
+          ? JSON.parse(data.dashboard_view)
+          : data.dashboard_view)
         : {};
 
       setPreferences({
@@ -111,7 +121,7 @@ const Dashboard = () => {
         showQuickFilters: dashboardView.showQuickFilters ?? true,
         visibleColumns: dashboardView.visibleColumns ?? preferences.visibleColumns,
       });
-      
+
       // Load column widths if saved
       if (dashboardView.columnWidths) {
         setColumnWidths({ ...DEFAULT_COLUMN_WIDTHS, ...dashboardView.columnWidths });
@@ -129,6 +139,7 @@ const Dashboard = () => {
     if (error) {
       console.error("Error fetching role:", error);
     } else {
+      console.log("Dashboard: Fetched user role:", data?.role);
       setUserRole(data?.role || "");
     }
   };
@@ -152,7 +163,7 @@ const Dashboard = () => {
   const handleResetPreferences = async () => {
     setPreferences(DEFAULT_PREFERENCES);
     setColumnWidths(DEFAULT_COLUMN_WIDTHS);
-    
+
     // Save reset to database
     if (user?.id) {
       await supabase
@@ -173,12 +184,12 @@ const Dashboard = () => {
 
   const handleColumnWidthsChange = useCallback((widths: ColumnWidths) => {
     setColumnWidths(widths);
-    
+
     // Clear existing timer
     if (columnWidthSaveTimerRef.current) {
       clearTimeout(columnWidthSaveTimerRef.current);
     }
-    
+
     // Debounce save to database (500ms delay)
     columnWidthSaveTimerRef.current = setTimeout(async () => {
       if (user?.id) {
@@ -187,7 +198,7 @@ const Dashboard = () => {
           visibleColumns: preferences.visibleColumns,
           columnWidths: widths,
         };
-        
+
         await supabase
           .from("user_preferences")
           .upsert({
@@ -201,46 +212,62 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
-        <Breadcrumbs />
-        
-        {preferences.showMetrics && <DashboardMetrics filters={filters} />}
+        <div className="flex items-center justify-between">
+          <Breadcrumbs />
+          {userRole === "project_owner" && (
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'ops' | 'growth')} className="w-[400px]">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="ops">Ops Center</TabsTrigger>
+                <TabsTrigger value="growth">Growth Engine</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
+        </div>
 
-        {preferences.showFilters && (
-          <GlobalFilters filters={filters} onFiltersChange={setFilters} />
-        )}
+        {viewMode === 'ops' ? (
+          <>
+            {preferences.showMetrics && <DashboardMetrics filters={filters} />}
 
-        {preferences.showQuickFilters && (
-          <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
-            <div className="flex items-center justify-center overflow-hidden">
-              <QuickFilters 
-                activeFilters={filters.quickFilter} 
-                onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })} 
+            {preferences.showFilters && (
+              <GlobalFilters filters={filters} onFiltersChange={setFilters} />
+            )}
+
+            {preferences.showQuickFilters && (
+              <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
+                <div className="flex items-center justify-center overflow-hidden">
+                  <QuickFilters
+                    activeFilters={filters.quickFilter}
+                    onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })}
+                    userRole={userRole}
+                    userId={user?.id}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4 mt-2">
+              <TaskTable
+                filters={filters}
                 userRole={userRole}
-                userId={user?.id}
+                userId={user?.id || ""}
+                visibleColumns={preferences.visibleColumns}
+                canCreateTasks={canCreateTasks}
+                onCreateTask={() => setDialogOpen(true)}
+                preferences={preferences}
+                onPreferencesChange={setPreferences}
+                onResetPreferences={handleResetPreferences}
+                columnWidths={columnWidths}
+                onColumnWidthsChange={handleColumnWidthsChange}
+                onDuplicate={(data) => {
+                  setDuplicateData(data);
+                  setDialogOpen(true);
+                }}
               />
             </div>
-          </div>
+          </>
+        ) : (
+          <GrowthDashboard />
         )}
-
-        <div className="space-y-4 mt-2">
-          <TaskTable
-            filters={filters} 
-            userRole={userRole} 
-            userId={user?.id || ""}
-            visibleColumns={preferences.visibleColumns}
-            canCreateTasks={canCreateTasks}
-            onCreateTask={() => setDialogOpen(true)}
-            preferences={preferences}
-            onPreferencesChange={setPreferences}
-            onResetPreferences={handleResetPreferences}
-            columnWidths={columnWidths}
-            onColumnWidthsChange={handleColumnWidthsChange}
-            onDuplicate={(data) => {
-              setDuplicateData(data);
-              setDialogOpen(true);
-            }}
-          />
-        </div>
       </div>
 
       {dialogOpen && (

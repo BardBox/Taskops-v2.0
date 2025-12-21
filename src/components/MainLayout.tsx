@@ -48,6 +48,7 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
       .single();
 
     if (roleData) {
+      console.log("AppHeader: Fetched user role:", roleData.role);
       setUserRole(roleData.role);
     }
 
@@ -74,9 +75,9 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
 
   return (
     <div className="min-h-screen flex flex-col">
-      <AppHeader 
-        userRole={userRole} 
-        userName={userName} 
+      <AppHeader
+        userRole={userRole}
+        userName={userName}
         avatarUrl={avatarUrl}
         showRoleBadge={showRoleBadge}
       />
