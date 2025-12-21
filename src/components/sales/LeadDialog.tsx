@@ -54,7 +54,7 @@ const leadSchema = z.object({
     stage: z.enum(['New', 'Active', 'Won', 'Lost', 'On Hold']),
     probability: z.coerce.number().min(0).max(100),
     expected_close_date: z.date().optional().nullable(),
-    assigned_to: z.string().min(1, "Assignee is required"),
+    owner_id: z.string().min(1, "Owner is required"),
     contact_id: z.string().optional().nullable(),
     notes: z.string().optional().nullable(),
 });
@@ -74,7 +74,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
             stage: "New",
             probability: 20,
             expected_close_date: undefined,
-            assigned_to: "",
+            owner_id: "",
             contact_id: "null", // String "null" for select handling
             notes: "",
         },
@@ -91,7 +91,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     stage: lead.stage,
                     probability: lead.probability || 0,
                     expected_close_date: lead.expected_close_date ? new Date(lead.expected_close_date) : undefined,
-                    assigned_to: lead.assigned_to || "",
+                    owner_id: lead.owner_id || "",
                     contact_id: lead.contact_id || "null",
                     notes: lead.notes || "",
                 });
@@ -102,14 +102,14 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     stage: "New",
                     probability: 20,
                     expected_close_date: undefined,
-                    assigned_to: "", // Ideally current user
+                    owner_id: "", // Ideally current user
                     contact_id: "null",
                     notes: "",
                 });
                 // Set default assignee to current user
                 supabase.auth.getUser().then(({ data }) => {
                     if (data.user) {
-                        form.setValue("assigned_to", data.user.id);
+                        form.setValue("owner_id", data.user.id);
                     }
                 });
             }
@@ -141,7 +141,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                 stage: values.stage,
                 probability: values.probability,
                 expected_close_date: values.expected_close_date?.toISOString().split('T')[0], // Format as YYYY-MM-DD
-                assigned_to: values.assigned_to,
+                owner_id: values.owner_id,
                 contact_id: values.contact_id === "null" ? null : values.contact_id,
                 notes: values.notes,
             };
@@ -295,7 +295,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
-                                name="assigned_to"
+                                name="owner_id"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Assigned To</FormLabel>
