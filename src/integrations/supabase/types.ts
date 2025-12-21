@@ -352,6 +352,69 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          client_id: string | null
+          created_at: string
+          expected_close_date: string | null
+          google_event_id: string | null
+          google_sheet_row_id: string | null
+          id: string
+          notes: string | null
+          probability: number | null
+          stage: string
+          title: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          expected_close_date?: string | null
+          google_event_id?: string | null
+          google_sheet_row_id?: string | null
+          id?: string
+          notes?: string | null
+          probability?: number | null
+          stage: string
+          title: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          expected_close_date?: string | null
+          google_event_id?: string | null
+          google_sheet_row_id?: string | null
+          id?: string
+          notes?: string | null
+          probability?: number | null
+          stage?: string
+          title?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       link_boards: {
         Row: {
           created_at: string
