@@ -47,11 +47,13 @@ CREATE TABLE public.leads (
     title TEXT NOT NULL,
     contact_id UUID REFERENCES public.contacts(id),
     source TEXT, -- e.g., 'Referral', 'LinkedIn'
+    service_interested TEXT[], -- Multi-select array
     owner_id UUID REFERENCES public.profiles(id), -- Assignee
     status public.lead_status DEFAULT 'New',
     follow_up_level public.follow_up_level DEFAULT 'L0',
     next_follow_up TIMESTAMP WITH TIME ZONE,
     expected_value NUMERIC,
+    currency TEXT DEFAULT 'USD', -- 'USD', 'INR', 'EUR', 'GBP'
     probability INTEGER CHECK (probability >= 0 AND probability <= 100),
     priority public.priority_level DEFAULT 'Medium',
     last_activity_timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
