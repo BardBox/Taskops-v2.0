@@ -30,7 +30,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
@@ -50,13 +49,16 @@ interface LeadDialogProps {
 
 const leadSchema = z.object({
     title: z.string().min(1, "Lead title is required"),
-    value: z.coerce.number().min(0, "Value must be positive"),
-    stage: z.enum(['New', 'Active', 'Won', 'Lost', 'On Hold']),
-    probability: z.coerce.number().min(0).max(100),
-    expected_close_date: z.date().optional().nullable(),
-    owner_id: z.string().min(1, "Owner is required"),
     contact_id: z.string().optional().nullable(),
-    notes: z.string().optional().nullable(),
+    owner_id: z.string().min(1, "Owner is required"),
+    source: z.string().optional().nullable(),
+    status: z.enum(['New', 'Active', 'Won', 'Lost', 'On Hold']),
+    follow_up_level: z.enum(['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']),
+    next_follow_up: z.date().optional().nullable(),
+    expected_value: z.coerce.number().min(0, "Value must be positive"),
+    currency: z.string().default("USD"),
+    probability: z.coerce.number().min(0).max(100),
+    priority: z.enum(['Low', 'Medium', 'High', 'Immediate']),
 });
 
 type LeadFormValues = z.infer<typeof leadSchema>;
@@ -70,13 +72,16 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         resolver: zodResolver(leadSchema),
         defaultValues: {
             title: "",
-            value: 0,
-            stage: "New",
-            probability: 20,
-            expected_close_date: undefined,
+            contact_id: "null",
             owner_id: "",
-            contact_id: "null", // String "null" for select handling
-            notes: "",
+            source: "",
+            status: "New",
+            follow_up_level: "L0",
+            next_follow_up: undefined,
+            expected_value: 0,
+            currency: "USD",
+            probability: 20,
+            priority: "Medium",
         },
     });
 
@@ -87,24 +92,30 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
             if (lead) {
                 form.reset({
                     title: lead.title,
-                    value: lead.value || 0,
-                    stage: lead.stage,
-                    probability: lead.probability || 0,
-                    expected_close_date: lead.expected_close_date ? new Date(lead.expected_close_date) : undefined,
-                    owner_id: lead.owner_id || "",
                     contact_id: lead.contact_id || "null",
-                    notes: lead.notes || "",
+                    owner_id: lead.owner_id || "",
+                    source: lead.source || "",
+                    status: lead.status || "New",
+                    follow_up_level: lead.follow_up_level || "L0",
+                    next_follow_up: lead.next_follow_up ? new Date(lead.next_follow_up) : undefined,
+                    expected_value: lead.expected_value || 0,
+                    currency: lead.currency || "USD",
+                    probability: lead.probability || 0,
+                    priority: lead.priority || "Medium",
                 });
             } else {
                 form.reset({
                     title: "",
-                    value: 0,
-                    stage: "New",
-                    probability: 20,
-                    expected_close_date: undefined,
-                    owner_id: "", // Ideally current user
                     contact_id: "null",
-                    notes: "",
+                    owner_id: "",
+                    source: "",
+                    status: "New",
+                    follow_up_level: "L0",
+                    next_follow_up: undefined,
+                    expected_value: 0,
+                    currency: "USD",
+                    probability: 20,
+                    priority: "Medium",
                 });
                 // Set default assignee to current user
                 supabase.auth.getUser().then(({ data }) => {
@@ -137,13 +148,16 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         try {
             const leadData = {
                 title: values.title,
-                value: values.value,
-                stage: values.stage,
-                probability: values.probability,
-                expected_close_date: values.expected_close_date?.toISOString().split('T')[0], // Format as YYYY-MM-DD
-                owner_id: values.owner_id,
                 contact_id: values.contact_id === "null" ? null : values.contact_id,
-                notes: values.notes,
+                owner_id: values.owner_id,
+                source: values.source,
+                status: values.status,
+                follow_up_level: values.follow_up_level,
+                next_follow_up: values.next_follow_up?.toISOString(),
+                expected_value: values.expected_value,
+                currency: values.currency,
+                probability: values.probability,
+                priority: values.priority,
             };
 
             if (lead) {
@@ -163,7 +177,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
             onSuccess();
             onOpenChange(false);
         } catch (error: any) {
-            console.error("Error saving lead key details:", error);
+            console.error("Error saving lead:", error);
             toast.error(error.message || "Failed to save lead");
         } finally {
             setLoading(false);
@@ -172,199 +186,282 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{lead ? "Edit Lead" : "Add New Lead"}</DialogTitle>
+                    <DialogTitle>{lead ? "Edit Lead" : "Create New Lead"}</DialogTitle>
                     <DialogDescription>
-                        {lead ? "Update the details of your sales lead." : "Enter the details for a new sales opportunity."}
+                        Frictionless entry for your sales opportunities.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="title"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Lead Title</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Website Redesign for Acme" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="grid grid-cols-2 gap-4">
+                        {/* REQUIRED FIELDS FIRST */}
+                        <div className="space-y-4 border-b pb-4">
+                            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Required Details</h4>
                             <FormField
                                 control={form.control}
-                                name="value"
+                                name="title"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Estimated Value</FormLabel>
+                                        <FormLabel>Lead Title <span className="text-red-500">*</span></FormLabel>
                                         <FormControl>
-                                            <div className="relative">
-                                                <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                <Input type="number" className="pl-8" {...field} />
-                                            </div>
+                                            <Input placeholder="e.g. Acme Corp Contract" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
-                            <FormField
-                                control={form.control}
-                                name="probability"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Probability (%)</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <Percent className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                <Input type="number" className="pl-8" {...field} />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="stage"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Stage</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select stage" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="New">New</SelectItem>
-                                                <SelectItem value="Active">Active</SelectItem>
-                                                <SelectItem value="Won">Won</SelectItem>
-                                                <SelectItem value="Lost">Lost</SelectItem>
-                                                <SelectItem value="On Hold">On Hold</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="expected_close_date"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Expected Close</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="contact_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Contact <span className="text-red-500">*</span></FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value ?? "null"}
+                                                value={field.value ?? "null"}
+                                            >
                                                 <FormControl>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        {field.value ? (
-                                                            format(field.value, "PPP")
-                                                        ) : (
-                                                            <span>Pick a date</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select contact" />
+                                                    </SelectTrigger>
                                                 </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value || undefined}
-                                                    onSelect={field.onChange}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                                <SelectContent>
+                                                    <SelectItem value="null">-- None --</SelectItem>
+                                                    {contacts.map((contact) => (
+                                                        <SelectItem key={contact.id} value={contact.id}>
+                                                            {contact.name} {contact.company_name ? `(${contact.company_name})` : ''}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="owner_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Owner (Assignee) <span className="text-red-500">*</span></FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select team member" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {teamMembers.map((member) => (
+                                                        <SelectItem key={member.id} value={member.id}>
+                                                            {member.full_name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="owner_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Assigned To</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+
+                        {/* OPTIONAL FIELDS */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Additional Details</h4>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Status</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select status" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="New">New</SelectItem>
+                                                    <SelectItem value="Active">Active</SelectItem>
+                                                    <SelectItem value="Won">Won</SelectItem>
+                                                    <SelectItem value="Lost">Lost</SelectItem>
+                                                    <SelectItem value="On Hold">On Hold</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="follow_up_level"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Follow-up Level</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select level" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="L0">L0 - Captured</SelectItem>
+                                                    <SelectItem value="L1">L1 - Attempted</SelectItem>
+                                                    <SelectItem value="L2">L2 - Connected</SelectItem>
+                                                    <SelectItem value="L3">L3 - Discovery</SelectItem>
+                                                    <SelectItem value="L4">L4 - Meeting</SelectItem>
+                                                    <SelectItem value="L5">L5 - Proposal</SelectItem>
+                                                    <SelectItem value="L6">L6 - Negotiation</SelectItem>
+                                                    <SelectItem value="L7">L7 - Closed</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="source"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Source</FormLabel>
                                             <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select team member" />
-                                                </SelectTrigger>
+                                                <Input placeholder="e.g. LinkedIn, Referral" {...field} value={field.value || ""} />
                                             </FormControl>
-                                            <SelectContent>
-                                                {teamMembers.map((member) => (
-                                                    <SelectItem key={member.id} value={member.id}>
-                                                        {member.full_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="contact_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Contact / Company</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value ?? "null"}
-                                            value={field.value ?? "null"}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select contact" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="null">-- None --</SelectItem>
-                                                {contacts.map((contact) => (
-                                                    <SelectItem key={contact.id} value={contact.id}>
-                                                        {contact.name} {contact.company_name ? `(${contact.company_name})` : ''}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="notes"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Notes</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder="Add any additional details here..."
-                                            className="resize-none"
-                                            {...field}
-                                            value={field.value || ""}
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="priority"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Priority</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select priority" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Low">Low</SelectItem>
+                                                    <SelectItem value="Medium">Medium</SelectItem>
+                                                    <SelectItem value="High">High</SelectItem>
+                                                    <SelectItem value="Immediate">Immediate</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="next_follow_up"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-col mt-2">
+                                            <FormLabel>Next Follow Up</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full pl-3 text-left font-normal",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value ? (
+                                                                format(field.value, "PPP")
+                                                            ) : (
+                                                                <span>Pick a date</span>
+                                                            )}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value || undefined}
+                                                        onSelect={field.onChange}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="space-y-2">
+                                    <div className="flex gap-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="currency"
+                                            render={({ field }) => (
+                                                <FormItem className="w-24">
+                                                    <FormLabel>Currency</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Curr" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="USD">USD ($)</SelectItem>
+                                                            <SelectItem value="INR">INR (₹)</SelectItem>
+                                                            <SelectItem value="EUR">EUR (€)</SelectItem>
+                                                            <SelectItem value="GBP">GBP (£)</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
                                         />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="expected_value"
+                                            render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel>Est. Value</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="probability"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Probability (%)</FormLabel>
+                                                <FormControl>
+                                                    <div className="relative">
+                                                        <Percent className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                        <Input type="number" className="pl-8" {...field} />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                 Cancel
