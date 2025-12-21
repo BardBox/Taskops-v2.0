@@ -192,7 +192,7 @@ export const GrowthDashboard = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            ${leads.reduce((sum, lead) => sum + (lead.value || 0), 0).toLocaleString()}
+                            ${leads.reduce((sum, lead) => sum + (lead.expected_value || 0), 0).toLocaleString()}
                         </div>
                     </CardContent>
                 </Card>

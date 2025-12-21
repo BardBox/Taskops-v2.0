@@ -21,17 +21,16 @@ import { format } from "date-fns";
 export interface Lead {
     id: string;
     title: string;
-    value: number | null;
-    stage: 'New' | 'Active' | 'Won' | 'Lost' | 'On Hold';
+    expected_value: number | null;
+    status: 'New' | 'Active' | 'Won' | 'Lost' | 'On Hold';
     probability: number | null;
-    expected_close_date: string | null;
-    assigned_to: string | null;
+    next_follow_up: string | null;
+    owner_id: string | null;
     contact_id: string | null;
     contact?: {
         name: string;
         company_name: string | null;
     };
-    notes?: string | null;
     created_at?: string;
     priority?: 'Low' | 'Medium' | 'High' | 'Immediate';
 }
@@ -44,8 +43,8 @@ interface LeadTableProps {
 }
 
 export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar }: LeadTableProps) => {
-    const getStageColor = (stage: string) => {
-        switch (stage) {
+    const getStatusColor = (status: string) => {
+        switch (status) {
             case 'New': return 'bg-blue-100 text-blue-800';
             case 'Active': return 'bg-purple-100 text-purple-800';
             case 'Won': return 'bg-green-100 text-green-800';
@@ -63,9 +62,9 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar }: LeadTabl
                         <TableHead>Lead Name</TableHead>
                         <TableHead>Contact (Company)</TableHead>
                         <TableHead>Value</TableHead>
-                        <TableHead>Stage</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Probability</TableHead>
-                        <TableHead>Expected Close</TableHead>
+                        <TableHead>Next Follow Up</TableHead>
                         <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -83,16 +82,16 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar }: LeadTabl
                                     </div>
                                 ) : '-'}
                             </TableCell>
-                            <TableCell>${lead.value?.toLocaleString()}</TableCell>
+                            <TableCell>${lead.expected_value?.toLocaleString()}</TableCell>
                             <TableCell>
-                                <Badge className={getStageColor(lead.stage)} variant="secondary">
-                                    {lead.stage}
+                                <Badge className={getStatusColor(lead.status)} variant="secondary">
+                                    {lead.status}
                                 </Badge>
                             </TableCell>
                             <TableCell>{lead.probability}%</TableCell>
                             <TableCell>
-                                {lead.expected_close_date
-                                    ? format(new Date(lead.expected_close_date), 'MMM d, yyyy')
+                                {lead.next_follow_up
+                                    ? format(new Date(lead.next_follow_up), 'MMM d, yyyy')
                                     : '-'}
                             </TableCell>
                             <TableCell>
