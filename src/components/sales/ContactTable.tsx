@@ -36,9 +36,10 @@ interface ContactTableProps {
     contacts: Contact[];
     onEdit: (contact: Contact) => void;
     onDelete: (contactId: string) => void;
+    onContactClick?: (contact: Contact) => void;
 }
 
-export const ContactTable = ({ contacts, onEdit, onDelete }: ContactTableProps) => {
+export const ContactTable = ({ contacts, onEdit, onDelete, onContactClick }: ContactTableProps) => {
     return (
         <div className="rounded-md border">
             <Table>
@@ -55,7 +56,11 @@ export const ContactTable = ({ contacts, onEdit, onDelete }: ContactTableProps) 
                 </TableHeader>
                 <TableBody>
                     {contacts.map((contact) => (
-                        <TableRow key={contact.id}>
+                        <TableRow
+                            key={contact.id}
+                            className={onContactClick ? "cursor-pointer hover:bg-slate-50" : ""}
+                            onClick={() => onContactClick?.(contact)}
+                        >
                             <TableCell className="font-medium">{contact.name}</TableCell>
                             <TableCell>{contact.company_name || '-'}</TableCell>
                             <TableCell>{contact.designation || '-'}</TableCell>
@@ -74,7 +79,7 @@ export const ContactTable = ({ contacts, onEdit, onDelete }: ContactTableProps) 
                                     )}
                                 </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0">

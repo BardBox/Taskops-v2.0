@@ -1607,7 +1607,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "project_owner" | "project_manager" | "team_member"
+      app_role:
+      | "project_manager"
+      | "team_member"
+      | "project_owner"
+      | "business_head"
+      | "sales_team"
       follow_up_level: "L0" | "L1" | "L2" | "L3" | "L4" | "L5" | "L6" | "L7"
       lead_status: "New" | "Active" | "Won" | "Lost" | "On Hold"
       priority_level: "Low" | "Medium" | "High" | "Immediate"

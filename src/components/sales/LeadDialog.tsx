@@ -69,6 +69,7 @@ const formSchema = z.object({
     project_links: z.array(z.string()).max(3, "Max 3 links allowed").optional(),
     project_files: z.array(z.string()).max(3, "Max 3 files allowed").optional(),
     new_contact_designation: z.string().optional(),
+    new_contact_company: z.string().optional(),
 }).refine((data) => {
     if (data.contact_id === "new") {
         return !!data.new_contact_name && (!!data.new_contact_email || !!data.new_contact_phone);
@@ -113,6 +114,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
             project_links: [],
             project_files: [],
             new_contact_designation: "",
+            new_contact_company: "",
         },
     });
 
@@ -143,6 +145,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     project_links: leadAny.project_links || [],
                     project_files: leadAny.project_files || [],
                     new_contact_designation: "",
+                    new_contact_company: "",
                 });
                 setIsNewContact(false);
             } else {
@@ -165,7 +168,9 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     website: null,
                     linkedin: null,
                     facebook: null,
+                    facebook: null,
                     instagram: null,
+                    new_contact_company: "",
                 });
                 if (currentUser) {
                     form.setValue("owner_id", currentUser);
@@ -239,7 +244,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         }
     };
 
-    const onSubmit = async (values: LeadFormValues) => {
+    const onSubmit = async (values: LeadFormValues, keepOpen: boolean = false) => {
         setLoading(true);
         try {
             let finalContactId = values.contact_id === "null" || values.contact_id === "new" ? null : values.contact_id;
@@ -250,6 +255,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     .from('contacts')
                     .insert({
                         name: values.new_contact_name!,
+                        company_name: values.new_contact_company || null,
                         email: values.new_contact_email || null,
                         phone: values.new_contact_phone || null,
                         designation: values.new_contact_designation || null,
@@ -316,7 +322,37 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
             }
 
             onSuccess();
-            onOpenChange(false);
+            if (keepOpen) {
+                toast.success(lead ? "Lead updated!" : "Lead created! Ready for next one.");
+                form.reset({
+                    title: "",
+                    contact_id: "null",
+                    new_contact_name: "",
+                    new_contact_email: "",
+                    new_contact_phone: "",
+                    owner_id: currentUser || "",
+                    lead_manager_id: null,
+                    source: "Direct",
+                    referral_name: null,
+                    status: "New",
+                    follow_up_level: "L0",
+                    next_follow_up: undefined,
+                    expected_value: 0,
+                    currency: "INR",
+                    probability: 5,
+                    website: null,
+                    linkedin: null,
+                    facebook: null,
+                    instagram: null,
+                    project_links: [],
+                    project_files: [],
+                    new_contact_designation: "",
+                    new_contact_company: "",
+                });
+                setIsNewContact(false);
+            } else {
+                onOpenChange(false);
+            }
         } catch (error: any) {
             console.error("Error saving lead:", error);
             toast.error(error.message || "Failed to save lead");
@@ -349,7 +385,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6">
                         {/* Core Details */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Core Details</h3>
@@ -494,6 +530,19 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                                     <FormLabel>Phone</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} placeholder="+123..." />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="new_contact_company"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Company Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Acme Inc." />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -928,7 +977,26 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                             />
                         </div>
 
-                        <DialogFooter>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => onOpenChange(false)}
+                            >
+                                Cancel
+                            </Button>
+                            {!lead && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="border-dashed"
+                                    onClick={form.handleSubmit((values) => onSubmit(values, true))}
+                                    disabled={loading}
+                                >
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                                    Add Next
+                                </Button>
+                            )}
                             <Button type="submit" disabled={loading}>
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {lead ? "Save Changes" : "Create Lead"}
@@ -937,6 +1005,6 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     </form>
                 </Form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

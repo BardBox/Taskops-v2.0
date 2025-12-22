@@ -11,6 +11,7 @@ import { ContactDialog } from "@/components/sales/ContactDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { SalesOpsPanel, Activity } from "@/components/sales/SalesOpsPanel";
+import { ContactDetailPanel } from "@/components/sales/ContactDetailPanel";
 import { SmartMetricCards } from "@/components/sales/SmartMetricCards";
 import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
 
@@ -35,6 +36,7 @@ export const GrowthDashboard = () => {
 
     // Panel State
     const [selectedLeadForPanel, setSelectedLeadForPanel] = useState<Lead | null>(null);
+    const [selectedContactForPanel, setSelectedContactForPanel] = useState<Contact | null>(null);
     const [activities, setActivities] = useState<Activity[]>([]);
 
     // Currency State
@@ -209,6 +211,10 @@ export const GrowthDashboard = () => {
         setContactDialogOpen(true);
     };
 
+    const handleContactClick = (contact: Contact) => {
+        setSelectedContactForPanel(contact);
+    };
+
     const confirmDeleteContact = (contactId: string) => {
         setContactToDelete(contactId);
         setDeleteContactDialogOpen(true);
@@ -288,6 +294,7 @@ export const GrowthDashboard = () => {
                         contacts={contacts}
                         onEdit={handleEditContact}
                         onDelete={confirmDeleteContact}
+                        onContactClick={handleContactClick}
                     />
                 </TabsContent>
             </Tabs>
@@ -299,6 +306,17 @@ export const GrowthDashboard = () => {
                     onClose={() => setSelectedLeadForPanel(null)}
                     onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
                     userMap={userMap}
+                />
+            )}
+
+            {selectedContactForPanel && (
+                <ContactDetailPanel
+                    contact={selectedContactForPanel}
+                    onClose={() => setSelectedContactForPanel(null)}
+                    onEdit={(contact) => {
+                        handleEditContact(contact);
+                        // Optional: close panel or keep it open to see changes after save
+                    }}
                 />
             )}
 

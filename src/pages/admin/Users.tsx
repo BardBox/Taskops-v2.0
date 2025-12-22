@@ -91,19 +91,31 @@ export default function AdminUsers() {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ action: 'list' }),
       });
 
       if (!response.ok) {
+        let errorMessage = 'Failed to fetch users';
         if (response.status === 401) {
           toast.error("Session expired. Please sign in again.");
           await supabase.auth.signOut();
           window.location.href = "/auth";
           return;
         }
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch users');
+        if (response.status === 404) {
+          errorMessage = 'Service not found. Please ensure the "admin-users" Edge Function is deployed.';
+        } else {
+          try {
+            const error = await response.json();
+            errorMessage = error.error || errorMessage;
+          } catch (e) {
+            console.error("Error parsing error response:", e);
+            errorMessage = `Server error (${response.status}): ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const { users: usersData } = await response.json();
@@ -132,6 +144,7 @@ export default function AdminUsers() {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           action: 'create',
@@ -149,8 +162,15 @@ export default function AdminUsers() {
           window.location.href = "/auth";
           return;
         }
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create user');
+        let errorMessage = 'Failed to create user';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (e) {
+          console.error("Error parsing error response:", e);
+          errorMessage = `Server error (${response.status}): ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       toast.success("User created successfully");
@@ -159,7 +179,9 @@ export default function AdminUsers() {
       fetchUsers();
     } catch (error: any) {
       console.error("Error creating user:", error);
-      toast.error(error.message || "Failed to create user");
+      // Detailed error for debugging
+      const errorDetails = error instanceof Error ? error.message : JSON.stringify(error);
+      toast.error(`Create failed: ${errorDetails}`);
     }
   };
 
@@ -186,6 +208,7 @@ export default function AdminUsers() {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           action: 'update',
@@ -449,6 +472,7 @@ export default function AdminUsers() {
           Create User
         </Button>
       </div>
+
 
       <Card>
         <CardHeader>
