@@ -11,6 +11,7 @@ import { ContactDialog } from "@/components/sales/ContactDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { SalesOpsPanel, Activity } from "@/components/sales/SalesOpsPanel";
+import { fetchExchangeRates, convertToINR, formatCurrency, ExchangeRates } from "@/utils/currency";
 
 export const GrowthDashboard = () => {
     // Lead State
@@ -35,9 +36,13 @@ export const GrowthDashboard = () => {
     const [selectedLeadForPanel, setSelectedLeadForPanel] = useState<Lead | null>(null);
     const [activities, setActivities] = useState<Activity[]>([]);
 
+    // Currency State
+    const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({});
+
     useEffect(() => {
         fetchLeads();
         fetchContacts();
+        loadRates();
     }, []);
 
     useEffect(() => {
@@ -45,6 +50,11 @@ export const GrowthDashboard = () => {
             fetchActivities(selectedLeadForPanel.id);
         }
     }, [selectedLeadForPanel]);
+
+    const loadRates = async () => {
+        const rates = await fetchExchangeRates();
+        setExchangeRates(rates);
+    };
 
     const fetchLeads = async () => {
         try {
@@ -208,12 +218,19 @@ export const GrowthDashboard = () => {
             <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Pipeline Value</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Pipeline Value (INR)</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            ${leads.reduce((sum, lead) => sum + (lead.expected_value || 0), 0).toLocaleString()}
+                            {formatCurrency(
+                                leads.reduce((sum, lead) => {
+                                    return sum + convertToINR(lead.expected_value || 0, lead.currency || 'INR', exchangeRates);
+                                }, 0)
+                            )}
                         </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Converted to INR using real-time rates
+                        </p>
                     </CardContent>
                 </Card>
                 <Card>
