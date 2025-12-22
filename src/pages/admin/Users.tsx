@@ -78,7 +78,7 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         toast.error("Session expired. Please sign in again.");
         await supabase.auth.signOut();
@@ -119,7 +119,7 @@ export default function AdminUsers() {
   const handleCreateUser = async () => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         toast.error("Session expired. Please sign in again.");
         await supabase.auth.signOut();
@@ -173,7 +173,7 @@ export default function AdminUsers() {
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         toast.error("Session expired. Please sign in again.");
         await supabase.auth.signOut();
@@ -222,7 +222,7 @@ export default function AdminUsers() {
   const handleResetPassword = async (userId: string) => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         toast.error("Session expired. Please sign in again.");
         await supabase.auth.signOut();
@@ -270,7 +270,7 @@ export default function AdminUsers() {
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         toast.error("Session expired. Please sign in again.");
         await supabase.auth.signOut();
@@ -319,7 +319,7 @@ export default function AdminUsers() {
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         toast.error("Session expired. Please sign in again.");
         await supabase.auth.signOut();
@@ -418,10 +418,10 @@ export default function AdminUsers() {
     })
     .sort((a, b) => {
       if (!sortField) return 0;
-      
+
       const aValue = a[sortField]?.toLowerCase() || "";
       const bValue = b[sortField]?.toLowerCase() || "";
-      
+
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
@@ -515,6 +515,9 @@ export default function AdminUsers() {
               <SelectContent>
                 <SelectItem value=" ">All Roles</SelectItem>
                 <SelectItem value="team_member">Team Member</SelectItem>
+                <SelectItem value="sales_team">Sales Team</SelectItem>
+                <SelectItem value="production_superviser">Production Superviser</SelectItem>
+                <SelectItem value="business_head">Business Head</SelectItem>
                 <SelectItem value="project_manager">Project Manager</SelectItem>
                 <SelectItem value="project_owner">Project Owner</SelectItem>
               </SelectContent>
@@ -655,8 +658,13 @@ export default function AdminUsers() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="team_member">Team Member</SelectItem>
+                  <SelectItem value="sales_team">Sales Team</SelectItem>
+                  <SelectItem value="production_superviser">Production Superviser</SelectItem>
                   {(isOwner || isPM) && (
-                    <SelectItem value="project_manager">Project Manager</SelectItem>
+                    <>
+                      <SelectItem value="project_manager">Project Manager</SelectItem>
+                      <SelectItem value="business_head">Business Head</SelectItem>
+                    </>
                   )}
                   {isOwner && (
                     <SelectItem value="project_owner">Project Owner</SelectItem>
@@ -755,8 +763,13 @@ export default function AdminUsers() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="team_member">Team Member</SelectItem>
+                    <SelectItem value="sales_team">Sales Team</SelectItem>
+                    <SelectItem value="production_superviser">Production Superviser</SelectItem>
                     {(isOwner || isPM) && (
-                      <SelectItem value="project_manager">Project Manager</SelectItem>
+                      <>
+                        <SelectItem value="project_manager">Project Manager</SelectItem>
+                        <SelectItem value="business_head">Business Head</SelectItem>
+                      </>
                     )}
                     {isOwner && (
                       <SelectItem value="project_owner">Project Owner</SelectItem>
@@ -780,8 +793,8 @@ export default function AdminUsers() {
           <DialogFooter className="flex flex-col gap-3 sm:gap-2">
             <div className="flex flex-wrap gap-2">
               {isOwner && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setEditDialogOpen(false);
                     setChangePasswordDialogOpen(true);
@@ -792,8 +805,8 @@ export default function AdminUsers() {
                   Change Password
                 </Button>
               )}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => editingUser && handleResetPassword(editingUser.id)}
                 className="flex-1 sm:flex-initial"
               >
@@ -836,8 +849,8 @@ export default function AdminUsers() {
           </div>
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setChangePasswordDialogOpen(false);
                 setNewPassword("");

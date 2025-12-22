@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MoreHorizontal, Pencil, Trash2, AlertCircle } from "lucide-react";
+import { Calendar, MoreVertical, Trash2, Edit, AlertCircle, User, Users } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,56 +21,62 @@ import { cn } from "@/lib/utils";
 
 export interface Lead {
     id: string;
-    lead_code?: number;
     title: string;
-    expected_value: number | null;
-    currency?: string | null;
-    status: 'New' | 'Active' | 'Won' | 'Lost' | 'On Hold';
-    probability: number | null;
-    next_follow_up: string | null;
-    owner_id: string | null;
     contact_id: string | null;
-    follow_up_level?: string | null;
-    source?: string | null;
+    owner_id: string | null;
+    status: 'New' | 'Contacted' | 'Qualified' | 'Proposal' | 'Negotiation' | 'Won' | 'Lost';
+    source: string | null;
+    created_at: string;
+    next_follow_up: string | null;
+    follow_up_level: 'L1' | 'L2' | 'L3' | 'L4' | 'L5' | null;
+    expected_value: number | null;
+    currency: string | null;
+    probability: number | null; // Now 0-100 (from 1-10 scale * 10)
+    lead_code: number;
+    // New Fields (Extended interface for UI even if strict Supabase types differ initially)
+    lead_manager_id?: string | null;
+    priority?: string | null; // Deprecated but might exist in old data
+    website?: string | null;
+    linkedin?: string | null;
+    facebook?: string | null;
+    instagram?: string | null;
+    project_links?: string[] | null;
+    project_files?: string[] | null;
+
+    // Joined fields
     contact?: {
         name: string;
-        company_name: string | null;
-    };
-    created_at?: string;
-    priority?: 'Low' | 'Medium' | 'High' | 'Immediate';
+        company_name?: string | null;
+    } | null;
+    // We might need to fetch producer/manager names if not joined in query
+    // Ideally query updates to join profiles for owner and manager.
 }
 
 interface LeadTableProps {
     leads: Lead[];
     onEdit: (lead: Lead) => void;
-    onDelete: (leadId: string) => void;
+    onDelete: (id: string) => void;
     onAddToCalendar: (lead: Lead) => void;
     onLeadClick: (lead: Lead) => void;
+    userMap: Record<string, string>;
 }
 
-export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClick }: LeadTableProps) => {
+export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClick, userMap }: LeadTableProps) => {
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'New': return 'bg-blue-100 text-blue-800';
-            case 'Active': return 'bg-purple-100 text-purple-800';
-            case 'Won': return 'bg-green-100 text-green-800';
-            case 'Lost': return 'bg-red-100 text-red-800';
-            case 'On Hold': return 'bg-gray-100 text-gray-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'New': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'Contacted': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+            case 'Qualified': return 'bg-purple-100 text-purple-800 border-purple-200';
+            case 'Proposal': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'Negotiation': return 'bg-orange-100 text-orange-800 border-orange-200';
+            case 'Won': return 'bg-green-100 text-green-800 border-green-200';
+            case 'Lost': return 'bg-red-100 text-red-800 border-red-200';
+            default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
 
-    const getPriorityColor = (priority?: string) => {
-        switch (priority) {
-            case 'Immediate': return 'bg-red-100 text-red-800 border-red-200';
-            case 'High': return 'bg-orange-100 text-orange-800 border-orange-200';
-            case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'Low': return 'bg-slate-100 text-slate-800 border-slate-200';
-            default: return 'bg-slate-100 text-slate-800';
-        }
-    };
-
-    const getCurrencySymbol = (currency?: string | null) => {
+    const getCurrencySymbol = (currency: string | null) => {
         switch (currency) {
             case 'INR': return '₹';
             case 'EUR': return '€';
@@ -85,104 +91,137 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
     };
 
     return (
-        <div className="rounded-md border">
+        <div className="rounded-md border bg-white shadow-sm overflow-hidden">
             <Table>
-                <TableHeader>
+                <TableHeader className="bg-slate-50">
                     <TableRow>
-                        <TableHead className="w-[80px]">ID</TableHead>
-                        <TableHead>Lead Name</TableHead>
-                        <TableHead>Contact (Company)</TableHead>
+                        <TableHead className="w-[80px]">Lead ID</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Producer</TableHead>
+                        <TableHead>Manager</TableHead>
                         <TableHead>Value</TableHead>
+                        {/* Removed Priority */}
                         <TableHead>Status</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead>Next Follow Up</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
+                        <TableHead>Follow Up</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {leads.map((lead) => {
-                        const overdue = isOverdue(lead.next_follow_up, lead.status);
-                        return (
-                            <TableRow
-                                key={lead.id}
-                                className="cursor-pointer hover:bg-slate-50 transition-colors"
-                                onClick={() => onLeadClick(lead)}
-                            >
-                                <TableCell className="font-mono text-xs text-muted-foreground">
-                                    L-{String(lead.lead_code || 0).padStart(4, '0')}
-                                </TableCell>
-                                <TableCell className="font-medium">{lead.title}</TableCell>
-                                <TableCell>
-                                    {lead.contact ? (
+                    {leads.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                                No leads found. Add one to get started!
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        leads.map((lead) => {
+                            const overdue = isOverdue(lead.next_follow_up, lead.status);
+                            return (
+                                <TableRow
+                                    key={lead.id}
+                                    className={cn(
+                                        "cursor-pointer hover:bg-slate-50 transition-colors",
+                                        overdue && "bg-red-50 hover:bg-red-100"
+                                    )}
+                                    onClick={() => onLeadClick(lead)}
+                                >
+                                    <TableCell className="font-mono text-xs text-muted-foreground">
+                                        L-{String(lead.lead_code).padStart(4, '0')}
+                                    </TableCell>
+                                    <TableCell className="font-medium">
+                                        {lead.title}
+                                        {lead.probability !== null && (
+                                            <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                                {/* Convert back to 1-10 for display? or % */}
+                                                <span className={cn(
+                                                    "w-1.5 h-1.5 rounded-full",
+                                                    (lead.probability || 0) <= 30 ? "bg-blue-500" :
+                                                        (lead.probability || 0) <= 60 ? "bg-yellow-500" : "bg-red-500"
+                                                )} />
+                                                {(lead.probability || 0) / 10}/10 Heat
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-xs text-muted-foreground">
+                                        {format(new Date(lead.created_at), 'MMM d, yyyy')}
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="font-medium">{lead.contact.name}</span>
-                                            {lead.contact.company_name && (
+                                            <span className="text-sm">{lead.contact?.name}</span>
+                                            {lead.contact?.company_name && (
                                                 <span className="text-xs text-muted-foreground">{lead.contact.company_name}</span>
                                             )}
                                         </div>
-                                    ) : '-'}
-                                </TableCell>
-                                <TableCell>
-                                    {getCurrencySymbol(lead.currency)}
-                                    {lead.expected_value?.toLocaleString()}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge className={getStatusColor(lead.status)} variant="secondary">
-                                        {lead.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge className={getPriorityColor(lead.priority)} variant="outline">
-                                        {lead.priority || 'Medium'}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {lead.next_follow_up ? (
-                                        <div className={cn("flex items-center gap-2", overdue && "text-red-600 font-medium")}>
-                                            {overdue && <AlertCircle className="h-4 w-4" />}
-                                            {format(new Date(lead.next_follow_up), 'MMM d, yyyy')}
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                        <div className="flex items-center gap-1">
+                                            <User size={12} className="text-slate-400" />
+                                            {lead.owner_id ? (userMap[lead.owner_id] || 'Unknown') : '-'}
                                         </div>
-                                    ) : '-'}
-                                </TableCell>
-                                <TableCell onClick={(e) => e.stopPropagation()}>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Open menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => onEdit(lead)}>
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onAddToCalendar(lead)}>
-                                                <Calendar className="mr-2 h-4 w-4" />
-                                                Add to Calendar
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                className="text-red-600 focus:text-red-600"
-                                                onClick={() => onDelete(lead.id)}
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        );
-                    })}
-                    {leads.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={8} className="h-24 text-center">
-                                No leads found.
-                            </TableCell>
-                        </TableRow>
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                        {lead.lead_manager_id ? (
+                                            <div className="flex items-center gap-1">
+                                                <Users size={12} className="text-slate-400" />
+                                                {userMap[lead.lead_manager_id] || 'Unknown'}
+                                            </div>
+                                        ) : '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {lead.expected_value ? (
+                                            <span className="font-semibold text-slate-700">
+                                                {getCurrencySymbol(lead.currency)}
+                                                {lead.expected_value.toLocaleString()}
+                                            </span>
+                                        ) : '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={cn("font-normal border-0", getStatusColor(lead.status))}>
+                                            {lead.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className={cn("text-sm flex flex-col", overdue ? "text-red-600 font-bold" : "text-slate-600")}>
+                                            {lead.next_follow_up ? format(new Date(lead.next_follow_up), 'MMM d') : '-'}
+                                            {lead.follow_up_level && (
+                                                <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded w-fit mt-0.5">
+                                                    {lead.follow_up_level}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => onEdit(lead)}>
+                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onAddToCalendar(lead)}>
+                                                    <Calendar className="mr-2 h-4 w-4" /> Add to Calendar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => onDelete(lead.id)}
+                                                    className="text-red-600 focus:text-red-600"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })
                     )}
                 </TableBody>
             </Table>
-        </div>
+        </div >
     );
 };

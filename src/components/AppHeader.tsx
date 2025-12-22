@@ -343,15 +343,19 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
             <div className="flex flex-col gap-2">
               <Button
                 variant="ghost"
-                className={`justify-start ${location.pathname === "/dashboard"
+                className={`justify-start ${location.pathname === "/dashboard" && !location.search.includes("view=growth")
                   ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
                   : ""
                   }`}
                 onClick={() => navigate("/dashboard")}
+                // Hide Dashboard (Ops Center) for Sales Team
+                style={{ display: userRole === "sales_team" ? "none" : "flex" }}
               >
                 <Home className="mr-2 h-4 w-4" />
                 Dashboard
               </Button>
+              {/* ... other links ... */}
+              {/* Note: I am replacing the chunk containing Dashboard button down to Growth Engine button to ensure context */}
               <Button
                 variant="ghost"
                 className={`justify-start ${location.pathname === "/profile"
@@ -429,6 +433,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                 <Info className="mr-2 h-4 w-4" />
                 About
               </Button>
+              {/* Admin Access for new roles logic if needed, but keeping existing check for now */}
               {hasAdminAccess && (
                 <>
                   <div className="border-t my-2" />
@@ -443,20 +448,21 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
                     <Shield className="mr-2 h-4 w-4" />
                     Admin Panel
                   </Button>
-                  {userRole === "project_owner" && (
-                    <Button
-                      variant="ghost"
-                      className={`justify-start ${location.search.includes("view=growth")
-                        ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
-                        : ""
-                        }`}
-                      onClick={() => navigate("/dashboard?view=growth")}
-                    >
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      Growth Engine
-                    </Button>
-                  )}
                 </>
+              )}
+              {/* Growth Engine Logic */}
+              {(userRole === "project_owner" || userRole === "business_head" || userRole === "sales_team") && (
+                <Button
+                  variant="ghost"
+                  className={`justify-start ${location.search.includes("view=growth")
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20"
+                    : ""
+                    }`}
+                  onClick={() => navigate("/dashboard?view=growth")}
+                >
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Growth Engine
+                </Button>
               )}
               <div className="border-t my-2" />
               <Button

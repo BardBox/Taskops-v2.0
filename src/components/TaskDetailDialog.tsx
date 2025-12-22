@@ -158,7 +158,7 @@ export function TaskDetailDialog({
     if (taskId && open) {
       fetchTaskDetails();
       fetchComments();
-      
+
       const cleanupComments = subscribeToComments();
       const cleanupReactions = subscribeToReactions();
       const cleanupReceipts = subscribeToReadReceipts();
@@ -203,7 +203,7 @@ export function TaskDetailDialog({
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
         const typing = new Set<string>();
-        
+
         Object.values(state).forEach((presences: any) => {
           presences.forEach((presence: any) => {
             if (presence.typing && presence.user_id !== userId) {
@@ -211,7 +211,7 @@ export function TaskDetailDialog({
             }
           });
         });
-        
+
         setTypingUsers(typing);
       })
       .subscribe();
@@ -388,22 +388,22 @@ export function TaskDetailDialog({
         .single();
 
       setIsCollaborator(!!collabCheck);
-      
+
       // Fetch collaborators for role fetching
       const { data: collabData } = await supabase
         .from("task_collaborators")
         .select("user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url)")
         .eq("task_id", taskId);
-      
+
       setCollaborators(collabData || []);
-      
+
       // Fetch current user's name for mentions
       const { data: currentUserData } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("id", userId)
         .single();
-      
+
       setCurrentUserName(currentUserData?.full_name || null);
     } catch (error: any) {
       toast.error("Failed to fetch task details");
@@ -412,18 +412,18 @@ export function TaskDetailDialog({
 
   const fetchCollaborators = async () => {
     if (!taskId) return;
-    
+
     const { data } = await supabase
       .from("task_collaborators")
       .select("user_id, profiles!task_collaborators_user_id_fkey(full_name, avatar_url)")
       .eq("task_id", taskId);
-    
+
     setCollaborators(data || []);
   };
 
   const fetchEditHistory = async () => {
     if (!taskId) return;
-    
+
     const { data } = await supabase
       .from("task_edit_history")
       .select(`
@@ -432,7 +432,7 @@ export function TaskDetailDialog({
       `)
       .eq("task_id", taskId)
       .order("edited_at", { ascending: false });
-    
+
     setEditHistory(data || []);
   };
 
@@ -459,7 +459,7 @@ export function TaskDetailDialog({
       setUserProfiles(new Map(profilesData?.map(p => [p.id, p.full_name || "Unknown"])));
 
       const commentIds = commentsData?.map(c => c.id) || [];
-      
+
       const { data: reactionsData } = await supabase
         .from("comment_reactions")
         .select("*")
@@ -539,7 +539,7 @@ export function TaskDetailDialog({
     const messageText = newComment.trim() || "(Image)";
     const tempComment = newComment;
     const tempImage = selectedImage;
-    
+
     // Clear input immediately
     setNewComment("");
     setSelectedImage(null);
@@ -598,7 +598,7 @@ export function TaskDetailDialog({
           reaction_type: reactionType,
         });
       }
-      
+
       setShowReactionPicker(null);
     } catch (error: any) {
       console.error(error);
@@ -671,6 +671,10 @@ export function TaskDetailDialog({
 
   const handleStatusChange = async (newStatus: string) => {
     if (!task) return;
+    if (!["project_manager", "project_owner"].includes(userRole)) {
+      toast.error("You do not have permission to change status");
+      return;
+    }
     try {
       const { error } = await supabase
         .from("tasks")
@@ -688,6 +692,10 @@ export function TaskDetailDialog({
 
   const handleUrgencyChange = async (newUrgency: string) => {
     if (!task) return;
+    if (!["project_manager", "project_owner"].includes(userRole)) {
+      toast.error("You do not have permission to change urgency");
+      return;
+    }
     try {
       const { error } = await supabase
         .from("tasks")
@@ -705,6 +713,10 @@ export function TaskDetailDialog({
 
   const handleDeadlineChange = async (newDeadline: string) => {
     if (!task) return;
+    if (!["project_manager", "project_owner"].includes(userRole)) {
+      toast.error("You do not have permission to change deadline");
+      return;
+    }
     try {
       const { error } = await supabase
         .from("tasks")
@@ -723,8 +735,10 @@ export function TaskDetailDialog({
   const handleNotesSave = async () => {
     if (!task) return;
 
-    if (userRole === "team_member") {
-      toast.error("Team members cannot edit task descriptions");
+    const canEdit = ["project_manager", "project_owner"].includes(userRole);
+
+    if (!canEdit) {
+      toast.error("You do not have permission to edit task descriptions");
       return;
     }
 
@@ -746,6 +760,10 @@ export function TaskDetailDialog({
 
   const handleSaveAssetLink = async () => {
     if (!task) return;
+    if (!["project_manager", "project_owner"].includes(userRole)) {
+      toast.error("You do not have permission to change asset links");
+      return;
+    }
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -770,8 +788,8 @@ export function TaskDetailDialog({
             field_name: "asset_link",
             old_value: oldAssetLink || "(empty)",
             new_value: assetLinkValue || "(empty)",
-            change_description: oldAssetLink 
-              ? "Asset link updated" 
+            change_description: oldAssetLink
+              ? "Asset link updated"
               : "Asset link added",
           });
 
@@ -791,6 +809,10 @@ export function TaskDetailDialog({
 
   const handleDeleteAssetLink = async () => {
     if (!task) return;
+    if (!["project_manager", "project_owner"].includes(userRole)) {
+      toast.error("You do not have permission to delete asset links");
+      return;
+    }
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -856,18 +878,18 @@ export function TaskDetailDialog({
 
   const getDelayStatus = () => {
     if (!task?.deadline) return null;
-    
+
     const deadlineDate = new Date(task.deadline);
-    const compareDate = task.actual_delivery 
-      ? new Date(task.actual_delivery) 
+    const compareDate = task.actual_delivery
+      ? new Date(task.actual_delivery)
       : new Date();
-    
+
     const isDelayed = compareDate > deadlineDate;
-    
+
     return {
       status: isDelayed ? "Delayed" : "On Track",
-      className: isDelayed 
-        ? "bg-red-100 text-red-800 border-red-300" 
+      className: isDelayed
+        ? "bg-red-100 text-red-800 border-red-300"
         : "bg-green-100 text-green-800 border-green-300"
     };
   };
@@ -885,7 +907,7 @@ export function TaskDetailDialog({
       "bg-rose-500",
       "bg-amber-500",
     ];
-    
+
     // Generate consistent color based on user ID
     const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
@@ -894,8 +916,8 @@ export function TaskDetailDialog({
   if (!task) return null;
 
   const canEditTaskProperties = (
-    userRole === 'project_manager' || 
-    userRole === 'project_owner' || 
+    userRole === 'project_manager' ||
+    userRole === 'project_owner' ||
     (task?.assignee_id === userId && !isCollaborator)
   );
 
@@ -931,7 +953,7 @@ export function TaskDetailDialog({
               </Button>
             </DialogClose>
           </div>
-          
+
           <div className="flex items-start gap-3 pr-24">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full flex-shrink-0`} />
             <div className="flex-1 min-w-0">
@@ -981,7 +1003,7 @@ export function TaskDetailDialog({
                 History
               </TabsTrigger>
             </TabsList>
-            
+
             {(userRole === 'project_manager' || userRole === 'project_owner') && (
               <div className="flex items-center gap-1">
                 <Button
@@ -1096,7 +1118,7 @@ export function TaskDetailDialog({
               </div>
 
               {/* Task Timeline */}
-              <TaskTimeline 
+              <TaskTimeline
                 dateAssigned={task.date}
                 deadline={task.deadline || new Date().toISOString()}
                 dateSubmitted={task.actual_delivery}
@@ -1114,7 +1136,7 @@ export function TaskDetailDialog({
                   <TimeTrackingBadge records={timeRecords} variant="card" showStatus />
                 </div>
               )}
-              
+
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -1124,7 +1146,7 @@ export function TaskDetailDialog({
                   {(() => {
                     const availableStatuses = getAvailableStatuses(userRole, task.status || "");
                     const canChange = canEditTaskProperties && (userRole !== "team_member" || availableStatuses.length > 0);
-                    
+
                     if (!canChange) {
                       return (
                         <Badge variant="outline" className="h-8 px-4">
@@ -1132,13 +1154,13 @@ export function TaskDetailDialog({
                         </Badge>
                       );
                     }
-                    
+
                     return (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="h-8 px-4 text-sm font-medium hover:bg-accent"
                           >
                             {task.status}
@@ -1163,7 +1185,7 @@ export function TaskDetailDialog({
                     );
                   })()}
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                     <Zap className="h-3.5 w-3.5 text-amber-500" />
@@ -1263,9 +1285,9 @@ export function TaskDetailDialog({
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Links</Label>
                   <div className="space-y-1 mt-1">
                     {task.reference_link_1 && (
-                      <a 
-                        href={task.reference_link_1} 
-                        target="_blank" 
+                      <a
+                        href={task.reference_link_1}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline flex items-center gap-1"
                       >
@@ -1274,9 +1296,9 @@ export function TaskDetailDialog({
                       </a>
                     )}
                     {task.reference_link_2 && (
-                      <a 
-                        href={task.reference_link_2} 
-                        target="_blank" 
+                      <a
+                        href={task.reference_link_2}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline flex items-center gap-1"
                       >
@@ -1285,9 +1307,9 @@ export function TaskDetailDialog({
                       </a>
                     )}
                     {task.reference_link_3 && (
-                      <a 
-                        href={task.reference_link_3} 
-                        target="_blank" 
+                      <a
+                        href={task.reference_link_3}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline flex items-center gap-1"
                       >
@@ -1303,15 +1325,15 @@ export function TaskDetailDialog({
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Image</Label>
                   <div className="mt-1">
-                    <a 
-                      href={task.reference_image} 
-                      target="_blank" 
+                    <a
+                      href={task.reference_image}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-block"
                     >
-                      <img 
-                        src={task.reference_image} 
-                        alt="Task reference" 
+                      <img
+                        src={task.reference_image}
+                        alt="Task reference"
                         className="max-w-sm max-h-60 rounded border hover:opacity-90 transition-opacity cursor-pointer"
                       />
                     </a>
@@ -1322,9 +1344,9 @@ export function TaskDetailDialog({
               {task.asset_link && (
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Link</Label>
-                  <a 
-                    href={task.asset_link} 
-                    target="_blank" 
+                  <a
+                    href={task.asset_link}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
                   >
@@ -1333,8 +1355,8 @@ export function TaskDetailDialog({
                   </a>
                 </div>
               )}
-              
-               {/* Edit History */}
+
+              {/* Edit History */}
               {editHistory.length > 0 && (
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">Edit History</Label>
@@ -1377,7 +1399,7 @@ export function TaskDetailDialog({
                                 posted_by: isChecked ? userId : null,
                               })
                               .eq("id", task.id);
-                            
+
                             if (error) throw error;
                             setIsPosted(isChecked);
                             toast.success(isChecked ? "Marked as posted" : "Unmarked as posted");
@@ -1429,7 +1451,7 @@ export function TaskDetailDialog({
                               status: "In Approval",
                             })
                             .eq("id", task.id);
-                          
+
                           if (error) throw error;
                           toast.success("Assets submitted successfully!");
                           fetchTaskDetails();
@@ -1479,236 +1501,235 @@ export function TaskDetailDialog({
           <TabsContent value="discussion" className="flex-1 flex flex-col m-0 min-h-0">
             <ScrollArea className="flex-1" ref={scrollRef}>
               <div className="p-4 space-y-2">
-              {comments.map((comment, index) => (
-              <div key={comment.id} className="flex gap-3 p-3 rounded-lg border-b last:border-b-0">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={comment.profiles?.avatar_url || undefined} alt={comment.profiles?.full_name} />
-                  <AvatarFallback className={`text-white font-semibold ${getUserAvatarColor(comment.user_id)}`}>
-                    {comment.profiles?.full_name?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">
-                      {comment.profiles?.full_name || "Unknown User"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(comment.created_at).toLocaleString()}
-                    </span>
-                    {comment.is_pinned && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Pin className="h-3 w-3 mr-1" />
-                        Pinned
-                      </Badge>
-                    )}
-                    <div className="flex items-center gap-1 ml-auto">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => togglePinComment(comment.id, comment.is_pinned || false)}
-                      >
-                        <Pin className={`h-3 w-3 ${comment.is_pinned ? 'fill-current' : ''}`} />
-                      </Button>
-                      {(userRole === 'project_owner' || comment.user_id === userId) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
-                          onClick={() => handleDeleteComment(comment.id)}
-                          title="Delete comment"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                {comments.map((comment, index) => (
+                  <div key={comment.id} className="flex gap-3 p-3 rounded-lg border-b last:border-b-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={comment.profiles?.avatar_url || undefined} alt={comment.profiles?.full_name} />
+                      <AvatarFallback className={`text-white font-semibold ${getUserAvatarColor(comment.user_id)}`}>
+                        {comment.profiles?.full_name?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">
+                          {comment.profiles?.full_name || "Unknown User"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(comment.created_at).toLocaleString()}
+                        </span>
+                        {comment.is_pinned && (
+                          <Badge variant="secondary" className="text-xs">
+                            <Pin className="h-3 w-3 mr-1" />
+                            Pinned
+                          </Badge>
+                        )}
+                        <div className="flex items-center gap-1 ml-auto">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => togglePinComment(comment.id, comment.is_pinned || false)}
+                          >
+                            <Pin className={`h-3 w-3 ${comment.is_pinned ? 'fill-current' : ''}`} />
+                          </Button>
+                          {(userRole === 'project_owner' || comment.user_id === userId) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              title="Delete comment"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <p className={isOnlyEmojis(comment.message) ? "text-5xl leading-tight" : "text-sm"}>
+                        <MessageWithMentions text={comment.message} currentUserName={currentUserName} />
+                      </p>
+                      {comment.image_url && (
+                        <img
+                          src={comment.image_url}
+                          alt="Attachment"
+                          className="max-w-xs rounded-lg mt-2"
+                        />
                       )}
+
+                      <div className="flex items-center gap-2 pt-2 flex-wrap">
+                        {comment.reactions && comment.reactions.length > 0 && (
+                          <>
+                            {Array.from(getReactionsByType(comment.reactions).entries()).map(([type, data]) => {
+                              const emojiData = reactionEmojis.find(e => e.type === type);
+                              const userReacted = data.userIds.includes(userId);
+
+                              return (
+                                <HoverCard key={type} openDelay={200}>
+                                  <HoverCardTrigger asChild>
+                                    <button
+                                      onClick={() => handleReaction(comment.id, type)}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors ${userReacted
+                                        ? 'bg-primary/10 border border-primary/20'
+                                        : 'bg-muted hover:bg-muted/80 border border-transparent'
+                                        }`}
+                                    >
+                                      <span className="text-base">{emojiData?.emoji || '👍'}</span>
+                                      <span className="font-medium">{data.count}</span>
+                                    </button>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent className="w-auto p-2 bg-background border shadow-lg z-50" align="start">
+                                    <div className="space-y-1">
+                                      {data.userIds.map(uid => (
+                                        <div key={uid} className="text-xs">
+                                          {userProfiles.get(uid) || "Unknown User"}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              );
+                            })}
+                          </>
+                        )}
+
+                        <Popover open={showReactionPicker === comment.id} onOpenChange={(open) => setShowReactionPicker(open ? comment.id : null)}>
+                          <PopoverTrigger asChild>
+                            <button
+                              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            >
+                              <Smile className="h-3.5 w-3.5" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-2" align="start">
+                            <div className="flex gap-1">
+                              {reactionEmojis.map(({ type, emoji, label }) => (
+                                <button
+                                  key={type}
+                                  onClick={() => handleReaction(comment.id, type)}
+                                  className="text-2xl hover:scale-125 transition-transform p-1 rounded hover:bg-muted"
+                                  title={label}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+
+                        {comment.read_receipts && comment.read_receipts.length > 0 && (
+                          <HoverCard openDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                <Eye className="h-3 w-3" />
+                                <span>{comment.read_receipts.length}</span>
+                              </button>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-auto p-3 bg-background border shadow-lg z-50" align="start">
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">Seen by:</p>
+                                {comment.read_receipts.map((receipt) => (
+                                  <div key={receipt.id} className="text-sm">
+                                    {receipt.user_name}
+                                  </div>
+                                ))}
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <p className={isOnlyEmojis(comment.message) ? "text-5xl leading-tight" : "text-sm"}>
-                    <MessageWithMentions text={comment.message} currentUserName={currentUserName} />
-                  </p>
-                  {comment.image_url && (
-                    <img
-                      src={comment.image_url}
-                      alt="Attachment"
-                      className="max-w-xs rounded-lg mt-2"
-                    />
-                  )}
-                  
-                  <div className="flex items-center gap-2 pt-2 flex-wrap">
-                    {comment.reactions && comment.reactions.length > 0 && (
-                      <>
-                        {Array.from(getReactionsByType(comment.reactions).entries()).map(([type, data]) => {
-                          const emojiData = reactionEmojis.find(e => e.type === type);
-                          const userReacted = data.userIds.includes(userId);
-                          
-                          return (
-                            <HoverCard key={type} openDelay={200}>
-                              <HoverCardTrigger asChild>
-                                <button
-                                  onClick={() => handleReaction(comment.id, type)}
-                                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors ${
-                                    userReacted 
-                                      ? 'bg-primary/10 border border-primary/20' 
-                                      : 'bg-muted hover:bg-muted/80 border border-transparent'
-                                  }`}
-                                >
-                                  <span className="text-base">{emojiData?.emoji || '👍'}</span>
-                                  <span className="font-medium">{data.count}</span>
-                                </button>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-auto p-2 bg-background border shadow-lg z-50" align="start">
-                                <div className="space-y-1">
-                                  {data.userIds.map(uid => (
-                                    <div key={uid} className="text-xs">
-                                      {userProfiles.get(uid) || "Unknown User"}
-                                    </div>
-                                  ))}
-                                </div>
-                              </HoverCardContent>
-                            </HoverCard>
-                          );
-                        })}
-                      </>
-                    )}
-                    
-                    <Popover open={showReactionPicker === comment.id} onOpenChange={(open) => setShowReactionPicker(open ? comment.id : null)}>
-                      <PopoverTrigger asChild>
-                        <button
-                          className="flex items-center gap-1 px-2 py-1 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                        >
-                          <Smile className="h-3.5 w-3.5" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-2" align="start">
-                        <div className="flex gap-1">
-                          {reactionEmojis.map(({ type, emoji, label }) => (
-                            <button
-                              key={type}
-                              onClick={() => handleReaction(comment.id, type)}
-                              className="text-2xl hover:scale-125 transition-transform p-1 rounded hover:bg-muted"
-                              title={label}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    
-                    {comment.read_receipts && comment.read_receipts.length > 0 && (
-                      <HoverCard openDelay={200}>
-                        <HoverCardTrigger asChild>
-                          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                            <Eye className="h-3 w-3" />
-                            <span>{comment.read_receipts.length}</span>
-                          </button>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-auto p-3 bg-background border shadow-lg z-50" align="start">
-                          <div className="space-y-1">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">Seen by:</p>
-                            {comment.read_receipts.map((receipt) => (
-                              <div key={receipt.id} className="text-sm">
-                                {receipt.user_name}
-                              </div>
-                            ))}
-                          </div>
-                        </HoverCardContent>
-                      </HoverCard>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                ))}
 
-              {typingUserNames.length > 0 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
-                </div>
-              )}
-              <div ref={commentsEndRef} />
+                {typingUserNames.length > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {typingUserNames.join(", ")} {typingUserNames.length === 1 ? "is" : "are"} typing...
+                  </div>
+                )}
+                <div ref={commentsEndRef} />
               </div>
             </ScrollArea>
-            
+
             <div className="p-4 border-t bg-background flex-shrink-0">
-            
-            {selectedImage && (
-              <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-lg">
-                <span className="text-sm truncate flex-1">{selectedImage.name}</span>
-                <Button
-                  onClick={() => {
-                    setSelectedImage(null);
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = "";
+
+              {selectedImage && (
+                <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-lg">
+                  <span className="text-sm truncate flex-1">{selectedImage.name}</span>
+                  <Button
+                    onClick={() => {
+                      setSelectedImage(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <MentionInput
+                  value={newComment}
+                  onChange={(value) => {
+                    setNewComment(value);
+                    handleTyping();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendComment();
                     }
                   }}
-                  variant="ghost"
-                  size="sm"
+                  placeholder="Type a message... (use @ to mention)"
+                  disabled={uploading}
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                <Popover open={showMessageEmojiPicker} onOpenChange={setShowMessageEmojiPicker}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={uploading}
+                    >
+                      <Smile className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="end">
+                    <div className="grid grid-cols-6 gap-1">
+                      {reactionEmojis.map(({ emoji, label }) => (
+                        <button
+                          key={emoji}
+                          onClick={() => insertEmojiIntoMessage(emoji)}
+                          className="text-2xl hover:scale-125 transition-transform p-1 rounded hover:bg-muted"
+                          title={label}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="outline"
+                  size="icon"
+                  disabled={uploading}
                 >
-                  <X className="h-4 w-4" />
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <Button onClick={handleSendComment} disabled={uploading || (!newComment.trim() && !selectedImage)}>
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
-            )}
-            <div className="flex gap-2">
-              <MentionInput
-                value={newComment}
-                onChange={(value) => {
-                  setNewComment(value);
-                  handleTyping();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendComment();
-                  }
-                }}
-                placeholder="Type a message... (use @ to mention)"
-                disabled={uploading}
-              />
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-              <Popover open={showMessageEmojiPicker} onOpenChange={setShowMessageEmojiPicker}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    disabled={uploading}
-                  >
-                    <Smile className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-2" align="end">
-                  <div className="grid grid-cols-6 gap-1">
-                    {reactionEmojis.map(({ emoji, label }) => (
-                      <button
-                        key={emoji}
-                        onClick={() => insertEmojiIntoMessage(emoji)}
-                        className="text-2xl hover:scale-125 transition-transform p-1 rounded hover:bg-muted"
-                        title={label}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline"
-                size="icon"
-                disabled={uploading}
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <Button onClick={handleSendComment} disabled={uploading || (!newComment.trim() && !selectedImage)}>
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -1729,8 +1750,8 @@ export function TaskDetailDialog({
       {/* Edit Task Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <EditTaskTab 
-            task={task} 
+          <EditTaskTab
+            task={task}
             onTaskUpdated={() => {
               fetchTaskDetails();
               setShowEditDialog(false);

@@ -25,6 +25,10 @@ export interface Contact {
     designation: string | null;
     company_name: string | null;
     tags: string[] | null;
+    website?: string | null;
+    linkedin?: string | null;
+    facebook?: string | null;
+    instagram?: string | null;
     created_at: string;
 }
 

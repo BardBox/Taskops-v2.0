@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2, DollarSign, Percent } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Globe, Linkedin, Facebook, Instagram, CalendarIcon, Upload, FileText, Link as LinkIcon, Plus, X } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -21,6 +19,8 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
     Select,
     SelectContent,
@@ -28,17 +28,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Lead } from "./LeadTable";
+import { logActivity } from "@/utils/activityLogger";
+import { Contact } from "./ContactTable";
+import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface LeadDialogProps {
     open: boolean;
@@ -47,41 +46,73 @@ interface LeadDialogProps {
     onSuccess: () => void;
 }
 
-const leadSchema = z.object({
+const formSchema = z.object({
     title: z.string().min(1, "Lead title is required"),
-    contact_id: z.string().optional().nullable(),
-    owner_id: z.string().min(1, "Owner is required"),
+    contact_id: z.string().optional(),
+    new_contact_name: z.string().optional(),
+    new_contact_email: z.string().email("Invalid email").optional().or(z.literal("")),
+    new_contact_phone: z.string().optional(),
+    owner_id: z.string().min(1, "Lead Producer is required"),
+    lead_manager_id: z.string().optional().nullable(),
     source: z.string().optional().nullable(),
-    status: z.enum(['New', 'Active', 'Won', 'Lost', 'On Hold']),
-    follow_up_level: z.enum(['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']),
+    referral_name: z.string().optional().nullable(),
+    status: z.enum(['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost']),
+    follow_up_level: z.enum(['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']).optional().nullable(),
     next_follow_up: z.date().optional().nullable(),
-    expected_value: z.coerce.number().min(0, "Value must be positive"),
-    currency: z.string().default("INR"),
-    probability: z.coerce.number().min(0).max(100),
-    priority: z.enum(['Low', 'Medium', 'High', 'Immediate']),
+    expected_value: z.coerce.number().min(0, "Value must be positive").optional().nullable(),
+    currency: z.string().optional().nullable(),
+    probability: z.coerce.number().min(1).max(10), // 1-10 scale
+    website: z.string().optional().nullable(),
+    linkedin: z.string().optional().nullable(),
+    facebook: z.string().optional().nullable(),
+    instagram: z.string().optional().nullable(),
+    project_links: z.array(z.string()).max(3, "Max 3 links allowed").optional(),
+    project_files: z.array(z.string()).max(3, "Max 3 files allowed").optional(),
+    new_contact_designation: z.string().optional(),
+}).refine((data) => {
+    if (data.contact_id === "new") {
+        return !!data.new_contact_name && (!!data.new_contact_email || !!data.new_contact_phone);
+    }
+    return true;
+}, {
+    message: "Name and either Email or Phone are required for new contact",
+    path: ["new_contact_name"],
 });
 
-type LeadFormValues = z.infer<typeof leadSchema>;
+type LeadFormValues = z.infer<typeof formSchema>;
 
 export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogProps) {
-    const [contacts, setContacts] = useState<{ id: string; name: string; company_name: string | null }[]>([]);
-    const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([]);
     const [loading, setLoading] = useState(false);
+    const [contacts, setContacts] = useState<Contact[]>([]);
+    const [teamMembers, setTeamMembers] = useState<{ id: string, full_name: string }[]>([]);
+    const [isNewContact, setIsNewContact] = useState(false);
+    const [currentUser, setCurrentUser] = useState<string | null>(null);
 
     const form = useForm<LeadFormValues>({
-        resolver: zodResolver(leadSchema),
+        resolver: zodResolver(formSchema),
         defaultValues: {
             title: "",
             contact_id: "null",
+            new_contact_name: "",
+            new_contact_email: "",
+            new_contact_phone: "",
             owner_id: "",
-            source: "",
+            lead_manager_id: null,
+            source: "Direct",
+            referral_name: null,
             status: "New",
             follow_up_level: "L0",
             next_follow_up: undefined,
             expected_value: 0,
             currency: "INR",
-            probability: 20,
-            priority: "Medium",
+            probability: 5,
+            website: null,
+            linkedin: null,
+            facebook: null,
+            instagram: null,
+            project_links: [],
+            project_files: [],
+            new_contact_designation: "",
         },
     });
 
@@ -89,91 +120,201 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         if (open) {
             fetchContacts();
             fetchTeamMembers();
+            getCurrentUser();
             if (lead) {
+                const leadAny = lead as any; // Temporary cast
                 form.reset({
                     title: lead.title,
                     contact_id: lead.contact_id || "null",
                     owner_id: lead.owner_id || "",
-                    source: lead.source || "",
+                    lead_manager_id: leadAny.lead_manager_id || null,
+                    source: lead.source?.startsWith('Reference: ') ? 'Reference' : (lead.source || "Direct"),
+                    referral_name: lead.source?.startsWith('Reference: ') ? lead.source.replace('Reference: ', '') : null,
                     status: lead.status || "New",
-                    follow_up_level: (lead.follow_up_level as "L0" | "L1" | "L2" | "L3" | "L4" | "L5" | "L6" | "L7") || "L0",
+                    follow_up_level: (lead.follow_up_level as any) || "L0",
                     next_follow_up: lead.next_follow_up ? new Date(lead.next_follow_up) : undefined,
                     expected_value: lead.expected_value || 0,
-                    currency: lead.currency || "USD",
-                    probability: lead.probability || 0,
-                    priority: lead.priority || "Medium",
+                    currency: lead.currency || "INR",
+                    probability: lead.probability ? Math.round(lead.probability / 10) : 5,
+                    website: leadAny.website || null,
+                    linkedin: leadAny.linkedin || null,
+                    facebook: leadAny.facebook || null,
+                    instagram: leadAny.instagram || null,
+                    project_links: leadAny.project_links || [],
+                    project_files: leadAny.project_files || [],
+                    new_contact_designation: "",
                 });
+                setIsNewContact(false);
             } else {
                 form.reset({
                     title: "",
                     contact_id: "null",
+                    new_contact_name: "",
+                    new_contact_email: "",
+                    new_contact_phone: "",
                     owner_id: "",
-                    source: "",
+                    lead_manager_id: null,
+                    source: "Direct",
+                    referral_name: null,
                     status: "New",
                     follow_up_level: "L0",
                     next_follow_up: undefined,
                     expected_value: 0,
                     currency: "INR",
-                    probability: 20,
-                    priority: "Medium",
+                    probability: 5,
+                    website: null,
+                    linkedin: null,
+                    facebook: null,
+                    instagram: null,
                 });
-                // Set default assignee to current user
-                supabase.auth.getUser().then(({ data }) => {
-                    if (data.user) {
-                        form.setValue("owner_id", data.user.id);
-                    }
-                });
+                if (currentUser) {
+                    form.setValue("owner_id", currentUser);
+                }
+                setIsNewContact(false);
             }
         }
-    }, [open, lead, form]);
+    }, [open, lead, currentUser]);
+
+    // Effect to update owner_id when currentUser is fetched (if creating new)
+    useEffect(() => {
+        if (open && !lead && currentUser) {
+            form.setValue("owner_id", currentUser);
+        }
+    }, [currentUser, open, lead]);
+
+    const getCurrentUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) setCurrentUser(user.id);
+    };
 
     const fetchContacts = async () => {
-        const { data } = await supabase
-            .from("contacts")
-            .select("id, name, company_name")
-            .order("name");
-        if (data) setContacts(data);
+        const { data } = await supabase.from('contacts').select('*').order('name');
+        if (data) setContacts(data as Contact[]);
     };
 
     const fetchTeamMembers = async () => {
-        const { data } = await supabase
-            .from("profiles")
-            .select("id, full_name")
-            .order("full_name");
-        if (data) setTeamMembers(data);
+        try {
+            // 1. Fetch valid user IDs from user_roles
+            const { data: roleData, error: roleError } = await supabase
+                .from('user_roles')
+                .select('user_id')
+                .in('role', ['project_owner', 'business_head', 'sales_team'] as any);
+
+            if (roleError) {
+                console.error("Error fetching user roles:", roleError);
+                return;
+            }
+
+            const userIds = roleData?.map(r => r.user_id) || [];
+            if (userIds.length === 0) {
+                console.log("No users found with required roles");
+                setTeamMembers([]);
+                return;
+            }
+
+            // 2. Fetch profiles for these IDs
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('id, full_name')
+                .in('id', userIds);
+
+            if (profileError) {
+                console.error("Error fetching profiles:", profileError);
+                return;
+            }
+
+            // 3. Map to state
+            if (profileData) {
+                const members = profileData
+                    .filter(p => p.full_name)
+                    .map(p => ({
+                        id: p.id,
+                        full_name: p.full_name
+                    }));
+                setTeamMembers(members);
+            }
+        } catch (error) {
+            console.error("Unexpected error fetching team members:", error);
+            toast.error("Failed to load team members");
+        }
     };
 
     const onSubmit = async (values: LeadFormValues) => {
         setLoading(true);
         try {
-            const leadData = {
+            let finalContactId = values.contact_id === "null" || values.contact_id === "new" ? null : values.contact_id;
+
+            // 1. Handle New Contact Creation
+            if (values.contact_id === "new") {
+                const { data: newContact, error: contactError } = await supabase
+                    .from('contacts')
+                    .insert({
+                        name: values.new_contact_name!,
+                        email: values.new_contact_email || null,
+                        phone: values.new_contact_phone || null,
+                        designation: values.new_contact_designation || null,
+                        website: values.website || null,
+                        linkedin: values.linkedin || null,
+                        facebook: values.facebook || null,
+                        instagram: values.instagram || null,
+                        created_by: currentUser
+                    })
+                    .select()
+                    .single();
+
+                if (contactError) throw contactError;
+                if (newContact) finalContactId = newContact.id;
+            }
+
+            // 2. Prepare Lead Data
+            const leadData: any = {
                 title: values.title,
-                contact_id: values.contact_id === "null" ? null : values.contact_id,
+                contact_id: finalContactId,
                 owner_id: values.owner_id,
-                source: values.source,
+                lead_manager_id: values.lead_manager_id || null,
+                source: values.source === 'Reference' && values.referral_name
+                    ? `Reference: ${values.referral_name}`
+                    : values.source,
                 status: values.status,
                 follow_up_level: values.follow_up_level,
-                next_follow_up: values.next_follow_up?.toISOString(),
-                expected_value: values.expected_value,
+                next_follow_up: values.next_follow_up?.toISOString() || null,
+                expected_value: values.expected_value || 0,
                 currency: values.currency,
-                probability: values.probability,
-                priority: values.priority,
+                probability: values.probability * 10,
+                website: values.website || null,
+                linkedin: values.linkedin || null,
+                facebook: values.facebook || null,
+                instagram: values.instagram || null,
+                project_links: values.project_links || [],
+                project_files: values.project_files || [],
             };
 
+            // 3. Insert or Update
             if (lead) {
+                if (lead.status !== values.status) {
+                    await logActivity(lead.id, 'StageChange', `Status changed from ${lead.status} to ${values.status}`);
+                }
                 const { error } = await supabase
                     .from("leads")
                     .update(leadData)
                     .eq("id", lead.id);
+
                 if (error) throw error;
                 toast.success("Lead updated successfully");
             } else {
-                const { error } = await supabase
+                const { data: newLead, error } = await supabase
                     .from("leads")
-                    .insert([leadData]);
+                    .insert([leadData])
+                    .select()
+                    .single();
+
                 if (error) throw error;
+                if (newLead) {
+                    await logActivity(newLead.id, 'System', 'Lead Created');
+                }
                 toast.success("Lead created successfully");
             }
+
             onSuccess();
             onOpenChange(false);
         } catch (error: any) {
@@ -184,59 +325,44 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         }
     };
 
+    const getHeatmapLabel = (value: number) => {
+        if (value <= 2) return "Freezing Cold 🥶";
+        if (value <= 4) return "Cold ❄️";
+        if (value <= 6) return "Warm 🌤️";
+        if (value <= 8) return "Hot 🔥";
+        return "Red Hot 💥";
+    };
+
+    const getHeatmapColor = (value: number) => {
+        if (value <= 3) return "bg-blue-500";
+        if (value <= 6) return "bg-yellow-500";
+        return "bg-red-500";
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{lead ? "Edit Lead" : "Create New Lead"}</DialogTitle>
                     <DialogDescription>
-                        Frictionless entry for your sales opportunities.
+                        Fill in the details for the potential opportunity.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        {/* REQUIRED FIELDS FIRST */}
-                        <div className="space-y-4 border-b pb-4">
-                            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Required Details</h4>
-                            <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Lead Title <span className="text-red-500">*</span></FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. Acme Corp Contract" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        {/* Core Details */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Core Details</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
-                                    name="contact_id"
+                                    name="title"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Contact <span className="text-red-500">*</span></FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value ?? "null"}
-                                                value={field.value ?? "null"}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select contact" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="null">-- None --</SelectItem>
-                                                    {contacts.map((contact) => (
-                                                        <SelectItem key={contact.id} value={contact.id}>
-                                                            {contact.name} {contact.company_name ? `(${contact.company_name})` : ''}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                        <FormItem className="col-span-2">
+                                            <FormLabel>Lead Title</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. Enterprise License Deal - Acme Corp" {...field} />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -246,11 +372,11 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                     name="owner_id"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Owner (Assignee) <span className="text-red-500">*</span></FormLabel>
+                                            <FormLabel>Lead Producer</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select team member" />
+                                                        <SelectValue placeholder="Select Producer" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -265,12 +391,446 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                         </FormItem>
                                     )}
                                 />
+                                <FormField
+                                    control={form.control}
+                                    name="lead_manager_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Lead Manager</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value || "null"}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Manager" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="null">-- None --</SelectItem>
+                                                    {teamMembers.map((member) => (
+                                                        <SelectItem key={member.id} value={member.id}>
+                                                            {member.full_name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
                         </div>
 
-                        {/* OPTIONAL FIELDS */}
+                        {/* Contact Information */}
                         <div className="space-y-4">
-                            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Additional Details</h4>
+                            <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Contact Information</h3>
+                            <FormField
+                                control={form.control}
+                                name="contact_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Select Contact</FormLabel>
+                                        <Select
+                                            onValueChange={(val) => {
+                                                field.onChange(val);
+                                                setIsNewContact(val === "new");
+                                            }}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Search or add contact..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="null">-- Select Existing Contact --</SelectItem>
+                                                <SelectItem value="new" className="font-bold text-blue-600 bg-blue-50">
+                                                    + Create New Contact
+                                                </SelectItem>
+                                                {contacts.map((contact) => (
+                                                    <SelectItem key={contact.id} value={contact.id}>
+                                                        {contact.name} {contact.company_name ? `(${contact.company_name})` : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {isNewContact && (
+                                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="new_contact_name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Name *</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="John Doe" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="new_contact_email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Email</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="john@example.com" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="new_contact_phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Phone</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="+123..." />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="new_contact_designation"
+                                            render={({ field }) => (
+                                                <FormItem className="col-span-3">
+                                                    <FormLabel>Designation / Title</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="e.g. CTO, Marketing Director" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="website"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="flex items-center gap-2"><Globe size={14} /> Website</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="https://..." className="h-8" value={field.value || ""} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="linkedin"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="flex items-center gap-2"><Linkedin size={14} /> LinkedIn</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Profile URL" className="h-8" value={field.value || ""} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="facebook"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="flex items-center gap-2"><Facebook size={14} /> Facebook</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Profile URL" className="h-8" value={field.value || ""} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="instagram"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="flex items-center gap-2"><Instagram size={14} /> Instagram</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Profile Handle/URL" className="h-8" value={field.value || ""} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Project Reference */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Project Reference</h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Links Section */}
+                                <div className="space-y-3">
+                                    <FormLabel className="flex items-center gap-2 font-semibold">
+                                        <LinkIcon size={14} /> Reference Links (Max 3)
+                                    </FormLabel>
+                                    <div className="space-y-2">
+                                        {form.watch('project_links')?.map((link, index) => (
+                                            <div key={index} className="flex gap-2">
+                                                <Input value={link} readOnly className="bg-slate-50 h-8 text-sm" />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => {
+                                                        const current = form.getValues('project_links') || [];
+                                                        form.setValue('project_links', current.filter((_, i) => i !== index));
+                                                    }}
+                                                >
+                                                    <X size={14} />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                        {(form.watch('project_links')?.length || 0) < 3 && (
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    id="new-link-input"
+                                                    placeholder="Add URL and press +"
+                                                    className="h-8 text-sm"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            const input = e.currentTarget as HTMLInputElement;
+                                                            const val = input.value.trim();
+                                                            if (val) {
+                                                                const current = form.getValues('project_links') || [];
+                                                                if (current.length < 3) {
+                                                                    form.setValue('project_links', [...current, val]);
+                                                                    input.value = '';
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => {
+                                                        const input = document.getElementById('new-link-input') as HTMLInputElement;
+                                                        const val = input.value.trim();
+                                                        if (val) {
+                                                            const current = form.getValues('project_links') || [];
+                                                            if (current.length < 3) {
+                                                                form.setValue('project_links', [...current, val]);
+                                                                input.value = '';
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <Plus size={14} />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Files Section */}
+                                <div className="space-y-3">
+                                    <FormLabel className="flex items-center gap-2 font-semibold">
+                                        <FileText size={14} /> Reference Files (Max 3, &lt;10MB)
+                                    </FormLabel>
+                                    <div className="space-y-2">
+                                        {form.watch('project_files')?.map((fileUrl, index) => (
+                                            <div key={index} className="flex gap-2 items-center bg-slate-50 p-2 rounded border">
+                                                <FileText size={14} className="text-blue-500" />
+                                                <span className="text-xs truncate flex-1">{fileUrl.split('/').pop()}</span>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => {
+                                                        const current = form.getValues('project_files') || [];
+                                                        form.setValue('project_files', current.filter((_, i) => i !== index));
+                                                    }}
+                                                >
+                                                    <X size={12} />
+                                                </Button>
+                                            </div>
+                                        ))}
+
+                                        {(form.watch('project_files')?.length || 0) < 3 && (
+                                            <div className="relative">
+                                                <Input
+                                                    type="file"
+                                                    className="hidden"
+                                                    id="file-upload"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+
+                                                        if (file.size > 10 * 1024 * 1024) {
+                                                            toast.error("File size must be less than 10MB");
+                                                            return;
+                                                        }
+
+                                                        const toastId = toast.loading("Uploading...", { duration: Infinity });
+                                                        try {
+                                                            const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                                                            const { data, error } = await supabase.storage
+                                                                .from('lead_attachments')
+                                                                .upload(fileName, file);
+
+                                                            if (error) throw error;
+
+                                                            const { data: { publicUrl } } = supabase.storage
+                                                                .from('lead_attachments')
+                                                                .getPublicUrl(fileName);
+
+                                                            const current = form.getValues('project_files') || [];
+                                                            form.setValue('project_files', [...current, publicUrl]);
+                                                            toast.success("File uploaded!");
+                                                        } catch (error: any) {
+                                                            console.error("Upload failed", error);
+                                                            toast.error("Upload failed: " + error.message);
+                                                        } finally {
+                                                            toast.dismiss(toastId);
+                                                            e.target.value = ''; // Reset input
+                                                        }
+                                                    }}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="w-full h-8 text-sm gap-2"
+                                                    onClick={() => document.getElementById('file-upload')?.click()}
+                                                >
+                                                    <Upload size={14} /> Upload File
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Deal Dynamics */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Deal Dynamics</h3>
+
+                            <FormField
+                                control={form.control}
+                                name="probability"
+                                render={({ field }) => (
+                                    <FormItem className="bg-slate-50 p-4 rounded-xl border">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <FormLabel className="text-base">Probability Heatmap</FormLabel>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${getHeatmapColor(field.value)} transition-colors`}>
+                                                {getHeatmapLabel(field.value)} ({field.value}/10)
+                                            </span>
+                                        </div>
+                                        <FormControl>
+                                            <Slider
+                                                min={1}
+                                                max={10}
+                                                step={1}
+                                                value={[field.value]}
+                                                onValueChange={(vals) => field.onChange(vals[0])}
+                                                className="py-4"
+                                            />
+                                        </FormControl>
+                                        <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                            <span>Freezing</span>
+                                            <span>Red Hot</span>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="expected_value"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Expected Value</FormLabel>
+                                            <div className="flex gap-2">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="currency"
+                                                    render={({ field: currencyField }) => (
+                                                        <Select onValueChange={currencyField.onChange} value={currencyField.value || "INR"}>
+                                                            <FormControl>
+                                                                <SelectTrigger className="w-[80px]">
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="INR">INR</SelectItem>
+                                                                <SelectItem value="USD">USD</SelectItem>
+                                                                <SelectItem value="EUR">EUR</SelectItem>
+                                                                <SelectItem value="GBP">GBP</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                />
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        {...field}
+                                                        onChange={e => field.onChange(parseFloat(e.target.value))}
+                                                        value={field.value || ""}
+                                                    />
+                                                </FormControl>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="source"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Source</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value === 'Reference' ? 'Reference' : field.value || "Direct"}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Source" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Direct">Direct</SelectItem>
+                                                    <SelectItem value="Website">Website</SelectItem>
+                                                    <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                                                    <SelectItem value="Reference">Reference</SelectItem>
+                                                    <SelectItem value="Cold Call">Cold Call</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {field.value === 'Reference' && (
+                                                <Input
+                                                    placeholder="Referred By..."
+                                                    className="mt-2"
+                                                    onChange={(e) => {
+                                                        form.setValue('referral_name', e.target.value);
+                                                    }}
+                                                    value={form.getValues('referral_name') || ""}
+                                                />
+                                            )}
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
@@ -282,15 +842,17 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select status" />
+                                                        <SelectValue placeholder="Status" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="New">New</SelectItem>
-                                                    <SelectItem value="Active">Active</SelectItem>
+                                                    <SelectItem value="Contacted">Contacted</SelectItem>
+                                                    <SelectItem value="Qualified">Qualified</SelectItem>
+                                                    <SelectItem value="Proposal">Proposal</SelectItem>
+                                                    <SelectItem value="Negotiation">Negotiation</SelectItem>
                                                     <SelectItem value="Won">Won</SelectItem>
                                                     <SelectItem value="Lost">Lost</SelectItem>
-                                                    <SelectItem value="On Hold">On Hold</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -303,7 +865,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Follow-up Level</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value || "L0"}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select level" />
@@ -326,149 +888,50 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="source"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Source</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. LinkedIn, Referral" {...field} value={field.value || ""} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="priority"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Priority</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
+                            <FormField
+                                control={form.control}
+                                name="next_follow_up"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col mt-2">
+                                        <FormLabel>Next Follow Up</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
                                                 <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select priority" />
-                                                    </SelectTrigger>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(field.value, "PPP")
+                                                        ) : (
+                                                            <span>Pick a date</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
                                                 </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Low">Low</SelectItem>
-                                                    <SelectItem value="Medium">Medium</SelectItem>
-                                                    <SelectItem value="High">High</SelectItem>
-                                                    <SelectItem value="Immediate">Immediate</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="next_follow_up"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col mt-2">
-                                            <FormLabel>Next Follow Up</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant={"outline"}
-                                                            className={cn(
-                                                                "w-full pl-3 text-left font-normal",
-                                                                !field.value && "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {field.value ? (
-                                                                format(field.value, "PPP")
-                                                            ) : (
-                                                                <span>Pick a date</span>
-                                                            )}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value || undefined}
-                                                        onSelect={field.onChange}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <div className="space-y-2">
-                                    <div className="flex gap-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="currency"
-                                            render={({ field }) => (
-                                                <FormItem className="w-24">
-                                                    <FormLabel>Currency</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Curr" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="USD">USD ($)</SelectItem>
-                                                            <SelectItem value="INR">INR (₹)</SelectItem>
-                                                            <SelectItem value="EUR">EUR (€)</SelectItem>
-                                                            <SelectItem value="GBP">GBP (£)</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="expected_value"
-                                            render={({ field }) => (
-                                                <FormItem className="flex-1">
-                                                    <FormLabel>Est. Value</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    <FormField
-                                        control={form.control}
-                                        name="probability"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Probability (%)</FormLabel>
-                                                <FormControl>
-                                                    <div className="relative">
-                                                        <Percent className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                        <Input type="number" className="pl-8" {...field} />
-                                                    </div>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value || undefined}
+                                                    onSelect={field.onChange}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Cancel
-                            </Button>
                             <Button type="submit" disabled={loading}>
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Lead
+                                {lead ? "Save Changes" : "Create Lead"}
                             </Button>
                         </DialogFooter>
                     </form>

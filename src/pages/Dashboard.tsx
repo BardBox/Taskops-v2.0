@@ -158,6 +158,12 @@ const Dashboard = () => {
     }
   };
 
+  useEffect(() => {
+    if (userRole === "sales_team" && viewMode === 'ops') {
+      setViewMode('growth');
+    }
+  }, [userRole, viewMode]);
+
   const canCreateTasks = userRole === "project_owner" || userRole === "project_manager";
 
   const handleResetPreferences = async () => {

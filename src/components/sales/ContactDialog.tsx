@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Globe, Linkedin, Facebook, Instagram } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
     Dialog,
@@ -38,7 +38,11 @@ const contactSchema = z.object({
     designation: z.string().optional().nullable(),
     email: z.string().email("Invalid email").optional().or(z.literal("")),
     phone: z.string().optional().nullable(),
-    tags: z.string().optional().nullable(), // Comma separated string for input
+    tags: z.string().optional().nullable(),
+    website: z.string().optional().nullable(),
+    linkedin: z.string().optional().nullable(),
+    facebook: z.string().optional().nullable(),
+    instagram: z.string().optional().nullable(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -55,6 +59,10 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
             email: "",
             phone: "",
             tags: "",
+            website: "",
+            linkedin: "",
+            facebook: "",
+            instagram: "",
         },
     });
 
@@ -68,6 +76,10 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                     email: contact.email || "",
                     phone: contact.phone || "",
                     tags: contact.tags ? contact.tags.join(", ") : "",
+                    website: contact.website || "",
+                    linkedin: contact.linkedin || "",
+                    facebook: contact.facebook || "",
+                    instagram: contact.instagram || "",
                 });
             } else {
                 form.reset({
@@ -77,6 +89,10 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                     email: "",
                     phone: "",
                     tags: "",
+                    website: "",
+                    linkedin: "",
+                    facebook: "",
+                    instagram: "",
                 });
             }
         }
@@ -96,6 +112,10 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                 email: values.email || null,
                 phone: values.phone || null,
                 tags: tagsArray.length > 0 ? tagsArray : null,
+                website: values.website || null,
+                linkedin: values.linkedin || null,
+                facebook: values.facebook || null,
+                instagram: values.instagram || null,
             };
 
             if (contact) {
@@ -211,6 +231,57 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                                             <Input placeholder="+1 234 567 890" {...field} value={field.value || ""} />
                                         </FormControl>
                                         <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                            <FormField
+                                control={form.control}
+                                name="website"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2"><Globe size={14} /> Website</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="https://..." className="h-8" value={field.value || ""} />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="linkedin"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2"><Linkedin size={14} /> LinkedIn</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Profile URL" className="h-8" value={field.value || ""} />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="facebook"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2"><Facebook size={14} /> Facebook</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Profile URL" className="h-8" value={field.value || ""} />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="instagram"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2"><Instagram size={14} /> Instagram</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Profile URL" className="h-8" value={field.value || ""} />
+                                        </FormControl>
                                     </FormItem>
                                 )}
                             />

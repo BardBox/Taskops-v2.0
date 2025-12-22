@@ -740,6 +740,19 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   };
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
+    if (!["project_manager", "project_owner", "team_member"].includes(userRole)) {
+      toast.error("You do not have permission to change status");
+      return;
+    }
+    // Team members can only change their own tasks (checked via canEdit or RLS, but explicit check here is safer)
+    if (userRole === "team_member") {
+      const task = tasks.find(t => t.id === taskId);
+      if (task && task.assignee_id !== userId) {
+        toast.error("You can only update your own tasks");
+        return;
+      }
+    }
+
     // Optimistically update local state
     setTasks(prevTasks =>
       prevTasks.map(task =>
@@ -763,6 +776,11 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   };
 
   const handleUrgencyChange = async (taskId: string, newUrgency: string) => {
+    if (!["project_manager", "project_owner"].includes(userRole)) {
+      toast.error("You do not have permission to change urgency");
+      return;
+    }
+
     // Optimistically update local state
     setTasks(prevTasks =>
       prevTasks.map(task =>

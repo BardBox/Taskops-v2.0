@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Loader2 } from "lucide-react";
 import { LeadTable, Lead } from "@/components/sales/LeadTable";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,8 @@ import { ContactDialog } from "@/components/sales/ContactDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { SalesOpsPanel, Activity } from "@/components/sales/SalesOpsPanel";
-import { fetchExchangeRates, convertToINR, formatCurrency, ExchangeRates } from "@/utils/currency";
+import { SmartMetricCards } from "@/components/sales/SmartMetricCards";
+import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
 
 export const GrowthDashboard = () => {
     // Lead State
@@ -39,17 +40,35 @@ export const GrowthDashboard = () => {
     // Currency State
     const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({});
 
-    useEffect(() => {
-        fetchLeads();
-        fetchContacts();
-        loadRates();
-    }, []);
+    // User/Profile State
+    const [userMap, setUserMap] = useState<Record<string, string>>({});
 
-    useEffect(() => {
-        if (selectedLeadForPanel) {
-            fetchActivities(selectedLeadForPanel.id);
+    // Access Control
+    const navigate = useNavigate();
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    const checkAccess = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .single();
+
+        const role = roleData?.role;
+        setUserRole(role);
+
+        // Roles allowed to access Growth Engine
+        const allowedRoles = ["project_owner", "business_head", "sales_team"];
+        const isAllowed = allowedRoles.includes(role);
+
+        if (role && !isAllowed) {
+            toast.error("You do not have access to the Growth Engine");
+            navigate("/dashboard?view=ops");
         }
-    }, [selectedLeadForPanel]);
+    };
 
     const loadRates = async () => {
         const rates = await fetchExchangeRates();
@@ -104,6 +123,38 @@ export const GrowthDashboard = () => {
             setActivities([]);
         }
     };
+
+    const fetchUsers = async () => {
+        const { data } = await supabase
+            .from('user_roles')
+            .select('user_id, profiles:user_id(full_name)')
+            // Fetch all roles relevant to sales/growth
+            .in('role', ['project_owner', 'business_head', 'sales_team']);
+
+        if (data) {
+            const map: Record<string, string> = {};
+            data.forEach((item: any) => {
+                if (item.profiles && item.profiles.full_name) {
+                    map[item.user_id] = item.profiles.full_name;
+                }
+            });
+            setUserMap(map);
+        }
+    };
+
+    useEffect(() => {
+        checkAccess();
+        fetchLeads();
+        fetchContacts();
+        loadRates();
+        fetchUsers();
+    }, []);
+
+    useEffect(() => {
+        if (selectedLeadForPanel) {
+            fetchActivities(selectedLeadForPanel.id);
+        }
+    }, [selectedLeadForPanel]);
 
     // Lead Handlers
     const handleAddLead = () => {
@@ -215,41 +266,7 @@ export const GrowthDashboard = () => {
                 )}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Pipeline Value (INR)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {formatCurrency(
-                                leads.reduce((sum, lead) => {
-                                    return sum + convertToINR(lead.expected_value || 0, lead.currency || 'INR', exchangeRates);
-                                }, 0)
-                            )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Converted to INR using real-time rates
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Leads</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{leads.length}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Contacts</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{contacts.length}</div>
-                    </CardContent>
-                </Card>
-            </div>
+            <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList>
@@ -263,6 +280,7 @@ export const GrowthDashboard = () => {
                         onDelete={confirmDeleteLead}
                         onAddToCalendar={() => toast.info("Calendar integration coming soon")}
                         onLeadClick={handleLeadClick}
+                        userMap={userMap}
                     />
                 </TabsContent>
                 <TabsContent value="contacts" className="space-y-4">
@@ -279,6 +297,8 @@ export const GrowthDashboard = () => {
                     lead={selectedLeadForPanel}
                     events={activities}
                     onClose={() => setSelectedLeadForPanel(null)}
+                    onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
+                    userMap={userMap}
                 />
             )}
 
