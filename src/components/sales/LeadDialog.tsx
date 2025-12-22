@@ -56,7 +56,7 @@ const leadSchema = z.object({
     follow_up_level: z.enum(['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']),
     next_follow_up: z.date().optional().nullable(),
     expected_value: z.coerce.number().min(0, "Value must be positive"),
-    currency: z.string().default("USD"),
+    currency: z.string().default("INR"),
     probability: z.coerce.number().min(0).max(100),
     priority: z.enum(['Low', 'Medium', 'High', 'Immediate']),
 });
@@ -113,7 +113,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     follow_up_level: "L0",
                     next_follow_up: undefined,
                     expected_value: 0,
-                    currency: "USD",
+                    currency: "INR",
                     probability: 20,
                     priority: "Medium",
                 });

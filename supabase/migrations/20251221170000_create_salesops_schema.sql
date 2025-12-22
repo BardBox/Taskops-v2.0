@@ -53,7 +53,7 @@ CREATE TABLE public.leads (
     follow_up_level public.follow_up_level DEFAULT 'L0',
     next_follow_up TIMESTAMP WITH TIME ZONE,
     expected_value NUMERIC,
-    currency TEXT DEFAULT 'USD', -- 'USD', 'INR', 'EUR', 'GBP'
+    currency TEXT DEFAULT 'INR', -- 'USD', 'INR', 'EUR', 'GBP'
     probability INTEGER CHECK (probability >= 0 AND probability <= 100),
     priority public.priority_level DEFAULT 'Medium',
     last_activity_timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
