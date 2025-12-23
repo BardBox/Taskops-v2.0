@@ -23,7 +23,7 @@ const AVATAR_LIBRARY = [
   { name: "Tiger Tina", prompt: "powerful tiger with stripes, fierce yet noble", category: "animal" },
   { name: "Elephant Ella", prompt: "wise elephant with large ears, gentle giant", category: "animal" },
   { name: "Wolf Wyatt", prompt: "noble wolf with silver fur, pack leader", category: "animal" },
-  
+
   // Fantasy (13)
   { name: "Wizard Waldo", prompt: "wise wizard with long beard, pointed hat, mystical aura", category: "fantasy" },
   { name: "Fairy Flora", prompt: "delicate fairy with wings, flower crown, magical glow", category: "fantasy" },
@@ -38,7 +38,7 @@ const AVATAR_LIBRARY = [
   { name: "Centaur Carl", prompt: "noble centaur warrior, half-human half-horse", category: "fantasy" },
   { name: "Pixie Penny", prompt: "tiny pixie with sparkles, mischievous sprite", category: "fantasy" },
   { name: "Troll Trent", prompt: "friendly troll under bridge, stone-like appearance", category: "fantasy" },
-  
+
   // Human (13)
   { name: "Executive Emma", prompt: "professional businesswoman with glasses, confident smile, corporate attire", category: "human" },
   { name: "Tech Guru Tom", prompt: "tech professional with headphones, casual hoodie, friendly demeanor", category: "human" },
@@ -53,7 +53,7 @@ const AVATAR_LIBRARY = [
   { name: "Athlete Alex", prompt: "sports champion with medals, athletic build, determined", category: "human" },
   { name: "Musician Mia", prompt: "rock star with guitar, energetic performer", category: "human" },
   { name: "Explorer Eddie", prompt: "adventurer with backpack and compass, explorer spirit", category: "human" },
-  
+
   // SuperHero (12)
   { name: "Thunder Strike", prompt: "superhero with lightning powers, electric cape, heroic pose", category: "superhero" },
   { name: "Solar Flare", prompt: "sun-powered hero with golden suit, radiant energy", category: "superhero" },
@@ -67,7 +67,7 @@ const AVATAR_LIBRARY = [
   { name: "Tech Knight", prompt: "technology-powered hero, high-tech armor, gadgets", category: "superhero" },
   { name: "Nature's Wrath", prompt: "plant-controlling hero, green powers, eco-warrior", category: "superhero" },
   { name: "Speed Bolt", prompt: "super-fast hero with lightning trails, speed force", category: "superhero" },
-  
+
   // Supervillain (12)
   { name: "Dark Reaper", prompt: "sinister villain with dark cloak, ominous presence", category: "supervillain" },
   { name: "Venom Strike", prompt: "toxic villain with poisonous powers, menacing", category: "supervillain" },
@@ -81,7 +81,7 @@ const AVATAR_LIBRARY = [
   { name: "Storm Tyrant", prompt: "weather-controlling villain, tempest master", category: "supervillain" },
   { name: "Plague Doctor", prompt: "bio-hazard villain with toxic experiments, mad scientist", category: "supervillain" },
   { name: "Nightmare King", prompt: "fear-inducing villain, master of nightmares", category: "supervillain" },
-  
+
   // Droid (12)
   { name: "Robo Rover", prompt: "friendly service robot, helpful companion bot", category: "droid" },
   { name: "Cyber Sentinel", prompt: "security droid with shields, protective guardian", category: "droid" },
@@ -95,7 +95,7 @@ const AVATAR_LIBRARY = [
   { name: "Pixel Pete", prompt: "retro 8-bit robot, pixelated charm, nostalgic", category: "droid" },
   { name: "Solar Sol", prompt: "solar-powered robot with panels, eco-friendly", category: "droid" },
   { name: "Binary Ben", prompt: "code-themed robot with binary numbers, programmer bot", category: "droid" },
-  
+
   // Abstract (12)
   { name: "Cosmic Swirl", prompt: "abstract cosmic patterns, swirling galaxies, space art", category: "abstract" },
   { name: "Neon Pulse", prompt: "vibrant neon lights, pulsing energy waves, electric art", category: "abstract" },
@@ -109,7 +109,7 @@ const AVATAR_LIBRARY = [
   { name: "Fractal Zone", prompt: "fractal patterns, infinite recursion, mathematical beauty", category: "abstract" },
   { name: "Gradient Sphere", prompt: "smooth color gradients, spherical forms, soft transitions", category: "abstract" },
   { name: "Chaos Theory", prompt: "chaotic patterns, butterfly effect visualization, complex systems", category: "abstract" },
-  
+
   // Nature (13)
   { name: "Mountain Peak", prompt: "majestic mountain summit, snowy peak, alpine landscape", category: "nature" },
   { name: "Ocean Wave", prompt: "powerful ocean wave, turquoise water, coastal beauty", category: "nature" },
@@ -129,7 +129,7 @@ const AVATAR_LIBRARY = [
 // Personality templates for generating unique avatars per category
 const PERSONALITY_TEMPLATES = {
   human: [
-    "professional", "casual", "elegant", "sporty", "artistic", 
+    "professional", "casual", "elegant", "sporty", "artistic",
     "intellectual", "cheerful", "serious", "friendly", "confident",
     "creative", "wise", "energetic", "calm", "bold",
     "gentle", "determined", "curious", "warm", "sophisticated"
@@ -197,26 +197,31 @@ export default function AvatarGenerator() {
       for (let i = 0; i < total; i++) {
         const avatarData = AVATAR_LIBRARY[i];
         const fullPrompt = `${avatarData.prompt}, high quality avatar portrait, professional digital art`;
-        
+
         setCurrentAvatar(avatarData.name);
         console.log(`Generating ${i + 1}/${total}: ${avatarData.name}`);
 
         try {
           const { data, error } = await supabase.functions.invoke('generate-avatar', {
-            body: { 
-              prompt: fullPrompt, 
-              name: avatarData.name, 
-              category: avatarData.category 
+            body: {
+              prompt: fullPrompt,
+              name: avatarData.name,
+              category: avatarData.category
             }
           });
 
           if (error) throw error;
 
+          if (data?.error) {
+            console.error("Backend Error Details:", data.details);
+            throw new Error(data.details);
+          }
+
           if (data?.imageUrl) {
             // Convert base64 to blob
             const base64Response = await fetch(data.imageUrl);
             const blob = await base64Response.blob();
-            
+
             // Upload to storage
             const fileName = `${Date.now()}_${avatarData.name.toLowerCase().replace(/\s+/g, '_')}.png`;
             const { error: uploadError } = await supabase.storage
@@ -254,7 +259,7 @@ export default function AvatarGenerator() {
         }
 
         setProgress(((i + 1) / total) * 100);
-        
+
         // Add delay to avoid rate limiting
         if (i < total - 1) {
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -290,10 +295,10 @@ export default function AvatarGenerator() {
         const personality = personalities[i];
         const categoryName = selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1);
         const avatarName = `${personality.charAt(0).toUpperCase() + personality.slice(1)} ${categoryName}`;
-        
+
         // Create detailed prompts based on category
         let basePrompt = "";
-        switch(selectedCategory) {
+        switch (selectedCategory) {
           case "human":
             basePrompt = `${personality} person, diverse ethnicity, professional portrait`;
             break;
@@ -321,16 +326,16 @@ export default function AvatarGenerator() {
         }
 
         const fullPrompt = `${basePrompt}, high quality avatar portrait, professional digital art`;
-        
+
         setCurrentAvatar(avatarName);
         console.log(`Generating ${i + 1}/${total}: ${avatarName}`);
 
         try {
           const { data, error } = await supabase.functions.invoke('generate-avatar', {
-            body: { 
-              prompt: fullPrompt, 
-              name: avatarName, 
-              category: selectedCategory 
+            body: {
+              prompt: fullPrompt,
+              name: avatarName,
+              category: selectedCategory
             }
           });
 
@@ -340,7 +345,7 @@ export default function AvatarGenerator() {
             // Convert base64 to blob
             const base64Response = await fetch(data.imageUrl);
             const blob = await base64Response.blob();
-            
+
             // Upload to storage
             const fileName = `${Date.now()}_${avatarName.toLowerCase().replace(/\s+/g, '_')}.png`;
             const { error: uploadError } = await supabase.storage
@@ -378,7 +383,7 @@ export default function AvatarGenerator() {
         }
 
         setProgress(((i + 1) / total) * 100);
-        
+
         // Add delay to avoid rate limiting
         if (i < total - 1) {
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -443,8 +448,8 @@ export default function AvatarGenerator() {
             Generate the default avatar library for users to choose from
           </p>
         </div>
-        <Button 
-          variant="destructive" 
+        <Button
+          variant="destructive"
           onClick={clearAllAvatars}
           disabled={clearing || generating}
         >
@@ -472,7 +477,7 @@ export default function AvatarGenerator() {
             <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
               ⚠️ This will take approximately 1 minute to complete. Each avatar is generated with a 2-second delay.
             </p>
-            
+
             <div className="flex gap-4 items-end">
               <div className="flex-1">
                 <label className="text-sm font-medium mb-2 block">Select Category</label>
@@ -492,7 +497,7 @@ export default function AvatarGenerator() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button 
+              <Button
                 onClick={generateCategoryAvatars}
                 disabled={generating || !selectedCategory}
                 size="lg"
@@ -567,7 +572,7 @@ export default function AvatarGenerator() {
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={generateDefaultLibrary}
             disabled={generating}
             className="w-full"
@@ -593,7 +598,7 @@ export default function AvatarGenerator() {
                 <span className="font-medium">{generatedCount} / 100</span>
               </div>
               <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-primary transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />

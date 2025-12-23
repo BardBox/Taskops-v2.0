@@ -38,7 +38,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
     "Available", "Busy", "Out of Office", "Do Not Disturb", "On Leave"
   ]);
   const [moods, setMoods] = useState<string[]>([
-    "😊 Happy", "😎 Cool", "🤔 Thoughtful", "😴 Tired", "🔥 On Fire",
+    "😄 Happy", "😎 Cool", "🤔 Thoughtful", "😴 Tired", "🔥 On Fire",
     "🎯 Focused", "🎉 Excited", "😌 Relaxed", "💪 Motivated", "🤯 Overwhelmed"
   ]);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -77,10 +77,19 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true 
 
     if (settings) {
       settings.forEach((setting) => {
-        if (setting.setting_key === "status_options") {
-          setStatuses(JSON.parse(setting.setting_value));
-        } else if (setting.setting_key === "mood_options") {
-          setMoods(JSON.parse(setting.setting_value));
+        let value = setting.setting_value;
+        if (typeof value === 'string') {
+          try {
+            value = JSON.parse(value);
+          } catch (e) {
+            console.error("Failed to parse setting:", setting.setting_key, e);
+          }
+        }
+
+        if (setting.setting_key === "status_options" && Array.isArray(value)) {
+          setStatuses(value);
+        } else if (setting.setting_key === "mood_options" && Array.isArray(value)) {
+          setMoods(value);
         }
       });
     }

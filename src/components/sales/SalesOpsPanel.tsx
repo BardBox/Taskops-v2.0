@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     Phone, MessageSquare, Mail, Calendar,
     FileText, ArrowRight, Settings, CheckCircle,
-    Clock, AlertCircle, X, Loader2
+    Clock, AlertCircle, X, Loader2, Pencil, Globe
 } from 'lucide-react';
 import { Lead } from './LeadTable';
 import { format } from 'date-fns';
@@ -25,6 +25,7 @@ interface SalesOpsPanelProps {
     events: Activity[];
     onClose: () => void;
     onRefresh: () => void;
+    onEdit: (lead: Lead) => void;
     userMap: Record<string, string>;
 }
 
@@ -80,7 +81,7 @@ const TimelineItem = ({ event }: { event: Activity }) => {
     );
 };
 
-export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, userMap }: SalesOpsPanelProps) => {
+export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, userMap }: SalesOpsPanelProps) => {
     const [activityDialogOpen, setActivityDialogOpen] = useState(false);
 
     const getHeatmapLabel = (value: number) => {
@@ -130,9 +131,18 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, userMap }: Sal
                         <h2 className="text-xl font-bold text-slate-900 mt-1">{lead.title}</h2>
                         <p className="text-sm text-slate-500 font-medium">{lead.contact?.company_name || 'No Company'}</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                        <X size={20} className="text-slate-400" />
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => onEdit(lead)}
+                            className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-500 hover:text-slate-900"
+                            title="Edit Lead"
+                        >
+                            <Pencil size={20} />
+                        </button>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                            <X size={20} className="text-slate-400" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-6">
@@ -155,7 +165,7 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, userMap }: Sal
                     {lead.website && (
                         <a href={lead.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-colors">
                             <span className="sr-only">Website</span>
-                            <Settings size={16} /> {/* Using generic icon as Globe not imported, can verify later */}
+                            <Globe size={16} />
                         </a>
                     )}
                     {lead.linkedin && (

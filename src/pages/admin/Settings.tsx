@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { SettingsListEditor } from "@/components/admin/SettingsListEditor";
 
 export default function AdminSettings() {
   const { userRole } = useOutletContext<{ userRole: string }>();
@@ -142,6 +143,41 @@ export default function AdminSettings() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+        <div className="md:col-span-2">
+          <h3 className="text-xl font-semibold mb-2">Dropdown Management</h3>
+          <p className="text-muted-foreground mb-4">Manage options for dropdown menus across the application</p>
+        </div>
+
+        <SettingsListEditor
+          title="Lead Sources"
+          description="Options for where a lead came from (Lead Dialog)"
+          settingKey="lead_sources"
+          placeholder="e.g. Instagram"
+        />
+
+        <SettingsListEditor
+          title="Project Types"
+          description="Available project types for leads (e.g. Branding, SEO)"
+          settingKey="project_types"
+          placeholder="e.g. Web Development"
+        />
+
+        <SettingsListEditor
+          title="Currencies"
+          description="Supported currencies for deal value"
+          settingKey="currencies"
+          placeholder="e.g. AED"
+        />
+
+        <SettingsListEditor
+          title="Contact Tags"
+          description="Categories for contacts"
+          settingKey="contact_tags"
+          placeholder="e.g. VIP"
+        />
+      </div>
 
       <div className="flex justify-end">
         <Button onClick={handleSaveSettings}>Save Settings</Button>

@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Contact } from "./ContactTable";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 interface ContactDialogProps {
     open: boolean;
@@ -31,6 +32,7 @@ interface ContactDialogProps {
     contact?: Contact | null;
     onSuccess: () => void;
 }
+import { useSettings } from "@/hooks/useSettings";
 
 const contactSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -43,6 +45,7 @@ const contactSchema = z.object({
     linkedin: z.string().optional().nullable(),
     facebook: z.string().optional().nullable(),
     instagram: z.string().optional().nullable(),
+    address: z.string().optional().nullable(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -63,8 +66,11 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
             linkedin: "",
             facebook: "",
             instagram: "",
+            address: "",
         },
     });
+
+    const { value: contactTags } = useSettings('contact_tags', ["VIP", "Vendor", "Client"]);
 
     useEffect(() => {
         if (open) {
@@ -80,6 +86,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                     linkedin: contact.linkedin || "",
                     facebook: contact.facebook || "",
                     instagram: contact.instagram || "",
+                    address: (contact as any).address || "",
                 });
             } else {
                 form.reset({
@@ -93,6 +100,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                     linkedin: "",
                     facebook: "",
                     instagram: "",
+                    address: "",
                 });
             }
         }
@@ -116,6 +124,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                 linkedin: values.linkedin || null,
                 facebook: values.facebook || null,
                 instagram: values.instagram || null,
+                address: values.address || null,
             };
 
             if (contact) {
@@ -200,7 +209,40 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                                     <FormItem>
                                         <FormLabel>Tags</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. VIP, Client (comma separated)" {...field} value={field.value || ""} />
+                                            <div className="space-y-2">
+                                                <Input
+                                                    placeholder="Select below or type..."
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                />
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {contactTags?.map((tag: string) => {
+                                                        const currentTags = field.value ? field.value.split(',').map(t => t.trim()) : [];
+                                                        const isSelected = currentTags.includes(tag);
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={tag}
+                                                                onClick={() => {
+                                                                    let newTags;
+                                                                    if (isSelected) {
+                                                                        newTags = currentTags.filter(t => t !== tag);
+                                                                    } else {
+                                                                        newTags = [...currentTags, tag];
+                                                                    }
+                                                                    field.onChange(newTags.join(', '));
+                                                                }}
+                                                                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${isSelected
+                                                                    ? 'bg-primary text-primary-foreground border-primary'
+                                                                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                                                    }`}
+                                                            >
+                                                                {tag}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -228,7 +270,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                                     <FormItem>
                                         <FormLabel>Phone</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="+1 234 567 890" {...field} value={field.value || ""} />
+                                            <PhoneInput placeholder="+91 98765 43210" {...field} value={field.value || ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -236,7 +278,19 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem className="col-span-2">
+                                        <FormLabel>Address</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Full Address" value={field.value || ""} />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="website"

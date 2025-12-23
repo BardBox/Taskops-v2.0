@@ -38,6 +38,9 @@ import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { useSettings } from "@/hooks/useSettings";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Combobox } from "@/components/ui/combobox";
 
 interface LeadDialogProps {
     open: boolean;
@@ -47,8 +50,9 @@ interface LeadDialogProps {
 }
 
 const formSchema = z.object({
-    title: z.string().min(1, "Lead title is required"),
-    contact_id: z.string().optional(),
+    title: z.string().min(2, "Title is required"),
+    project_type: z.string().optional(),
+    contact_id: z.string().min(1, "Contact is required"),
     new_contact_name: z.string().optional(),
     new_contact_email: z.string().email("Invalid email").optional().or(z.literal("")),
     new_contact_phone: z.string().optional(),
@@ -70,6 +74,7 @@ const formSchema = z.object({
     project_files: z.array(z.string()).max(3, "Max 3 files allowed").optional(),
     new_contact_designation: z.string().optional(),
     new_contact_company: z.string().optional(),
+    new_contact_address: z.string().optional(),
 }).refine((data) => {
     if (data.contact_id === "new") {
         return !!data.new_contact_name && (!!data.new_contact_email || !!data.new_contact_phone);
@@ -88,11 +93,18 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
     const [teamMembers, setTeamMembers] = useState<{ id: string, full_name: string }[]>([]);
     const [isNewContact, setIsNewContact] = useState(false);
     const [currentUser, setCurrentUser] = useState<string | null>(null);
+    const [showAddressField, setShowAddressField] = useState(false);
+
+    // in LeadDialog
+    const { value: leadSources } = useSettings('lead_sources', ["Direct", "Website", "LinkedIn", "Reference"]);
+    const { value: currencies } = useSettings('currencies', ["INR", "USD", "EUR"]);
+    const { value: projectTypes } = useSettings('project_types', ["Branding", "SEO", "Web Development"]);
 
     const form = useForm<LeadFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             title: "",
+            project_type: "",
             contact_id: "null",
             new_contact_name: "",
             new_contact_email: "",
@@ -115,6 +127,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
             project_files: [],
             new_contact_designation: "",
             new_contact_company: "",
+            new_contact_address: "",
         },
     });
 
@@ -127,6 +140,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                 const leadAny = lead as any; // Temporary cast
                 form.reset({
                     title: lead.title,
+                    project_type: (lead as any).project_type || "",
                     contact_id: lead.contact_id || "null",
                     owner_id: lead.owner_id || "",
                     lead_manager_id: leadAny.lead_manager_id || null,
@@ -168,7 +182,6 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     website: null,
                     linkedin: null,
                     facebook: null,
-                    facebook: null,
                     instagram: null,
                     new_contact_company: "",
                 });
@@ -176,6 +189,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                     form.setValue("owner_id", currentUser);
                 }
                 setIsNewContact(false);
+                setShowAddressField(false);
             }
         }
     }, [open, lead, currentUser]);
@@ -263,6 +277,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                         linkedin: values.linkedin || null,
                         facebook: values.facebook || null,
                         instagram: values.instagram || null,
+                        address: values.new_contact_address || null,
                         created_by: currentUser
                     })
                     .select()
@@ -274,7 +289,8 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
 
             // 2. Prepare Lead Data
             const leadData: any = {
-                title: values.title,
+                title: "New Opportunity",
+                project_type: "",
                 contact_id: finalContactId,
                 owner_id: values.owner_id,
                 lead_manager_id: values.lead_manager_id || null,
@@ -458,6 +474,26 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                         {/* Contact Information */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Contact Information</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="project_type"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Project Type</FormLabel>
+                                            <FormControl>
+                                                <Combobox
+                                                    options={projectTypes || []}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select Project Type"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <FormField
                                 control={form.control}
                                 name="contact_id"
@@ -495,7 +531,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
 
                             {isNewContact && (
                                 <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <FormField
                                             control={form.control}
                                             name="new_contact_name"
@@ -504,32 +540,6 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                                     <FormLabel>Name *</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} placeholder="John Doe" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="new_contact_email"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Email</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} placeholder="john@example.com" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="new_contact_phone"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Phone</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} placeholder="+123..." />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -552,16 +562,87 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                             control={form.control}
                                             name="new_contact_designation"
                                             render={({ field }) => (
-                                                <FormItem className="col-span-3">
-                                                    <FormLabel>Designation / Title</FormLabel>
+                                                <FormItem>
+                                                    <FormLabel>Designation</FormLabel>
                                                     <FormControl>
-                                                        <Input {...field} placeholder="e.g. CTO, Marketing Director" />
+                                                        <Input {...field} placeholder="e.g. CEO" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                        <FormField
+                                            control={form.control}
+                                            name="new_contact_phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Phone</FormLabel>
+                                                    <FormControl>
+                                                        <PhoneInput {...field} placeholder="+91..." />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="new_contact_email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Email</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="john@example.com" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    {/* Address Section */}
+                                    <FormField
+                                        control={form.control}
+                                        name="new_contact_address"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                {!showAddressField ? (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        onClick={() => setShowAddressField(true)}
+                                                    >
+                                                        + Add Address
+                                                    </Button>
+                                                ) : (
+                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                        <FormLabel className="text-xs">Address</FormLabel>
+                                                        <div className="flex gap-2">
+                                                            <FormControl>
+                                                                <Input {...field} placeholder="Street address, City, Country" className="h-8" />
+                                                            </FormControl>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-slate-400 hover:text-red-500"
+                                                                onClick={() => {
+                                                                    setShowAddressField(false);
+                                                                    field.onChange("");
+                                                                }}
+                                                            >
+                                                                <X size={14} />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             )}
 
@@ -823,10 +904,9 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
-                                                                <SelectItem value="INR">INR</SelectItem>
-                                                                <SelectItem value="USD">USD</SelectItem>
-                                                                <SelectItem value="EUR">EUR</SelectItem>
-                                                                <SelectItem value="GBP">GBP</SelectItem>
+                                                                {currencies?.map((curr: string) => (
+                                                                    <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                                                                ))}
                                                             </SelectContent>
                                                         </Select>
                                                     )}
@@ -858,11 +938,9 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="Direct">Direct</SelectItem>
-                                                    <SelectItem value="Website">Website</SelectItem>
-                                                    <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                                                    <SelectItem value="Reference">Reference</SelectItem>
-                                                    <SelectItem value="Cold Call">Cold Call</SelectItem>
+                                                    {leadSources?.map((src: string) => (
+                                                        <SelectItem key={src} value={src}>{src}</SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                             {field.value === 'Reference' && (

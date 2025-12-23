@@ -224,20 +224,28 @@ export const GrowthDashboard = () => {
         if (!contactToDelete) return;
 
         try {
-            const { error } = await supabase
+            const { error, count } = await supabase
                 .from('contacts')
-                .delete()
+                .delete({ count: 'exact' })
                 .eq('id', contactToDelete);
 
             if (error) throw error;
+            if (count === 0) {
+                throw new Error("No contact was deleted. Check permissions.");
+            }
 
             toast.success("Contact deleted successfully");
             fetchContacts();
             // Also refresh leads as some might have missing contacts now (or CASCADE handled it)
             fetchLeads();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting contact:', error);
-            toast.error("Failed to delete contact");
+            // Check for Foreign Key violation (Postgres code 23503)
+            if (error.code === '23503') {
+                toast.error("Cannot delete contact because it is linked to active leads. Please archive or unlink it first.");
+            } else {
+                toast.error("Failed to delete contact: " + (error.message || "Unknown error"));
+            }
         } finally {
             setDeleteContactDialogOpen(false);
             setContactToDelete(null);
@@ -305,6 +313,7 @@ export const GrowthDashboard = () => {
                     events={activities}
                     onClose={() => setSelectedLeadForPanel(null)}
                     onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
+                    onEdit={handleEditLead}
                     userMap={userMap}
                 />
             )}
