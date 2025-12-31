@@ -83,11 +83,17 @@ const TimeTracking = () => {
   const fetchTimeData = async () => {
     try {
       setLoading(true);
-      
-      let query = supabase
-        .from("task_time_tracking")
+
+      // Use task_time_sessions for accurate daily breakdown
+      let query = (supabase as any)
+        .from("task_time_sessions")
         .select(`
-          *,
+          id,
+          task_id,
+          user_id,
+          started_at,
+          ended_at,
+          duration_seconds,
           profiles:user_id(full_name, avatar_url),
           tasks:task_id(
             task_name,
@@ -108,37 +114,55 @@ const TimeTracking = () => {
       const { data, error } = await query;
       if (error) throw error;
 
-      const records = (data || []).map((record: any) => ({
-        ...record,
-        task: record.tasks,
+      // Group sessions by task to match expected TimeTrackingData interface roughly
+      const sessions = (data || []).map((session: any) => ({
+        ...session,
+        task: session.tasks,
+        total_seconds: session.duration_seconds || 0,
+        tracking_status: 'completed', // Sessions are always historical/completed segments
       }));
 
-      setTimeData(records);
-      
-      // Calculate stats
-      const total = records.reduce((sum: number, r: any) => sum + (r.total_seconds || 0), 0);
+      setTimeData(sessions);
+
+      // Calculate stats based on sessions
+      const total = sessions.reduce((sum: number, r: any) => sum + (r.duration_seconds || 0), 0);
       setTotalTime(total);
-      setActiveTrackers(records.filter((r: any) => r.tracking_status === 'active').length);
+
+      // Active trackers count still needs to come from main table
+      const { count } = await supabase
+        .from('task_time_tracking')
+        .select('*', { count: 'exact', head: true })
+        .eq('tracking_status', 'active');
+
+      setActiveTrackers(count || 0);
 
       // User stats
-      const userMap = new Map<string, UserTimeStats>();
-      records.forEach((r: any) => {
+      const userMap = new Map<string, any>();
+      sessions.forEach((r: any) => {
         const existing = userMap.get(r.user_id) || {
           userId: r.user_id,
           userName: r.profiles?.full_name || 'Unknown',
           avatarUrl: r.profiles?.avatar_url,
           totalSeconds: 0,
           taskCount: 0,
+          tasksSeen: new Set<string>(),
         };
-        existing.totalSeconds += r.total_seconds || 0;
-        existing.taskCount += 1;
+        existing.totalSeconds += r.duration_seconds || 0;
+        existing.tasksSeen.add(r.task_id);
+        existing.taskCount = existing.tasksSeen.size;
         userMap.set(r.user_id, existing);
       });
-      setUserStats(Array.from(userMap.values()).sort((a, b) => b.totalSeconds - a.totalSeconds));
+      setUserStats(Array.from(userMap.values()).map((u: any) => ({
+        userId: u.userId,
+        userName: u.userName,
+        avatarUrl: u.avatarUrl,
+        totalSeconds: u.totalSeconds,
+        taskCount: u.taskCount
+      })).sort((a: any, b: any) => b.totalSeconds - a.totalSeconds));
 
       // Client stats
-      const clientMap = new Map<string, ClientTimeStats>();
-      records.forEach((r: any) => {
+      const clientMap = new Map<string, any>();
+      sessions.forEach((r: any) => {
         const clientId = r.task?.client_id || 'no-client';
         const clientName = r.task?.clients?.name || 'No Client';
         const existing = clientMap.get(clientId) || {
@@ -146,12 +170,19 @@ const TimeTracking = () => {
           clientName,
           totalSeconds: 0,
           taskCount: 0,
+          tasksSeen: new Set<string>(),
         };
-        existing.totalSeconds += r.total_seconds || 0;
-        existing.taskCount += 1;
+        existing.totalSeconds += r.duration_seconds || 0;
+        existing.tasksSeen.add(r.task_id);
+        existing.taskCount = existing.tasksSeen.size;
         clientMap.set(clientId, existing);
       });
-      setClientStats(Array.from(clientMap.values()).sort((a, b) => b.totalSeconds - a.totalSeconds));
+      setClientStats(Array.from(clientMap.values()).map((c: any) => ({
+        clientId: c.clientId,
+        clientName: c.clientName,
+        totalSeconds: c.totalSeconds,
+        taskCount: c.taskCount
+      })).sort((a: any, b: any) => b.totalSeconds - a.totalSeconds));
 
     } catch (error) {
       console.error('Error fetching time tracking data:', error);
@@ -351,7 +382,7 @@ const TimeTracking = () => {
                       {formatTimeTrackingFull(user.totalSeconds, false, null)}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
-                      {formatTimeTrackingFull(Math.round(user.totalSeconds / user.taskCount), false, null)}
+                      {formatTimeTrackingFull(Math.round(user.totalSeconds / (user.taskCount || 1)), false, null)}
                     </TableCell>
                   </TableRow>
                 ))}

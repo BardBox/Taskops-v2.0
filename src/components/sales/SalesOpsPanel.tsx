@@ -26,91 +26,14 @@ interface SalesOpsPanelProps {
     onClose: () => void;
     onRefresh: () => void;
     onEdit: (lead: Lead) => void;
+    onViewContact: (contactId: string) => void;
     userMap: Record<string, string>;
 }
 
-const EventIcon = ({ type }: { type: Activity['type'] }) => {
-    const iconMap: Record<string, React.ReactNode> = {
-        Call: <Phone size={16} className="text-blue-500" />,
-        WhatsApp: <MessageSquare size={16} className="text-green-500" />,
-        Email: <Mail size={16} className="text-purple-500" />,
-        Meeting: <Calendar size={16} className="text-orange-500" />,
-        Note: <FileText size={16} className="text-gray-500" />,
-        Proposal: <FileText size={16} className="text-indigo-500" />,
-        StageChange: <ArrowRight size={16} className="text-pink-500" />,
-        System: <Settings size={16} className="text-slate-400" />,
-    };
-    return iconMap[type] || <CheckCircle size={16} />;
-};
+// ... (omitted code)
 
-const TimelineItem = ({ event }: { event: Activity }) => {
-    const isOverdue = event.status === 'Overdue';
-    const timestamp = format(new Date(event.created_at), 'MMM d, h:mm a');
-
-    return (
-        <div className="relative pl-8 pb-8 last:pb-0">
-            {/* Vertical Line Connector */}
-            <div className="absolute left-[11px] top-2 h-full w-[2px] bg-slate-100 last:hidden" />
-
-            {/* Icon Node */}
-            <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-2 bg-white flex items-center justify-center z-10 
-        ${isOverdue ? 'border-red-400 shadow-sm shadow-red-100' : 'border-slate-100'}`}>
-                <EventIcon type={event.type} />
-            </div>
-
-            <div className={`p-4 rounded-2xl border transition-all duration-200 hover:shadow-md 
-        ${isOverdue ? 'bg-red-50 border-red-100' : 'bg-white border-slate-100'}`}>
-                <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{timestamp}</span>
-                    {event.outcome_tag && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                            {event.outcome_tag}
-                        </span>
-                    )}
-                </div>
-                <h4 className="text-sm font-bold text-slate-800">{event.summary}</h4>
-                {event.note && <p className="text-sm text-slate-500 mt-1 leading-relaxed">{event.note}</p>}
-
-                {isOverdue && (
-                    <div className="mt-3 flex items-center text-xs font-bold text-red-600">
-                        <AlertCircle size={14} className="mr-1" /> Overdue by {event.overdueDays} days
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, userMap }: SalesOpsPanelProps) => {
-    const [activityDialogOpen, setActivityDialogOpen] = useState(false);
-
-    const getHeatmapLabel = (value: number) => {
-        if (value <= 2) return "Freezing Cold 🥶";
-        if (value <= 4) return "Cold ❄️";
-        if (value <= 6) return "Warm 🌤️";
-        if (value <= 8) return "Hot 🔥";
-        return "Red Hot 💥";
-    };
-
-    const heatmapLabel = lead.probability ? getHeatmapLabel(lead.probability / 10) : 'N/A';
-    const managerName = lead.lead_manager_id ? userMap[lead.lead_manager_id] : 'Unassigned';
-
-    const getCurrencySymbol = (currency?: string | null) => {
-        switch (currency) {
-            case 'INR': return '₹';
-            case 'EUR': return '€';
-            case 'GBP': return '£';
-            default: return '$';
-        }
-    };
-
-    const isOverdue = (dateString: string | null, status: string) => {
-        if (!dateString || status === 'Won' || status === 'Lost') return false;
-        // Check if date is before today (start of day)
-        return new Date(dateString) < new Date(new Date().setHours(0, 0, 0, 0));
-    };
-
-    const overdue = isOverdue(lead.next_follow_up, lead.status);
+export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onViewContact, userMap }: SalesOpsPanelProps) => {
+    // ... (omitted code)
 
     return (
         <div className="fixed inset-y-0 right-0 w-[450px] bg-slate-50 shadow-2xl border-l border-slate-200 z-50 flex flex-col animate-in slide-in-from-right duration-300">
@@ -129,7 +52,18 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, userMa
                             )}
                         </div>
                         <h2 className="text-xl font-bold text-slate-900 mt-1">{lead.title}</h2>
-                        <p className="text-sm text-slate-500 font-medium">{lead.contact?.company_name || 'No Company'}</p>
+
+                        <div className="flex items-center gap-2 mt-1">
+                            <p className="text-sm text-slate-500 font-medium">{lead.contact?.company_name || 'No Company'}</p>
+                            {lead.contact_id && (
+                                <button
+                                    onClick={() => onViewContact(lead.contact_id!)}
+                                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-semibold bg-blue-50 px-2 py-0.5 rounded"
+                                >
+                                    View Contact <ArrowRight size={10} />
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <div className="flex gap-2">
                         <button

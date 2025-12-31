@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     X, Phone, Mail, Globe, Facebook, Linkedin, Instagram,
-    Share2, Pencil, Briefcase, Building2, Tag, Copy
+    Share2, Pencil, Briefcase, Building2, Tag, Copy, FolderOpen
 } from 'lucide-react';
 import { Contact } from './ContactTable';
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { Lead } from './LeadTable';
 
 interface ContactDetailPanelProps {
     contact: Contact;
@@ -15,6 +17,33 @@ interface ContactDetailPanelProps {
 }
 
 export const ContactDetailPanel = ({ contact, onClose, onEdit }: ContactDetailPanelProps) => {
+    const [pastLeads, setPastLeads] = useState<Lead[]>([]);
+    const [loadingLeads, setLoadingLeads] = useState(true);
+
+    useEffect(() => {
+        const fetchPastLeads = async () => {
+            setLoadingLeads(true);
+            try {
+                const { data, error } = await supabase
+                    .from('leads')
+                    .select('*')
+                    .eq('contact_id', contact.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                setPastLeads(data as unknown as Lead[] || []);
+            } catch (error) {
+                console.error("Error fetching past leads:", error);
+                // Don't toast here to avoid clutter
+            } finally {
+                setLoadingLeads(false);
+            }
+        };
+
+        if (contact.id) {
+            fetchPastLeads();
+        }
+    }, [contact.id]);
 
     const handleCopy = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -34,6 +63,19 @@ linkedin: ${contact.linkedin || '-'}
 
         navigator.clipboard.writeText(shareText);
         toast.success("Contact details copied to clipboard!");
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'New': return 'bg-blue-100 text-blue-800';
+            case 'Contacted': return 'bg-indigo-100 text-indigo-800';
+            case 'Qualified': return 'bg-purple-100 text-purple-800';
+            case 'Proposal': return 'bg-yellow-100 text-yellow-800';
+            case 'Negotiation': return 'bg-orange-100 text-orange-800';
+            case 'Won': return 'bg-green-100 text-green-800';
+            case 'Lost': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
     };
 
     return (
@@ -133,6 +175,39 @@ linkedin: ${contact.linkedin || '-'}
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Past Leads / History */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-2 mb-4">
+                        <FolderOpen size={16} className="text-slate-400" />
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">History ({pastLeads.length})</h3>
+                    </div>
+
+                    <div className="space-y-3">
+                        {loadingLeads ? (
+                            <div className="text-center py-4 text-sm text-slate-400">Loading history...</div>
+                        ) : pastLeads.length === 0 ? (
+                            <div className="text-center py-4 text-sm text-slate-400 italic">No past leads found.</div>
+                        ) : (
+                            pastLeads.map((lead) => (
+                                <div key={lead.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-blue-200 transition-colors">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h4 className="text-sm font-semibold text-slate-800 line-clamp-1">{lead.title}</h4>
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${getStatusColor(lead.status)}`}>
+                                            {lead.status}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-slate-500">
+                                        <span>{format(new Date(lead.created_at), 'MMM d, yyyy')}</span>
+                                        <span className="font-semibold text-slate-700">
+                                            {lead.expected_value ? lead.expected_value.toLocaleString() : '-'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 

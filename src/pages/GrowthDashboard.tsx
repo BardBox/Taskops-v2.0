@@ -252,134 +252,158 @@ export const GrowthDashboard = () => {
         }
     };
 
-    if (loadingLeads && loadingContacts) {
-        return (
-            <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        );
+    setContactToDelete(null);
+}
+    };
+
+const handleViewContact = (contactId: string) => {
+    // 1. Find the contact
+    const contact = contacts.find(c => c.id === contactId);
+    if (contact) {
+        // 2. Clear lead selection
+        setSelectedLeadForPanel(null);
+
+        // 3. Switch tab
+        setActiveTab("contacts");
+
+        // 4. Select contact for panel (slight delay to allow tab switch/mount if needed, though state is lifting)
+        setTimeout(() => {
+            setSelectedContactForPanel(contact);
+        }, 100);
+    } else {
+        toast.error("Contact details not found locally.");
+        // Potentially fetch individual if not found
     }
+};
 
+if (loadingLeads && loadingContacts) {
     return (
-        <div className="space-y-6 relative">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
-                    <p className="text-muted-foreground">Manage your pipeline, leads, and contacts.</p>
-                </div>
-                {activeTab === "pipeline" ? (
-                    <Button onClick={handleAddLead}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Lead
-                    </Button>
-                ) : (
-                    <Button onClick={handleAddContact}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Contact
-                    </Button>
-                )}
-            </div>
-
-            <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-                    <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pipeline" className="space-y-4">
-                    <LeadTable
-                        leads={leads}
-                        onEdit={handleEditLead}
-                        onDelete={confirmDeleteLead}
-                        onAddToCalendar={() => toast.info("Calendar integration coming soon")}
-                        onLeadClick={handleLeadClick}
-                        userMap={userMap}
-                    />
-                </TabsContent>
-                <TabsContent value="contacts" className="space-y-4">
-                    <ContactTable
-                        contacts={contacts}
-                        onEdit={handleEditContact}
-                        onDelete={confirmDeleteContact}
-                        onContactClick={handleContactClick}
-                    />
-                </TabsContent>
-            </Tabs>
-
-            {selectedLeadForPanel && (
-                <SalesOpsPanel
-                    lead={selectedLeadForPanel}
-                    events={activities}
-                    onClose={() => setSelectedLeadForPanel(null)}
-                    onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
-                    onEdit={handleEditLead}
-                    userMap={userMap}
-                />
-            )}
-
-            {selectedContactForPanel && (
-                <ContactDetailPanel
-                    contact={selectedContactForPanel}
-                    onClose={() => setSelectedContactForPanel(null)}
-                    onEdit={(contact) => {
-                        handleEditContact(contact);
-                        // Optional: close panel or keep it open to see changes after save
-                    }}
-                />
-            )}
-
-            <LeadDialog
-                open={leadDialogOpen}
-                onOpenChange={setLeadDialogOpen}
-                lead={selectedLead}
-                onSuccess={fetchLeads}
-            />
-
-            <ContactDialog
-                open={contactDialogOpen}
-                onOpenChange={setContactDialogOpen}
-                contact={selectedContact}
-                onSuccess={() => {
-                    fetchContacts();
-                    fetchLeads(); // Refresh leads in case contact details changed
-                }}
-            />
-
-            <AlertDialog open={deleteLeadDialogOpen} onOpenChange={setDeleteLeadDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the lead.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete Lead
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog open={deleteContactDialogOpen} onOpenChange={setDeleteContactDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the contact.
-                            Any leads associated with this contact might also be affected.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete Contact
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+        <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     );
+}
+
+return (
+    <div className="space-y-6 relative">
+        <div className="flex justify-between items-center">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
+                <p className="text-muted-foreground">Manage your pipeline, leads, and contacts.</p>
+            </div>
+            {activeTab === "pipeline" ? (
+                <Button onClick={handleAddLead}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Lead
+                </Button>
+            ) : (
+                <Button onClick={handleAddContact}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Contact
+                </Button>
+            )}
+        </div>
+
+        <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+                <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+                <TabsTrigger value="contacts">Contacts</TabsTrigger>
+            </TabsList>
+            <TabsContent value="pipeline" className="space-y-4">
+                <LeadTable
+                    leads={leads}
+                    onEdit={handleEditLead}
+                    onDelete={confirmDeleteLead}
+                    onAddToCalendar={() => toast.info("Calendar integration coming soon")}
+                    onLeadClick={handleLeadClick}
+                    userMap={userMap}
+                />
+            </TabsContent>
+            <TabsContent value="contacts" className="space-y-4">
+                <ContactTable
+                    contacts={contacts}
+                    onEdit={handleEditContact}
+                    onDelete={confirmDeleteContact}
+                    onContactClick={handleContactClick}
+                />
+            </TabsContent>
+        </Tabs>
+
+        {selectedLeadForPanel && (
+            <SalesOpsPanel
+                lead={selectedLeadForPanel}
+                events={activities}
+                onClose={() => setSelectedLeadForPanel(null)}
+                onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
+                onEdit={handleEditLead}
+                userMap={userMap}
+            />
+        )}
+
+        {selectedContactForPanel && (
+            <ContactDetailPanel
+                contact={selectedContactForPanel}
+                onClose={() => setSelectedContactForPanel(null)}
+                onEdit={(contact) => {
+                    handleEditContact(contact);
+                    // Optional: close panel or keep it open to see changes after save
+                }}
+            />
+        )}
+
+        <LeadDialog
+            open={leadDialogOpen}
+            onOpenChange={setLeadDialogOpen}
+            lead={selectedLead}
+            onSuccess={fetchLeads}
+        />
+
+        <ContactDialog
+            open={contactDialogOpen}
+            onOpenChange={setContactDialogOpen}
+            contact={selectedContact}
+            onSuccess={() => {
+                fetchContacts();
+                fetchLeads(); // Refresh leads in case contact details changed
+            }}
+        />
+
+        <AlertDialog open={deleteLeadDialogOpen} onOpenChange={setDeleteLeadDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the lead.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete Lead
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={deleteContactDialogOpen} onOpenChange={setDeleteContactDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the contact.
+                        Any leads associated with this contact might also be affected.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete Contact
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </div>
+);
 };

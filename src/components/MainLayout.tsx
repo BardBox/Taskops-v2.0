@@ -2,6 +2,7 @@ import { useEffect, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
+import { TimeBar } from "@/components/layout/TimeBar";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -81,6 +82,7 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
         avatarUrl={avatarUrl}
         showRoleBadge={showRoleBadge}
       />
+      <TimeBar />
       <main className="flex-1">
         {children}
       </main>

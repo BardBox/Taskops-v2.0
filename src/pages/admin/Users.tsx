@@ -31,7 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Edit, ArrowUpDown, ArrowUp, ArrowDown, KeyRound } from "lucide-react";
 import { toast } from "sonner";
-import { toast } from "sonner";
+import { AvatarSelector } from "@/components/AvatarSelector";
 
 interface User {
   id: string;
@@ -152,7 +152,7 @@ export default function AdminUsers() {
           password: newUser.password,
           full_name: newUser.full_name,
           role: newUser.role,
-          avatar_url: avatarUrl,
+          avatar_url: newUser.avatar_url,
         }),
       });
 
@@ -702,13 +702,14 @@ export default function AdminUsers() {
                 </p>
               )}
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateUser}>Create User</Button>
-            </DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateUser}>Create User</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

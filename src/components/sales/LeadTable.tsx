@@ -99,6 +99,7 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                         <TableHead>Title</TableHead>
                         <TableHead>Created</TableHead>
                         <TableHead>Contact</TableHead>
+                        <TableHead>Company</TableHead>
                         <TableHead>Producer</TableHead>
                         <TableHead>Manager</TableHead>
                         <TableHead>Value</TableHead>
@@ -111,7 +112,7 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                 <TableBody>
                     {leads.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                                 No leads found. Add one to get started!
                             </TableCell>
                         </TableRow>
@@ -148,12 +149,12 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                                         {format(new Date(lead.created_at), 'MMM d, yyyy')}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm">{lead.contact?.name}</span>
-                                            {lead.contact?.company_name && (
-                                                <span className="text-xs text-muted-foreground">{lead.contact.company_name}</span>
-                                            )}
-                                        </div>
+                                        <span className="text-sm font-medium">{lead.contact?.name}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="text-sm text-muted-foreground">
+                                            {lead.contact?.company_name || '-'}
+                                        </span>
                                     </TableCell>
                                     <TableCell className="text-sm">
                                         <div className="flex items-center gap-1">

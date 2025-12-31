@@ -683,6 +683,70 @@ export function TaskDetailDialog({
 
       if (error) throw error;
       setTask({ ...task, status: newStatus });
+
+      // Handle timer logic based on status
+      const { data: activeTimers } = await supabase
+        .from('task_time_tracking')
+        .select('*')
+        .eq('task_id', task.id)
+        .eq('tracking_status', 'active');
+
+      if (activeTimers && activeTimers.length > 0) {
+        const now = new Date().toISOString();
+
+        // PAUSE conditions
+        if (['in_approval', 'hold'].includes(newStatus)) {
+          for (const timer of activeTimers) {
+            const duration = Math.floor((new Date(now).getTime() - new Date(timer.last_active_at || now).getTime()) / 1000);
+
+            // Create session
+            await (supabase as any).from('task_time_sessions').insert({
+              task_id: timer.task_id,
+              user_id: timer.user_id,
+              started_at: timer.last_active_at,
+              ended_at: now,
+              duration_seconds: duration,
+            });
+
+            await supabase
+              .from('task_time_tracking')
+              .update({
+                tracking_status: 'paused',
+                paused_at: now,
+                total_seconds: timer.total_seconds + duration,
+              })
+              .eq('id', timer.id);
+          }
+          toast.info("Task timer paused due to status change");
+        }
+
+        // STOP conditions
+        if (['approved', 'cancelled', 'rejected'].includes(newStatus)) {
+          for (const timer of activeTimers) {
+            const duration = Math.floor((new Date(now).getTime() - new Date(timer.last_active_at || now).getTime()) / 1000);
+
+            // Create session
+            await (supabase as any).from('task_time_sessions').insert({
+              task_id: timer.task_id,
+              user_id: timer.user_id,
+              started_at: timer.last_active_at,
+              ended_at: now,
+              duration_seconds: duration,
+            });
+
+            await supabase
+              .from('task_time_tracking')
+              .update({
+                tracking_status: 'stopped',
+                stopped_at: now,
+                total_seconds: timer.total_seconds + duration,
+              })
+              .eq('id', timer.id);
+          }
+          toast.info("Task timer stopped due to status change");
+        }
+      }
+
       toast.success("Status updated");
     } catch (error: any) {
       console.error(error);

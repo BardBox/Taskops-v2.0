@@ -38,6 +38,7 @@ import Team from "./pages/Team";
 import TheHive from "./pages/TheHive";
 import PostingStatus from "./pages/PostingStatus";
 import { supabase } from "@/integrations/supabase/client";
+import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
 
 const queryClient = new QueryClient();
 
@@ -113,9 +114,11 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
+          <TimeTrackingProvider>
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+          </TimeTrackingProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
