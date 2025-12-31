@@ -108,12 +108,14 @@ linkedin: ${contact.linkedin || '-'}
                             onClick={() => onEdit(contact)}
                             className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-500 hover:text-slate-900"
                             title="Edit Contact"
+                            aria-label="Edit Contact"
                         >
                             <Pencil size={20} />
                         </button>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
+                            aria-label="Close panel"
                         >
                             <X size={20} />
                         </button>
@@ -149,7 +151,7 @@ linkedin: ${contact.linkedin || '-'}
                                         {contact.email || <span className="text-slate-300 italic">Not provided</span>}
                                     </p>
                                     {contact.email && (
-                                        <button onClick={() => handleCopy(contact.email!, 'Email')} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 rounded text-slate-400 transition-all">
+                                        <button onClick={() => handleCopy(contact.email!, 'Email')} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 rounded text-slate-400 transition-all" aria-label="Copy email">
                                             <Copy size={12} />
                                         </button>
                                     )}
@@ -168,7 +170,7 @@ linkedin: ${contact.linkedin || '-'}
                                         {contact.phone || <span className="text-slate-300 italic">Not provided</span>}
                                     </p>
                                     {contact.phone && (
-                                        <button onClick={() => handleCopy(contact.phone!, 'Phone')} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 rounded text-slate-400 transition-all">
+                                        <button onClick={() => handleCopy(contact.phone!, 'Phone')} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 rounded text-slate-400 transition-all" aria-label="Copy phone">
                                             <Copy size={12} />
                                         </button>
                                     )}
