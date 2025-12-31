@@ -31,7 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Edit, ArrowUpDown, ArrowUp, ArrowDown, KeyRound } from "lucide-react";
 import { toast } from "sonner";
-import { AvatarSelector } from "@/components/AvatarSelector";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -152,6 +152,7 @@ export default function AdminUsers() {
           password: newUser.password,
           full_name: newUser.full_name,
           role: newUser.role,
+          avatar_url: avatarUrl,
         }),
       });
 
@@ -702,18 +703,12 @@ export default function AdminUsers() {
               )}
             </div>
 
-            <AvatarSelector
-              selectedAvatarUrl={newUser.avatar_url}
-              onAvatarSelect={(url) => setNewUser({ ...newUser, avatar_url: url })}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateUser}>Create User</Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateUser}>Create User</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
 
