@@ -414,8 +414,13 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   };
 
   const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setDetailDialogOpen(true);
+    if (selectedTaskId === taskId && detailDialogOpen) {
+      setDetailDialogOpen(false);
+      setSelectedTaskId(null);
+    } else {
+      setSelectedTaskId(taskId);
+      setDetailDialogOpen(true);
+    }
   };
 
   const handleSelfAssign = async (taskId: string, e: React.MouseEvent) => {
@@ -1196,6 +1201,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   return (
                     <TableRow
                       key={task.id}
+                      data-task-row="true"
                       className={`cursor-pointer transition-all group ${highlightClass}`}
                       onClick={() => handleTaskClick(task.id)}
                     >

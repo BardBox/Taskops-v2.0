@@ -995,11 +995,24 @@ export function TaskDetailDialog({
     .filter(Boolean);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent side="right" hideCloseButton className={cn(
-        "sm:max-w-[1000px] w-full p-0 flex flex-col overflow-hidden gap-0 transition-all duration-300",
-        isFullscreen ? "max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] animate-fade-in" : "max-w-4xl w-4xl max-h-[90vh] h-[90vh]"
-      )}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent
+        side="right"
+        hideCloseButton
+        overlayClassName="hidden"
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement;
+          // If clicking on a task row, prevent default close to allow the row click handler to run (switching/toggling tasks)
+          // If clicking elsewhere (empty space), let it close naturally
+          if (target.closest('[data-task-row="true"]')) {
+            e.preventDefault();
+          }
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "sm:max-w-[600px] w-full p-0 flex flex-col overflow-hidden gap-0",
+          isFullscreen ? "w-screen h-screen max-w-none m-0 rounded-none" : "h-full"
+        )}>
         <div className="p-6 pb-4 border-b flex-shrink-0 relative">
           <div className="absolute top-6 right-6 flex items-center gap-1 z-10">
             <Button
@@ -1813,7 +1826,7 @@ export function TaskDetailDialog({
 
       {/* Edit Task Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent side="right" className="sm:max-w-4xl w-full overflow-y-auto">
+        <DialogContent side="right" className="sm:max-w-[600px] w-full h-full overflow-y-auto">
           <EditTaskTab
             task={task}
             onTaskUpdated={() => {

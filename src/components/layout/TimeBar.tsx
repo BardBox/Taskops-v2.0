@@ -70,99 +70,103 @@ export function TimeBar() {
 
     return (
         <div className={cn(
-            "flex items-center justify-center border-b px-4 py-1.5 gap-4 shadow-sm text-sm transition-colors duration-300",
-            isOffline && "bg-muted/40",
-            isWorking && "bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-800/50",
-            isBreak && "bg-orange-50/50 dark:bg-orange-950/20 border-orange-200/50 dark:border-orange-800/50"
+            "flex items-center justify-center border-b border-border/40 backdrop-blur-sm bg-background/80 px-4 py-2 gap-6 shadow-sm shadow-black/5 transition-all duration-300",
+            isOffline && "bg-muted/20 border-border/20",
+            isWorking && "bg-green-500/5 border-green-500/10",
+            isBreak && "bg-orange-500/5 border-orange-500/10"
         )}>
 
             {/* Timers Display */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
                 {/* Main Work Timer */}
                 <div className={cn(
-                    "flex items-center gap-2 font-mono text-lg font-medium tracking-tight transition-colors",
-                    isWorking ? "text-green-700 dark:text-green-400" : "text-muted-foreground",
-                    isBreak && "opacity-60" // Dim work timer when on break
+                    "flex items-center gap-2 font-mono text-sm font-medium tracking-tight transition-colors",
+                    isWorking ? "text-green-600 dark:text-green-400" : "text-muted-foreground",
+                    isBreak && "opacity-50" // Dim work timer when on break
                 )}>
-                    <Clock className="h-4 w-4" />
-                    {elapsedTime}
+                    <Clock className="h-3.5 w-3.5 opacity-70" />
+                    <span className="text-base">{elapsedTime}</span>
                 </div>
+
+                {/* Vertical Divider */}
+                <div className="h-4 w-px bg-border/40" />
 
                 {/* Break Timer (Always visible) */}
                 <div className={cn(
-                    "flex items-center gap-2 font-mono text-lg font-medium tracking-tight transition-colors",
-                    isBreak ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground/70"
+                    "flex items-center gap-2 font-mono text-sm font-medium tracking-tight transition-colors",
+                    isBreak ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground/60"
                 )}>
-                    <Coffee className="h-4 w-4" />
-                    {breakTime}
+                    <Coffee className="h-3.5 w-3.5 opacity-70" />
+                    <span>{breakTime}</span>
                 </div>
             </div>
 
-            <div className="h-4 w-px bg-border/60 mx-2" />
-
             {/* Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
                 {isOffline ? (
                     <Button
                         size="sm"
-                        className="h-7 gap-1.5 bg-green-600 hover:bg-green-700 text-white shadow-none"
+                        className="h-8 rounded-full px-5 gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm font-medium transition-all hover:shadow-green-500/20"
                         onClick={clockIn}
                     >
-                        <Play className="h-3.5 w-3.5" />
-                        Clock In
+                        <Play className="h-3.5 w-3.5 fill-current" />
+                        Start Day
                     </Button>
                 ) : (
                     <>
                         {isWorking ? (
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 gap-1.5 bg-background border shadow-sm hover:bg-muted/50 text-foreground"
+                                className="h-8 rounded-full px-5 gap-2 border-orange-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 dark:border-orange-900/30 dark:hover:bg-orange-950/30 transition-all text-muted-foreground"
                                 onClick={pauseWork}
                             >
-                                <Coffee className="h-3.5 w-3.5 text-orange-500" />
-                                Pause Work
+                                <Coffee className="h-3.5 w-3.5" />
+                                Take Break
                             </Button>
                         ) : (
                             <Button
-                                variant="default"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 gap-1.5 bg-green-600 hover:bg-green-700 text-white shadow-none"
+                                className="h-8 rounded-full px-5 gap-2 border-green-200 hover:bg-green-50 hover:text-green-600 hover:border-green-300 dark:border-green-900/30 dark:hover:bg-green-950/30 transition-all font-medium text-foreground"
                                 onClick={resumeWork}
                             >
-                                <Play className="h-3.5 w-3.5" />
-                                Resume Work
+                                <Play className="h-3.5 w-3.5 fill-current" />
+                                Resume
                             </Button>
                         )}
 
                         <Button
-                            variant="destructive"
+                            variant="ghost"
                             size="sm"
-                            className="h-7 gap-1.5 shadow-none opacity-80 hover:opacity-100"
+                            className="h-8 rounded-full px-4 gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                             onClick={clockOut}
                         >
                             <Square className="h-3.5 w-3.5 fill-current" />
-                            Clock Out
+                            Finish
                         </Button>
                     </>
                 )}
             </div>
 
-            {/* Status Badge */}
+            {/* Minimal Status Indicators */}
             {isBreak && (
-                <span className="ml-2 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/40 px-2 py-0.5 rounded-full">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 text-xs font-medium animate-in fade-in zoom-in-95 duration-200">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                    </span>
                     On Break
-                </span>
+                </div>
             )}
             {isWorking && (
-                <span className="ml-2 text-xs font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/40 px-2 py-0.5 rounded-full">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100/50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs font-medium animate-in fade-in zoom-in-95 duration-200">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
                     Working
-                </span>
-            )}
-            {isOffline && (
-                <span className="ml-2 text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    Offline
-                </span>
+                </div>
             )}
         </div>
     );

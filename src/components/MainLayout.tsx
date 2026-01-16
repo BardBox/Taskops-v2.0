@@ -1,8 +1,10 @@
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState, useRef, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { TimeBar } from "@/components/layout/TimeBar";
+import { Sidebar } from "@/components/Sidebar";
+import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -49,7 +51,7 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
       .single();
 
     if (roleData) {
-      console.log("AppHeader: Fetched user role:", roleData.role);
+      // console.log("AppHeader: Fetched user role:", roleData.role);
       setUserRole(roleData.role);
     }
 
@@ -66,6 +68,45 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
     }
   };
 
+  // ... inside component
+  const [isCompact, setIsCompact] = useState(false);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const lastScrollTop = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (mainRef.current) {
+        const currentScrollTop = mainRef.current.scrollTop;
+
+        // Always expand at the very top
+        if (currentScrollTop < 20) {
+          setIsCompact(false);
+        }
+        // Scroll Down -> Compact
+        else if (currentScrollTop > lastScrollTop.current) {
+          setIsCompact(true);
+        }
+        // Scroll Up -> Expand
+        else if (currentScrollTop < lastScrollTop.current - 5) { // Small threshold to prevent jitter
+          setIsCompact(false);
+        }
+
+        lastScrollTop.current = currentScrollTop;
+      }
+    };
+
+    const mainElement = mainRef.current;
+    if (mainElement) {
+      mainElement.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (mainElement) {
+        mainElement.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -75,17 +116,35 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <AppHeader
-        userRole={userRole}
-        userName={userName}
-        avatarUrl={avatarUrl}
-        showRoleBadge={showRoleBadge}
-      />
-      <TimeBar />
-      <main className="flex-1">
-        {children}
-      </main>
+    <div className="h-screen w-full overflow-hidden flex bg-background">
+      {/* Sidebar Navigation */}
+      <Sidebar userRole={userRole} className="flex-shrink-0 sticky top-0 h-screen" />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
+        <AppHeader
+          userRole={userRole}
+          userName={userName}
+          avatarUrl={avatarUrl}
+          showRoleBadge={showRoleBadge}
+          isCompact={isCompact}
+        />
+
+        {/* TimeBar Container - Slides in/out based on compact mode */}
+        <div className={cn(
+          "transition-all duration-300 ease-in-out overflow-hidden",
+          isCompact ? "max-h-0 opacity-0 -translate-y-full" : "max-h-20 opacity-100 translate-y-0"
+        )}>
+          <TimeBar />
+        </div>
+
+        <main
+          ref={mainRef}
+          className="flex-1 overflow-y-auto"
+        >
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
