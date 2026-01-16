@@ -8,6 +8,7 @@ import { Lead } from './LeadTable';
 import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { ActivityLogDialog } from './ActivityLogDialog';
+import { ScheduleFollowUpDialog } from './ScheduleFollowUpDialog';
 
 export interface Activity {
     id: string;
@@ -27,16 +28,106 @@ interface SalesOpsPanelProps {
     onRefresh: () => void;
     onEdit: (lead: Lead) => void;
     onViewContact: (contactId: string) => void;
+    onMarkWon: (lead: Lead) => void;
     userMap: Record<string, string>;
 }
 
 // ... (omitted code)
 
-export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onViewContact, userMap }: SalesOpsPanelProps) => {
-    // ... (omitted code)
+const getCurrencySymbol = (currency: string | null) => {
+    switch (currency) {
+        case 'USD': return '$';
+        case 'EUR': return '€';
+        case 'GBP': return '£';
+        case 'INR': return '₹';
+        default: return '$';
+    }
+};
+
+const TimelineItem = ({ event }: { event: Activity }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const getIcon = (type: string) => {
+        switch (type) {
+            case 'Call': return Phone;
+            case 'Email': return Mail;
+            case 'Meeting': return Calendar;
+            case 'WhatsApp': return MessageSquare;
+            case 'Note': return FileText;
+            case 'Proposal': return FileText;
+            case 'System': return Settings;
+            case 'StageChange': return ArrowRight;
+            default: return CheckCircle;
+        }
+    };
+    const Icon = getIcon(event.type);
 
     return (
-        <div className="fixed inset-y-0 right-0 w-[450px] bg-slate-50 shadow-2xl border-l border-slate-200 z-50 flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="flex gap-3 mb-6 last:mb-0 relative group">
+            <div className="absolute left-[19px] top-10 bottom-[-24px] w-0.5 bg-slate-100 group-last:hidden" />
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white shadow-sm ${event.type === 'System' || event.type === 'StageChange' ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-500'
+                }`}>
+                <Icon size={16} />
+            </div>
+            <div className="flex-1">
+                <div
+                    className={`bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors ${event.note && event.note.length > 100 ? 'cursor-pointer' : ''
+                        }`}
+                    onClick={() => {
+                        if (event.note && event.note.length > 100) {
+                            setIsExpanded(!isExpanded);
+                        }
+                    }}
+                >
+                    <div className="flex justify-between items-start mb-1">
+                        <span className="text-xs font-bold text-slate-700">{event.type}</span>
+                        <span className="text-[10px] font-medium text-slate-400">{format(new Date(event.created_at), 'MMM d, h:mm a')}</span>
+                    </div>
+                    <h4 className="text-sm font-medium text-slate-900 mb-1">{event.summary}</h4>
+                    {event.note && (
+                        <p className={`text-xs text-slate-600 bg-slate-50 p-2 rounded-lg mt-2 leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''
+                            }`}>
+                            {event.note}
+                        </p>
+                    )}
+                    {event.outcome_tag && (
+                        <div className="mt-2">
+                            <Badge variant="secondary" className="text-[10px] h-5 bg-slate-100 text-slate-600 border-slate-200">
+                                {event.outcome_tag}
+                            </Badge>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onViewContact, onMarkWon, userMap }: SalesOpsPanelProps) => {
+    const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+    const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+
+    const managerName = userMap[lead.owner_id || ''] || 'Unassigned';
+
+    // Simple logic for overdue - if next follow up is in past and status is not closed
+    const overdue = lead.next_follow_up &&
+        new Date(lead.next_follow_up) < new Date() &&
+        lead.status !== 'Won' &&
+        lead.status !== 'Lost';
+
+    // Heuristic for heat map label based on probability or status
+    const getHeatmapLabel = () => {
+        const prob = lead.probability || 0;
+        if (lead.status === 'Won') return 'Closed Won';
+        if (lead.status === 'Lost') return 'Closed Lost';
+        if (prob >= 80) return 'Hot Lead 🔥';
+        if (prob >= 50) return 'Warm Lead 🌤️';
+        return 'Cold Lead ❄️';
+    };
+    const heatmapLabel = getHeatmapLabel();
+
+    return (
+        <div className="h-full flex flex-col bg-slate-50">
             {/* Header Summary Card */}
             <div className="p-6 bg-white border-b border-slate-100">
                 <div className="flex justify-between items-start mb-4">
@@ -118,18 +209,34 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onView
                             {getCurrencySymbol(lead.currency)}{lead.expected_value?.toLocaleString() || '0'}
                         </div>
                     </div>
-                    <div>
-                        <span className="text-xs text-slate-400 font-medium">Next Follow-up</span>
+                    <div
+                        className="cursor-pointer group hover:bg-slate-100 p-2 -m-2 rounded-lg transition-colors"
+                        onClick={() => setScheduleDialogOpen(true)}
+                    >
+                        <span className="text-xs text-slate-400 font-medium group-hover:text-blue-500 transition-colors">Next Follow-up</span>
                         <div className="text-sm font-bold text-slate-800 flex items-center gap-1 mt-1">
-                            <Calendar size={14} className="text-slate-400" />
+                            <Calendar size={14} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
                             {lead.next_follow_up ? format(new Date(lead.next_follow_up), 'MMM d, h:mm a') : 'Unscheduled'}
                         </div>
+                        {lead.next_follow_up_agenda && (
+                            <div className="text-xs text-slate-500 mt-1 line-clamp-1 italic">
+                                {lead.next_follow_up_agenda}
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                    <button className="flex items-center justify-center gap-2 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all">
-                        <CheckCircle size={16} /> Mark Won
+                    <button
+                        onClick={() => onMarkWon(lead)}
+                        disabled={lead.status === 'Won'}
+                        className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${lead.status === 'Won'
+                            ? 'bg-green-100 text-green-700 cursor-default'
+                            : 'bg-slate-900 text-white hover:bg-slate-800'
+                            }`}
+                    >
+                        <CheckCircle size={16} />
+                        {lead.status === 'Won' ? 'Won' : 'Mark Won'}
                     </button>
                     <button
                         onClick={() => setActivityDialogOpen(true)}

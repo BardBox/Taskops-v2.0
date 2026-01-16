@@ -59,7 +59,10 @@ export const ContactTable = ({ contacts, onEdit, onDelete, onContactClick }: Con
                         <TableRow
                             key={contact.id}
                             className={onContactClick ? "cursor-pointer hover:bg-slate-50" : ""}
-                            onClick={() => onContactClick?.(contact)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onContactClick?.(contact);
+                            }}
                         >
                             <TableCell className="font-medium">{contact.name}</TableCell>
                             <TableCell>{contact.company_name || '-'}</TableCell>

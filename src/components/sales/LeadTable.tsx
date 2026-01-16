@@ -28,6 +28,7 @@ export interface Lead {
     source: string | null;
     created_at: string;
     next_follow_up: string | null;
+    next_follow_up_agenda?: string;
     follow_up_level: 'L1' | 'L2' | 'L3' | 'L4' | 'L5' | null;
     expected_value: number | null;
     currency: string | null;
@@ -40,6 +41,7 @@ export interface Lead {
     linkedin?: string | null;
     facebook?: string | null;
     instagram?: string | null;
+    project_type?: string | null;
     project_links?: string[] | null;
     project_files?: string[] | null;
 
@@ -126,7 +128,10 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                                         "cursor-pointer hover:bg-slate-50 transition-colors",
                                         overdue && "bg-red-50 hover:bg-red-100"
                                     )}
-                                    onClick={() => onLeadClick(lead)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onLeadClick(lead);
+                                    }}
                                 >
                                     <TableCell className="font-mono text-xs text-muted-foreground">
                                         L-{String(lead.lead_code).padStart(4, '0')}

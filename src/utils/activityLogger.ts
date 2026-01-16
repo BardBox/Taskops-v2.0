@@ -7,7 +7,9 @@ export const logActivity = async (
     leadId: string,
     type: ActivityType,
     summary: string,
-    note?: string
+    note?: string,
+    nextFollowUp?: Date,
+    agenda?: string
 ) => {
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -15,7 +17,7 @@ export const logActivity = async (
 
         const finalSummary = note ? `${summary} - ${note}` : summary;
 
-        const { error } = await supabase
+        const { error: activityError } = await supabase
             .from('sales_activities')
             .insert({
                 lead_id: leadId,
@@ -24,7 +26,21 @@ export const logActivity = async (
                 created_by: user.id
             });
 
-        if (error) throw error;
+        if (activityError) throw activityError;
+
+        // If follow up is scheduled, update the lead
+        if (nextFollowUp) {
+            const { error: leadError } = await supabase
+                .from('leads')
+                .update({
+                    next_follow_up: nextFollowUp.toISOString(),
+                    next_follow_up_agenda: agenda
+                })
+                .eq('id', leadId);
+
+            if (leadError) throw leadError;
+        }
+
         return true;
     } catch (error) {
         console.error('Error logging activity:', error);

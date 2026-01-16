@@ -41,7 +41,8 @@ interface ActivityLogDialogProps {
 const activitySchema = z.object({
     type: z.enum(['Call', 'WhatsApp', 'Email', 'Meeting', 'Note', 'Proposal'] as const),
     summary: z.string().min(1, "Summary is required"),
-    note: z.string().optional(),
+    nextFollowUp: z.date().optional(),
+    agenda: z.string().optional(),
 });
 
 type ActivityFormValues = z.infer<typeof activitySchema>;
@@ -54,22 +55,20 @@ export function ActivityLogDialog({ open, onOpenChange, leadId, onSuccess }: Act
         defaultValues: {
             type: "Call",
             summary: "",
-            note: "",
+            agenda: "",
         },
     });
 
     const onSubmit = async (values: ActivityFormValues) => {
         setLoading(true);
         try {
-            // Append note to summary as per current schema limitation/workaround
-            // Or if we fix schema later, pass separately. 
-            // The utility handles the appending now.
-
             const success = await logActivity(
                 leadId,
                 values.type as ActivityType,
                 values.summary,
-                values.note
+                undefined, // note removed
+                values.nextFollowUp,
+                values.agenda
             );
 
             if (success) {
@@ -140,15 +139,34 @@ export function ActivityLogDialog({ open, onOpenChange, leadId, onSuccess }: Act
                         />
                         <FormField
                             control={form.control}
-                            name="note"
+                            name="nextFollowUp"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Next Follow Up</FormLabel>
+                                    <FormControl>
+                                        <input
+                                            type="datetime-local"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                                            value={field.value instanceof Date ? new Date(field.value.getTime() - field.value.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="agenda"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Additional Note (Optional)</FormLabel>
+                                    <FormLabel>Agenda for Follow Up</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            placeholder="Any other details..."
-                                            className="resize-none h-20"
+                                        <input
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="Short agenda..."
                                             {...field}
+                                            value={field.value || ""}
                                         />
                                     </FormControl>
                                     <FormMessage />

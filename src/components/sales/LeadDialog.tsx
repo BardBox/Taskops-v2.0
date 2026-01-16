@@ -278,7 +278,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                         facebook: values.facebook || null,
                         instagram: values.instagram || null,
                         address: values.new_contact_address || null,
-                        created_by: currentUser
+                        // created_by removed as it's not in schema
                     })
                     .select()
                     .single();
@@ -289,8 +289,8 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
 
             // 2. Prepare Lead Data
             const leadData: any = {
-                title: "New Opportunity",
-                project_type: "",
+                title: values.title || "New Opportunity",
+                project_type: values.project_type || null,
                 contact_id: finalContactId,
                 owner_id: values.owner_id,
                 lead_manager_id: values.lead_manager_id || null,

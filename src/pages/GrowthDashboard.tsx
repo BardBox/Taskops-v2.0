@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { SalesOpsPanel, Activity } from "@/components/sales/SalesOpsPanel";
 import { ContactDetailPanel } from "@/components/sales/ContactDetailPanel";
 import { SmartMetricCards } from "@/components/sales/SmartMetricCards";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
 
 export const GrowthDashboard = () => {
@@ -197,6 +198,7 @@ export const GrowthDashboard = () => {
     };
 
     const handleLeadClick = (lead: Lead) => {
+        setSelectedContactForPanel(null);
         setSelectedLeadForPanel(lead);
     };
 
@@ -212,6 +214,7 @@ export const GrowthDashboard = () => {
     };
 
     const handleContactClick = (contact: Contact) => {
+        setSelectedLeadForPanel(null);
         setSelectedContactForPanel(contact);
     };
 
@@ -280,8 +283,14 @@ export const GrowthDashboard = () => {
         );
     }
 
+    // Backdrop handler
+    const closePanels = () => {
+        setSelectedLeadForPanel(null);
+        setSelectedContactForPanel(null);
+    };
+
     return (
-        <div className="space-y-6 relative">
+        <div className="space-y-6 relative" onClick={closePanels}>
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
@@ -327,28 +336,63 @@ export const GrowthDashboard = () => {
                 </TabsContent>
             </Tabs>
 
-            {selectedLeadForPanel && (
-                <SalesOpsPanel
-                    lead={selectedLeadForPanel}
-                    events={activities}
-                    onClose={() => setSelectedLeadForPanel(null)}
-                    onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
-                    onEdit={handleEditLead}
-                    onViewContact={handleViewContact}
-                    userMap={userMap}
-                />
-            )}
+            <Sheet
+                open={!!selectedLeadForPanel || !!selectedContactForPanel}
+                onOpenChange={(open) => !open && closePanels()}
+                modal={false}
+            >
+                <SheetContent
+                    side="right"
+                    className="p-0 border-l border-slate-200 w-[450px] sm:max-w-[450px]"
+                    overlayClassName="hidden"
+                    onInteractOutside={(e) => e.preventDefault()} // Prevent auto-closing by Radix, we handle it manually via click
+                    onClick={(e) => e.stopPropagation()} // Prevent React event bubbling to the parent div which closes panels
+                >
+                    {selectedLeadForPanel ? (
+                        <SalesOpsPanel
+                            lead={selectedLeadForPanel}
+                            events={activities}
+                            onClose={() => setSelectedLeadForPanel(null)}
+                            onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
+                            onEdit={handleEditLead}
+                            onViewContact={handleViewContact}
+                            onMarkWon={async (lead) => {
+                                try {
+                                    const { error } = await supabase
+                                        .from('leads')
+                                        .update({ status: 'Won' })
+                                        .eq('id', lead.id);
 
-            {selectedContactForPanel && (
-                <ContactDetailPanel
-                    contact={selectedContactForPanel}
-                    onClose={() => setSelectedContactForPanel(null)}
-                    onEdit={(contact) => {
-                        handleEditContact(contact);
-                        // Optional: close panel or keep it open to see changes after save
-                    }}
-                />
-            )}
+                                    if (error) throw error;
+
+                                    toast.success("Lead marked as Won!");
+                                    fetchLeads(); // Refresh leads
+                                    // Refresh the specific panel lead if it's the one open (it is)
+                                    setSelectedLeadForPanel({ ...lead, status: 'Won' });
+                                } catch (error) {
+                                    console.error("Error marking lead as won:", error);
+                                    toast.error("Failed to update lead status");
+                                }
+                            }}
+                            userMap={userMap}
+                        />
+                    ) : selectedContactForPanel ? (
+                        <ContactDetailPanel
+                            contact={selectedContactForPanel}
+                            onClose={() => setSelectedContactForPanel(null)}
+                            onEdit={(contact) => {
+                                handleEditContact(contact);
+                            }}
+                            onLeadClick={(lead) => {
+                                // Switch to pipeline view and open the lead panel
+                                setActiveTab("pipeline");
+                                setSelectedContactForPanel(null);
+                                setSelectedLeadForPanel(lead);
+                            }}
+                        />
+                    ) : null}
+                </SheetContent>
+            </Sheet>
 
             <LeadDialog
                 open={leadDialogOpen}

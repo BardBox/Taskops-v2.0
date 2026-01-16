@@ -14,9 +14,10 @@ interface ContactDetailPanelProps {
     contact: Contact;
     onClose: () => void;
     onEdit: (contact: Contact) => void;
+    onLeadClick: (lead: Lead) => void;
 }
 
-export const ContactDetailPanel = ({ contact, onClose, onEdit }: ContactDetailPanelProps) => {
+export const ContactDetailPanel = ({ contact, onClose, onEdit, onLeadClick }: ContactDetailPanelProps) => {
     const [pastLeads, setPastLeads] = useState<Lead[]>([]);
     const [loadingLeads, setLoadingLeads] = useState(true);
 
@@ -79,7 +80,7 @@ linkedin: ${contact.linkedin || '-'}
     };
 
     return (
-        <div className="fixed inset-y-0 right-0 w-[450px] bg-slate-50 shadow-2xl border-l border-slate-200 z-50 flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="h-full flex flex-col bg-slate-50">
             {/* Header Section */}
             <div className="p-6 bg-white border-b border-slate-100">
                 <div className="flex justify-between items-start mb-4">
@@ -194,9 +195,13 @@ linkedin: ${contact.linkedin || '-'}
                             <div className="text-center py-4 text-sm text-slate-400 italic">No past leads found.</div>
                         ) : (
                             pastLeads.map((lead) => (
-                                <div key={lead.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-blue-200 transition-colors">
+                                <div
+                                    key={lead.id}
+                                    className="p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-blue-200 transition-colors cursor-pointer group"
+                                    onClick={() => onLeadClick(lead)}
+                                >
                                     <div className="flex justify-between items-start mb-1">
-                                        <h4 className="text-sm font-semibold text-slate-800 line-clamp-1">{lead.title}</h4>
+                                        <h4 className="text-sm font-semibold text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">{lead.title}</h4>
                                         <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${getStatusColor(lead.status)}`}>
                                             {lead.status}
                                         </span>
