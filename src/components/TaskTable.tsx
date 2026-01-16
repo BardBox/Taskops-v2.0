@@ -25,6 +25,7 @@ import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMultipleTasksTimeTracking, formatTimeTracking } from "@/hooks/useTaskTimeTracking";
 import { cn } from "@/lib/utils";
+import { TaskTimer } from "./TaskTimer";
 
 interface Task {
   id: string;
@@ -220,7 +221,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   // Get task IDs for time tracking
   const taskIds = tasks.map(t => t.id);
-  const { getTaskTotalTime, isTaskActive } = useMultipleTasksTimeTracking(taskIds);
+  const { getTaskTotalTime, isTaskActive, getTaskRecords } = useMultipleTasksTimeTracking(taskIds);
 
   const toggleCollaboratorsColumn = () => {
     setCollaboratorsExpanded(prev => !prev);
@@ -1453,25 +1454,26 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       {columns.time && (
                         <TableCell>
                           {(() => {
+                            const records = getTaskRecords(task.id);
                             const totalSeconds = getTaskTotalTime(task.id);
-                            const isActive = isTaskActive(task.id);
-                            if (totalSeconds === 0 && !isActive) return <span className="text-muted-foreground">-</span>;
+                            const activeStartTimes = records
+                              .filter((r: any) => r.is_running && r.started_at)
+                              .map((r: any) => r.started_at as string);
+
+                            const userRecord = records.find((r: any) => r.user_id === userId);
+                            const isCurrentUserRunning = userRecord?.is_running || false;
+
                             return (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <div className={`flex items-center justify-center h-7 w-14 rounded-full text-xs font-medium ${isActive
-                                      ? "bg-green-500/20 text-green-700 dark:text-green-400"
-                                      : "bg-muted text-muted-foreground"
-                                      }`}>
-                                      {formatTimeTracking(totalSeconds)}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{isActive ? "Timer active" : "Time spent on task"}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              <TaskTimer
+                                totalSecondsSnapshot={totalSeconds}
+                                runningStartTimes={activeStartTimes}
+                                isCurrentUserRunning={isCurrentUserRunning}
+                                onToggle={() => {
+                                  const newStatus = isCurrentUserRunning ? "On Hold" : "In Progress";
+                                  handleStatusChange(task.id, newStatus);
+                                }}
+                                disabled={!canEdit(task)}
+                              />
                             );
                           })()}
                         </TableCell>

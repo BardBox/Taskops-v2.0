@@ -61,9 +61,12 @@ interface LeadTableProps {
     onAddToCalendar: (lead: Lead) => void;
     onLeadClick: (lead: Lead) => void;
     userMap: Record<string, string>;
+    getFollowUpStatus?: (lead: Lead) => 'overdue' | 'today' | 'upcoming' | 'future' | null;
+    onSnooze?: (leadId: string) => void;
+    onMarkCompleted?: (leadId: string) => void;
 }
 
-export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClick, userMap }: LeadTableProps) => {
+export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClick, userMap, getFollowUpStatus, onSnooze, onMarkCompleted }: LeadTableProps) => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -90,6 +93,36 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
     const isOverdue = (dateString: string | null, status: string) => {
         if (!dateString || status === 'Won' || status === 'Lost') return false;
         return isBefore(new Date(dateString), startOfDay(new Date()));
+    };
+
+    const getFollowUpBadge = (lead: Lead) => {
+        if (!getFollowUpStatus) return null;
+        const status = getFollowUpStatus(lead);
+        if (!status) return null;
+
+        const badgeConfig = {
+            overdue: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: '🔴 Overdue' },
+            today: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', label: '🟠 Due Today' },
+            upcoming: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', label: '🟡 Upcoming' },
+            future: { bg: '', text: '', border: '', label: '' },
+        };
+
+        const config = badgeConfig[status];
+        if (status === 'future') return null;
+
+        return (
+            <Badge
+                variant="outline"
+                className={cn(
+                    'text-[10px] px-2 py-0.5 font-semibold',
+                    config.bg,
+                    config.text,
+                    config.border
+                )}
+            >
+                {config.label}
+            </Badge>
+        );
     };
 
     return (
@@ -188,11 +221,14 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                                             {lead.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>
-                                        <div className={cn("text-sm flex flex-col", overdue ? "text-red-600 font-bold" : "text-slate-600")}>
-                                            {lead.next_follow_up ? format(new Date(lead.next_follow_up), 'MMM d') : '-'}
+                                    <TableCell id={`lead-${lead.id}`}>
+                                        <div className={cn("text-sm flex flex-col gap-1", overdue ? "text-red-600 font-bold" : "text-slate-600")}>
+                                            <div className="flex items-center gap-2">
+                                                {lead.next_follow_up ? format(new Date(lead.next_follow_up), 'MMM d') : '-'}
+                                                {getFollowUpBadge(lead)}
+                                            </div>
                                             {lead.follow_up_level && (
-                                                <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded w-fit mt-0.5">
+                                                <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded w-fit">
                                                     {lead.follow_up_level}
                                                 </span>
                                             )}
@@ -213,6 +249,16 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                                                 <DropdownMenuItem onClick={() => onAddToCalendar(lead)}>
                                                     <Calendar className="mr-2 h-4 w-4" /> Add to Calendar
                                                 </DropdownMenuItem>
+                                                {lead.next_follow_up && onSnooze && (
+                                                    <DropdownMenuItem onClick={() => onSnooze(lead.id)} className="text-blue-600 focus:text-blue-600">
+                                                        <AlertCircle className="mr-2 h-4 w-4" /> Snooze +1 Day
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {lead.next_follow_up && onMarkCompleted && (
+                                                    <DropdownMenuItem onClick={() => onMarkCompleted(lead.id)} className="text-green-600 focus:text-green-600">
+                                                        <Calendar className="mr-2 h-4 w-4" /> Mark Completed
+                                                    </DropdownMenuItem>
+                                                )}
                                                 <DropdownMenuItem
                                                     onClick={() => onDelete(lead.id)}
                                                     className="text-red-600 focus:text-red-600"

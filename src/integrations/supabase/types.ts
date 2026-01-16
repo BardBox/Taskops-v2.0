@@ -102,6 +102,113 @@ export type Database = {
           }
         ]
       }
+      user_work_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          session_date: string
+          login_time: string
+          logout_time: string | null
+          session_seconds: number
+          is_active: boolean
+          is_paused: boolean | null
+          paused_at: string | null
+          total_paused_seconds: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          session_date?: string
+          login_time?: string
+          logout_time?: string | null
+          session_seconds?: number
+          is_active?: boolean
+          is_paused?: boolean | null
+          paused_at?: string | null
+          total_paused_seconds?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          session_date?: string
+          login_time?: string
+          logout_time?: string | null
+          session_seconds?: number
+          is_active?: boolean
+          is_paused?: boolean | null
+          paused_at?: string | null
+          total_paused_seconds?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_work_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      task_time_tracking: {
+        Row: {
+          id: string
+          task_id: string
+          user_id: string
+          is_running: boolean
+          started_at: string | null
+          paused_at: string | null
+          total_seconds: number
+          last_status: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          user_id: string
+          is_running?: boolean
+          started_at?: string | null
+          paused_at?: string | null
+          total_seconds?: number
+          last_status?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          task_id?: string
+          user_id?: string
+          is_running?: boolean
+          started_at?: string | null
+          paused_at?: string | null
+          total_seconds?: number
+          last_status?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_time_tracking_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_time_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       task_time_sessions: {
         Row: {
           id: string
@@ -1181,70 +1288,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      task_time_tracking: {
-        Row: {
-          created_at: string
-          id: string
-          last_active_at: string | null
-          paused_at: string | null
-          started_at: string | null
-          stopped_at: string | null
-          task_id: string
-          total_seconds: number
-          tracking_status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          last_active_at?: string | null
-          paused_at?: string | null
-          started_at?: string | null
-          stopped_at?: string | null
-          task_id: string
-          total_seconds?: number
-          tracking_status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          last_active_at?: string | null
-          paused_at?: string | null
-          started_at?: string | null
-          stopped_at?: string | null
-          task_id?: string
-          total_seconds?: number
-          tracking_status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_time_tracking_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "taskops_filtered_tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_time_tracking_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_time_tracking_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

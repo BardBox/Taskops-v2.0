@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
@@ -17,6 +17,10 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
 import { MainLayout } from "@/components/MainLayout";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { useFollowUpReminders } from "@/hooks/useFollowUpReminders";
+import { Search, Filter, SortAsc } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 export const GrowthDashboard = () => {
     // Lead State
@@ -51,6 +55,12 @@ export const GrowthDashboard = () => {
     // Access Control
     const navigate = useNavigate();
     const [userRole, setUserRole] = useState<string | null>(null);
+
+    // Filtering & Sorting State
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilters, setStatusFilters] = useState<string[]>([]);
+    const [sortBy, setSortBy] = useState<'created_at' | 'next_follow_up' | 'expected_value' | 'lead_code'>('created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
 
 
@@ -191,6 +201,55 @@ export const GrowthDashboard = () => {
         }
     }, [selectedLeadForPanel]);
 
+    // Follow-up Reminders
+    const { stats: followUpStats, getFollowUpStatus } = useFollowUpReminders(leads);
+
+    // Filter and sort leads
+    const filteredAndSortedLeads = useMemo(() => {
+        let filtered = [...leads];
+
+        // Search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(lead =>
+                lead.title.toLowerCase().includes(query) ||
+                lead.contact?.name?.toLowerCase().includes(query) ||
+                lead.contact?.company_name?.toLowerCase().includes(query)
+            );
+        }
+
+        // Status filter
+        if (statusFilters.length > 0) {
+            filtered = filtered.filter(lead => statusFilters.includes(lead.status));
+        }
+
+        // Sort
+        filtered.sort((a, b) => {
+            let compareValue = 0;
+
+            switch (sortBy) {
+                case 'created_at':
+                    compareValue = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                    break;
+                case 'next_follow_up':
+                    const aDate = a.next_follow_up ? new Date(a.next_follow_up).getTime() : Infinity;
+                    const bDate = b.next_follow_up ? new Date(b.next_follow_up).getTime() : Infinity;
+                    compareValue = aDate - bDate;
+                    break;
+                case 'expected_value':
+                    compareValue = (a.expected_value || 0) - (b.expected_value || 0);
+                    break;
+                case 'lead_code':
+                    compareValue = (a.lead_code || 0) - (b.lead_code || 0);
+                    break;
+            }
+
+            return sortOrder === 'asc' ? compareValue : -compareValue;
+        });
+
+        return filtered;
+    }, [leads, searchQuery, statusFilters, sortBy, sortOrder]);
+
     // Lead Handlers
     const handleAddLead = () => {
         setSelectedLead(null);
@@ -232,6 +291,45 @@ export const GrowthDashboard = () => {
     const handleLeadClick = (lead: Lead) => {
         setSelectedContactForPanel(null);
         setSelectedLeadForPanel(lead);
+    };
+
+    const handleSnoozeFollowUp = async (leadId: string) => {
+        try {
+            const lead = leads.find(l => l.id === leadId);
+            if (!lead || !lead.next_follow_up) return;
+
+            const currentDate = new Date(lead.next_follow_up);
+            const newDate = new Date(currentDate);
+            newDate.setDate(newDate.getDate() + 1);
+
+            const { error } = await supabase
+                .from('leads')
+                .update({ next_follow_up: newDate.toISOString() })
+                .eq('id', leadId);
+
+            if (error) throw error;
+
+            toast.success("Follow-up snoozed to " + newDate.toLocaleDateString());
+            fetchLeads();
+        } catch (error: any) {
+            toast.error("Failed to snooze: " + error.message);
+        }
+    };
+
+    const handleMarkFollowUpCompleted = async (leadId: string) => {
+        try {
+            const { error } = await supabase
+                .from('leads')
+                .update({ next_follow_up: null })
+                .eq('id', leadId);
+
+            if (error) throw error;
+
+            toast.success("Follow-up marked as completed");
+            fetchLeads();
+        } catch (error: any) {
+            toast.error("Failed to mark completed: " + error.message);
+        }
     };
 
     // Contact Handlers
@@ -332,17 +430,47 @@ export const GrowthDashboard = () => {
                         <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
                         <p className="text-muted-foreground">Manage your pipeline, leads, and contacts.</p>
                     </div>
-                    {activeTab === "pipeline" ? (
-                        <Button onClick={handleAddLead}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Lead
-                        </Button>
-                    ) : (
-                        <Button onClick={handleAddContact}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Contact
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {activeTab === "pipeline" ? (
+                            <>
+                                <Button
+                                    size="icon"
+                                    className="h-14 w-14 rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg"
+                                    onClick={handleAddLead}
+                                >
+                                    <Plus className="h-6 w-6" />
+                                </Button>
+                                <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-14 w-14 rounded-full shadow-md"
+                                    onClick={() => fetchLeads()}
+                                    title="Refresh leads"
+                                >
+                                    <Loader2 className="h-5 w-5" />
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button
+                                    size="icon"
+                                    className="h-14 w-14 rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg"
+                                    onClick={handleAddContact}
+                                >
+                                    <Plus className="h-6 w-6" />
+                                </Button>
+                                <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-14 w-14 rounded-full shadow-md"
+                                    onClick={() => fetchContacts()}
+                                    title="Refresh contacts"
+                                >
+                                    <Loader2 className="h-5 w-5" />
+                                </Button>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
@@ -353,13 +481,94 @@ export const GrowthDashboard = () => {
                         <TabsTrigger value="contacts">Contacts</TabsTrigger>
                     </TabsList>
                     <TabsContent value="pipeline" className="space-y-4">
+                        {/* Search and Filters */}
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white p-4 rounded-lg border">
+                            {/* Search */}
+                            <div className="relative flex-1 max-w-md">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search leads by title, contact, or company..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+
+                            {/* Sort */}
+                            <div className="flex items-center gap-2">
+                                <SortAsc className="h-4 w-4 text-muted-foreground" />
+                                <select
+                                    value={`${sortBy}-${sortOrder}`}
+                                    onChange={(e) => {
+                                        const [field, order] = e.target.value.split('-');
+                                        setSortBy(field as any);
+                                        setSortOrder(order as 'asc' | 'desc');
+                                    }}
+                                    className="text-sm border rounded-md px-2 py-1.5 bg-white"
+                                >
+                                    <option value="created_at-desc">Newest First</option>
+                                    <option value="created_at-asc">Oldest First</option>
+                                    <option value="next_follow_up-asc">Follow-up (Earliest)</option>
+                                    <option value="next_follow_up-desc">Follow-up (Latest)</option>
+                                    <option value="expected_value-desc">Value (High to Low)</option>
+                                    <option value="expected_value-asc">Value (Low to High)</option>
+                                    <option value="lead_code-desc">Lead Code (Desc)</option>
+                                    <option value="lead_code-asc">Lead Code (Asc)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Status Filters */}
+                        <div className="flex items-center gap-2 flex-wrap bg-white p-3 rounded-lg border">
+                            <Filter className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-muted-foreground">Status:</span>
+                            {['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'].map((status) => {
+                                const count = leads.filter(l => l.status === status).length;
+                                const isActive = statusFilters.includes(status);
+                                return (
+                                    <Badge
+                                        key={status}
+                                        variant={isActive ? "default" : "outline"}
+                                        className={`cursor-pointer transition-all ${isActive ? '' : 'hover:bg-slate-100'}`}
+                                        onClick={() => {
+                                            if (isActive) {
+                                                setStatusFilters(statusFilters.filter(s => s !== status));
+                                            } else {
+                                                setStatusFilters([...statusFilters, status]);
+                                            }
+                                        }}
+                                    >
+                                        {status} ({count})
+                                    </Badge>
+                                );
+                            })}
+                            {statusFilters.length > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs"
+                                    onClick={() => setStatusFilters([])}
+                                >
+                                    Clear
+                                </Button>
+                            )}
+                        </div>
+
+                        {/* Results count */}
+                        <div className="text-sm text-muted-foreground">
+                            Showing {filteredAndSortedLeads.length} of {leads.length} leads
+                        </div>
+
                         <LeadTable
-                            leads={leads}
+                            leads={filteredAndSortedLeads}
                             onEdit={handleEditLead}
                             onDelete={confirmDeleteLead}
                             onAddToCalendar={() => toast.info("Calendar integration coming soon")}
                             onLeadClick={handleLeadClick}
                             userMap={userMap}
+                            getFollowUpStatus={getFollowUpStatus}
+                            onSnooze={handleSnoozeFollowUp}
+                            onMarkCompleted={handleMarkFollowUpCompleted}
                         />
                     </TabsContent>
                     <TabsContent value="contacts" className="space-y-4">

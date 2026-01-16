@@ -41,6 +41,12 @@ import PostingStatus from "./pages/PostingStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
 import { FocusModeProvider } from "@/contexts/FocusModeContext";
+import { useTimeTrackingSessionHandler } from "@/hooks/useTimeTrackingSessionHandler";
+
+const TimeTrackingSessionManager = () => {
+  useTimeTrackingSessionHandler();
+  return null;
+};
 
 const queryClient = new QueryClient();
 
@@ -118,6 +124,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <TimeTrackingProvider>
+            <TimeTrackingSessionManager />
             <FocusModeProvider>
               <BrowserRouter>
                 <AnimatedRoutes />

@@ -49,13 +49,20 @@ interface LeadDialogProps {
     onSuccess: () => void;
 }
 
+// URL validation regex
+const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+
 const formSchema = z.object({
     title: z.string().min(2, "Title is required"),
     project_type: z.string().optional(),
     contact_id: z.string().min(1, "Contact is required"),
     new_contact_name: z.string().optional(),
     new_contact_email: z.string().email("Invalid email").optional().or(z.literal("")),
-    new_contact_phone: z.string().optional(),
+    new_contact_phone: z.string()
+        .regex(/^[\d\s\-+()]*$/, "Invalid phone format")
+        .min(10, "Phone must be at least 10 digits")
+        .optional()
+        .or(z.literal("")),
     owner_id: z.string().min(1, "Lead Producer is required"),
     lead_manager_id: z.string().optional().nullable(),
     source: z.string().optional().nullable(),
@@ -66,16 +73,35 @@ const formSchema = z.object({
     expected_value: z.coerce.number().min(0, "Value must be positive").optional().nullable(),
     currency: z.string().optional().nullable(),
     probability: z.coerce.number().min(1).max(10), // 1-10 scale
-    website: z.string().optional().nullable(),
-    linkedin: z.string().optional().nullable(),
-    facebook: z.string().optional().nullable(),
-    instagram: z.string().optional().nullable(),
-    project_links: z.array(z.string()).max(3, "Max 3 links allowed").optional(),
+    website: z.string()
+        .regex(urlRegex, "Invalid URL format")
+        .optional()
+        .or(z.literal(""))
+        .nullable(),
+    linkedin: z.string()
+        .regex(urlRegex, "Invalid URL format")
+        .optional()
+        .or(z.literal(""))
+        .nullable(),
+    facebook: z.string()
+        .regex(urlRegex, "Invalid URL format")
+        .optional()
+        .or(z.literal(""))
+        .nullable(),
+    instagram: z.string()
+        .regex(urlRegex, "Invalid URL format")
+        .optional()
+        .or(z.literal(""))
+        .nullable(),
+    project_links: z.array(
+        z.string().regex(urlRegex, "Invalid URL format")
+    ).max(3, "Max 3 links allowed").optional(),
     project_files: z.array(z.string()).max(3, "Max 3 files allowed").optional(),
     new_contact_designation: z.string().optional(),
     new_contact_company: z.string().optional(),
     new_contact_address: z.string().optional(),
 }).refine((data) => {
+    // Validate new contact has required fields
     if (data.contact_id === "new") {
         return !!data.new_contact_name && (!!data.new_contact_email || !!data.new_contact_phone);
     }
@@ -83,6 +109,22 @@ const formSchema = z.object({
 }, {
     message: "Name and either Email or Phone are required for new contact",
     path: ["new_contact_name"],
+}).refine((data) => {
+    // Won/Lost leads shouldn't have follow-ups set
+    if ((data.status === 'Won' || data.status === 'Lost') && data.next_follow_up) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Follow-up date should not be set for Won/Lost leads",
+    path: ["next_follow_up"],
+}).refine((data) => {
+    // Warn if follow-up date is in the past (but allow it)
+    if (data.next_follow_up && data.next_follow_up < new Date()) {
+        // This is a soft warning - we'll handle it in the UI
+        return true;
+    }
+    return true;
 });
 
 type LeadFormValues = z.infer<typeof formSchema>;
@@ -94,6 +136,8 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
     const [isNewContact, setIsNewContact] = useState(false);
     const [currentUser, setCurrentUser] = useState<string | null>(null);
     const [showAddressField, setShowAddressField] = useState(false);
+    const [loadingContacts, setLoadingContacts] = useState(false);
+    const [loadingTeam, setLoadingTeam] = useState(false);
 
     // in LeadDialog
     const { value: leadSources } = useSettings('lead_sources', ["Direct", "Website", "LinkedIn", "Reference"]);
@@ -201,17 +245,57 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         }
     }, [currentUser, open, lead]);
 
+    // Auto-adjust probability and follow-up for Won/Lost status
+    useEffect(() => {
+        const subscription = form.watch((value, { name }) => {
+            if (name === 'status') {
+                const status = value.status;
+
+                // Auto-set probability for Won/Lost
+                if (status === 'Won' && form.getValues('probability') !== 10) {
+                    form.setValue('probability', 10);
+                    toast.info("Probability auto-set to 100% for Won status");
+                } else if (status === 'Lost' && form.getValues('probability') !== 1) {
+                    form.setValue('probability', 1);
+                    toast.info("Probability auto-set to 10% for Lost status");
+                }
+
+                // Clear follow-up for Won/Lost
+                if ((status === 'Won' || status === 'Lost') && form.getValues('next_follow_up')) {
+                    form.setValue('next_follow_up', undefined);
+                    toast.info("Follow-up date cleared for closed lead");
+                }
+            }
+
+            // Warn about past dates
+            if (name === 'next_follow_up' && value.next_follow_up) {
+                const followUpDate = new Date(value.next_follow_up);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (followUpDate < today) {
+                    toast.warning("⚠️ Follow-up date is in the past");
+                }
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [form]);
+
     const getCurrentUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) setCurrentUser(user.id);
     };
 
     const fetchContacts = async () => {
+        setLoadingContacts(true);
         const { data } = await supabase.from('contacts').select('*').order('name');
         if (data) setContacts(data as Contact[]);
+        setLoadingContacts(false);
     };
 
     const fetchTeamMembers = async () => {
+        setLoadingTeam(true);
         try {
             // 1. Fetch valid user IDs from user_roles
             const { data: roleData, error: roleError } = await supabase
@@ -255,6 +339,8 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         } catch (error) {
             console.error("Unexpected error fetching team members:", error);
             toast.error("Failed to load team members");
+        } finally {
+            setLoadingTeam(false);
         }
     };
 
@@ -405,7 +491,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                         {/* Core Details */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Core Details</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="title"
@@ -474,7 +560,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                         {/* Contact Information */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-500 border-b pb-1 mb-3">Contact Information</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="project_type"
@@ -531,7 +617,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
 
                             {isNewContact && (
                                 <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                                         <FormField
                                             control={form.control}
                                             name="new_contact_name"
@@ -572,7 +658,7 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                             )}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                                         <FormField
                                             control={form.control}
                                             name="new_contact_phone"
@@ -859,10 +945,10 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                 control={form.control}
                                 name="probability"
                                 render={({ field }) => (
-                                    <FormItem className="bg-slate-50 p-4 rounded-xl border">
+                                    <FormItem className="bg-gradient-to-br from-slate-50 to-blue-50 p-6 rounded-xl border-2 border-slate-200 shadow-sm">
                                         <div className="flex justify-between items-center mb-4">
-                                            <FormLabel className="text-base">Probability Heatmap</FormLabel>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${getHeatmapColor(field.value)} transition-colors`}>
+                                            <FormLabel className="text-base font-semibold">Deal Probability Heatmap</FormLabel>
+                                            <span className={`px-4 py-1.5 rounded-full text-sm font-bold text-white ${getHeatmapColor(field.value)} transition-all duration-300 shadow-md`}>
                                                 {getHeatmapLabel(field.value)} ({field.value}/10)
                                             </span>
                                         </div>
@@ -873,12 +959,22 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
                                                 step={1}
                                                 value={[field.value]}
                                                 onValueChange={(vals) => field.onChange(vals[0])}
-                                                className="py-4"
+                                                className="py-6"
                                             />
                                         </FormControl>
-                                        <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                            <span>Freezing</span>
-                                            <span>Red Hot</span>
+                                        <div className="flex justify-between text-xs text-slate-500 font-semibold uppercase tracking-wide mt-2">
+                                            <span className="flex items-center gap-1">
+                                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                                Freezing
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                                Warm
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                                Red Hot
+                                            </span>
                                         </div>
                                         <FormMessage />
                                     </FormItem>
