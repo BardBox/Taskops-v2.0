@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet as Dialog,
+  SheetContent as DialogContent,
+  SheetDescription as DialogDescription,
+  SheetHeader as DialogHeader,
+  SheetTitle as DialogTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -574,7 +574,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent side="right" className="sm:max-w-[800px] w-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">{task ? "Edit Task" : "Create New Task"}</DialogTitle>
           <DialogDescription>

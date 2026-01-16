@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Dialog,
-  DialogContent,
-  DialogClose,
-} from "@/components/ui/dialog";
+  Sheet as Dialog,
+  SheetContent as DialogContent,
+  SheetClose as DialogClose,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -996,8 +996,8 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent hideCloseButton className={cn(
-        "p-0 flex flex-col overflow-hidden gap-0 transition-all duration-300",
+      <DialogContent side="right" hideCloseButton className={cn(
+        "sm:max-w-[1000px] w-full p-0 flex flex-col overflow-hidden gap-0 transition-all duration-300",
         isFullscreen ? "max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] animate-fade-in" : "max-w-4xl w-4xl max-h-[90vh] h-[90vh]"
       )}>
         <div className="p-6 pb-4 border-b flex-shrink-0 relative">
@@ -1813,7 +1813,7 @@ export function TaskDetailDialog({
 
       {/* Edit Task Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent side="right" className="sm:max-w-4xl w-full overflow-y-auto">
           <EditTaskTab
             task={task}
             onTaskUpdated={() => {
