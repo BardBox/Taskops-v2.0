@@ -13,6 +13,7 @@ import { DashboardPreferences, DEFAULT_PREFERENCES } from "@/components/Dashboar
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
+import { useFocusMode } from "@/contexts/FocusModeContext";
 import { cn } from "@/lib/utils";
 
 interface ColumnWidths {
@@ -30,6 +31,9 @@ interface ColumnWidths {
   status: number;
   urgency: number;
 }
+
+
+// ... (other imports)
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -51,6 +55,7 @@ const Dashboard = () => {
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
+  const { isFocusMode } = useFocusMode();
 
   const [filters, setFilters] = useState<FilterState>({
     year: "all",
@@ -215,18 +220,20 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
-        <div className="flex items-center justify-between">
-          <Breadcrumbs />
-        </div>
+      <div className={cn("container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6 transition-all", isFocusMode && "max-w-full px-2 py-2 space-y-2")}>
+        {!isFocusMode && (
+          <div className="flex items-center justify-between">
+            <Breadcrumbs />
+          </div>
+        )}
 
-        {preferences.showMetrics && <DashboardMetrics filters={filters} />}
+        {preferences.showMetrics && !isFocusMode && <DashboardMetrics filters={filters} />}
 
-        {preferences.showFilters && (
+        {preferences.showFilters && !isFocusMode && (
           <GlobalFilters filters={filters} onFiltersChange={setFilters} />
         )}
 
-        {preferences.showQuickFilters && (
+        {preferences.showQuickFilters && !isFocusMode && (
           <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
             <div className="flex items-center justify-center overflow-hidden">
               <QuickFilters
@@ -238,7 +245,6 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-
         <div className="space-y-4 mt-2">
           <TaskTable
             filters={filters}

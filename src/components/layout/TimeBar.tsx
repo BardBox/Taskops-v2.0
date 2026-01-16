@@ -1,5 +1,6 @@
 
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
+import { useFocusMode } from "@/contexts/FocusModeContext";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Square, Clock, Coffee } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,7 @@ import { useEffect, useState } from "react";
 
 export function TimeBar() {
     const { state, clockIn, clockOut, pauseWork, resumeWork, isLoading } = useTimeTracking();
+    const { isFocusMode } = useFocusMode();
     const [elapsedTime, setElapsedTime] = useState("00:00:00");
     const [breakTime, setBreakTime] = useState("00:00:00");
 
@@ -61,7 +63,7 @@ export function TimeBar() {
         return () => clearInterval(interval);
     }, [state.clockInTime, state.status, state.totalBreakSeconds, state.lastBreakStart, state.previousSessionsTotal, state.previousBreaksTotal]);
 
-    if (isLoading) return null;
+    if (isLoading || isFocusMode) return null;
 
     // Determine Status Visuals
     const isOffline = state.status === 'idle' || state.status === 'completed';

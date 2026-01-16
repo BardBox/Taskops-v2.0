@@ -40,6 +40,7 @@ import TheHive from "./pages/TheHive";
 import PostingStatus from "./pages/PostingStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
+import { FocusModeProvider } from "@/contexts/FocusModeContext";
 
 const queryClient = new QueryClient();
 
@@ -117,9 +118,11 @@ const App = () => {
           <Toaster />
           <Sonner />
           <TimeTrackingProvider>
-            <BrowserRouter>
-              <AnimatedRoutes />
-            </BrowserRouter>
+            <FocusModeProvider>
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </FocusModeProvider>
           </TimeTrackingProvider>
         </TooltipProvider>
       </ThemeProvider>

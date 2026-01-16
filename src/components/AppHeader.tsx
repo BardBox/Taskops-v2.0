@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Clock3, Coffee } from "lucide-react";
+import { Clock3, Coffee, Zap, ZapOff } from "lucide-react";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
 import { useTimeTracking } from "@/contexts/TimeTrackingContext";
+import { useFocusMode } from "@/contexts/FocusModeContext";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface AppHeaderProps {
   userRole?: string;
@@ -19,7 +21,8 @@ interface AppHeaderProps {
 export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true, isCompact = false }: AppHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { state } = useTimeTracking(); // Get time tracking state
+  const { state } = useTimeTracking();
+  const { isFocusMode, toggleFocusMode } = useFocusMode();
 
   // Calculate display time for header (simple version of TimeBar logic)
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
@@ -80,7 +83,8 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
   return (
     <header className={cn(
       "sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-4 transition-all duration-300",
-      isCompact ? "h-10 text-sm shadow-md" : "h-14"
+      isCompact || isFocusMode ? "h-10 text-sm shadow-md" : "h-14",
+      isFocusMode ? "px-2" : "px-4"
     )}>
       {/* Left Section: Spacer to balance Right Section (or specific left content if needed) */}
       <div className="w-10"></div>
@@ -90,7 +94,8 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
         {/* Branding */}
         <div className={cn(
           "flex items-center gap-2 transition-all duration-300",
-          isCompact ? "scale-90" : "scale-100"
+          (isCompact || isFocusMode) ? "scale-90" : "scale-100",
+          isFocusMode ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"
         )}>
           <img
             src="/bardbox-logo.png"
@@ -110,10 +115,21 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
       >
+        {/* Focus Mode Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleFocusMode}
+          title={isFocusMode ? "Exit Focus Mode (F)" : "Enter Focus Mode (F)"}
+          className={cn("transition-all", isFocusMode ? "h-8 w-8 text-primary" : "h-9 w-9 text-muted-foreground hover:text-primary")}
+        >
+          {isFocusMode ? <ZapOff className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
+        </Button>
+
         {/* Compact Time Stats (Fade in when compact) */}
         <div className={cn(
           "flex items-center gap-3 overflow-hidden transition-all duration-300 border-r pr-4 border-border/50",
-          isCompact ? "w-auto opacity-100 translate-y-0" : "w-0 opacity-0 translate-y-2 pointer-events-none"
+          (isCompact || isFocusMode) ? "w-auto opacity-100 translate-y-0" : "w-0 opacity-0 translate-y-2 pointer-events-none"
         )}>
           <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
             <Clock3 className="h-3 w-3" />
