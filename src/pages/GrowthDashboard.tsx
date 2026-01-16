@@ -64,7 +64,7 @@ export const GrowthDashboard = () => {
 
 
 
-    // Keyboard shortcut for New Lead/Contact
+    // Keyboard shortcuts for Growth Engine
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
@@ -76,6 +76,19 @@ export const GrowthDashboard = () => {
                 return;
             }
 
+            // Tab switching shortcuts
+            if (e.key === '1') {
+                e.preventDefault();
+                setActiveTab("pipeline");
+                return;
+            }
+            if (e.key === '2') {
+                e.preventDefault();
+                setActiveTab("contacts");
+                return;
+            }
+
+            // New item shortcut
             if (e.key.toLowerCase() === 'n') {
                 e.preventDefault();
                 if (activeTab === "pipeline") {

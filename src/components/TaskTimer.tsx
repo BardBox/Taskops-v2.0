@@ -1,94 +1,100 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Play, Pause } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 
 interface TaskTimerProps {
     totalSecondsSnapshot: number;
-    runningStartTimes: string[]; // List of started_at for all active users on this task
-    isCurrentUserRunning: boolean;
-    onToggle: () => void;
-    disabled?: boolean;
+    runningStartTimes: string[]; // Still passed but used as fallback/initial data
+    taskStatus: string; // The current status of the task
     className?: string;
 }
 
 export function TaskTimer({
     totalSecondsSnapshot,
     runningStartTimes,
-    isCurrentUserRunning,
-    onToggle,
-    disabled = false,
+    taskStatus,
     className
 }: TaskTimerProps) {
-    const [displaySeconds, setDisplaySeconds] = useState(totalSecondsSnapshot);
+    const { state: timeTrackingState } = useTimeTracking();
 
-    // Initial sync
+    // Determine if time should be counting based ONLY on status
+    const isGloballyWorking = timeTrackingState.status === 'active';
+    const isTaskInProgress = taskStatus === "In Progress";
+    const shouldCount = isGloballyWorking && isTaskInProgress;
+
+    // Track accumulated time and when counting started
+    const [accumulatedSeconds, setAccumulatedSeconds] = useState(totalSecondsSnapshot);
+    const [currentSessionSeconds, setCurrentSessionSeconds] = useState(0);
+    const countingStartRef = useRef<number | null>(null);
+    const prevShouldCountRef = useRef(shouldCount);
+
+    // Sync with external snapshot when it changes
     useEffect(() => {
-        calculateTime();
-    }, [totalSecondsSnapshot, runningStartTimes]);
+        setAccumulatedSeconds(totalSecondsSnapshot);
+    }, [totalSecondsSnapshot]);
 
-    const calculateTime = () => {
-        const now = Date.now();
-        let addedSeconds = 0;
+    // Handle transitions between counting and not counting
+    useEffect(() => {
+        const wasCountingBefore = prevShouldCountRef.current;
 
-        runningStartTimes.forEach(start => {
-            if (start) {
-                addedSeconds += Math.floor((now - new Date(start).getTime()) / 1000);
+        if (shouldCount && !wasCountingBefore) {
+            // Started counting - record start time
+            countingStartRef.current = Date.now();
+            setCurrentSessionSeconds(0);
+        } else if (!shouldCount && wasCountingBefore) {
+            // Stopped counting - accumulate the session time
+            if (countingStartRef.current) {
+                const elapsedSeconds = Math.floor((Date.now() - countingStartRef.current) / 1000);
+                setAccumulatedSeconds(prev => prev + elapsedSeconds);
+                setCurrentSessionSeconds(0);
+                countingStartRef.current = null;
             }
-        });
+        }
 
-        setDisplaySeconds(totalSecondsSnapshot + addedSeconds);
-    };
+        prevShouldCountRef.current = shouldCount;
+    }, [shouldCount]);
 
-    // Live tick
+    // Live tick - only when counting
     useEffect(() => {
-        if (runningStartTimes.length === 0) {
+        if (!shouldCount || !countingStartRef.current) {
             return;
         }
 
-        const interval = setInterval(calculateTime, 1000);
+        const tick = () => {
+            if (countingStartRef.current) {
+                const elapsed = Math.floor((Date.now() - countingStartRef.current) / 1000);
+                setCurrentSessionSeconds(elapsed);
+            }
+        };
+
+        // Immediate tick
+        tick();
+
+        const interval = setInterval(tick, 1000);
         return () => clearInterval(interval);
-    }, [totalSecondsSnapshot, runningStartTimes]);
+    }, [shouldCount]);
+
+    // Calculate display time
+    const displaySeconds = accumulatedSeconds + currentSessionSeconds;
 
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
-        // Compact format for table cell
-        return `${h}:${m.toString().padStart(2, '0')}`;
+        const s = seconds % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
     return (
-        <div className={cn("flex items-center gap-1.5", className)} onClick={(e) => e.stopPropagation()}>
+        <div className={cn("flex items-center", className)} onClick={(e) => e.stopPropagation()}>
             <div className={cn(
-                "flex items-center gap-1.5 px-2 py-0.5 rounded-full transition-colors font-mono text-xs font-medium min-w-[64px] justify-between",
-                isCurrentUserRunning
-                    ? "bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/20"
-                    : runningStartTimes.length > 0
-                        ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20"
-                        : "bg-muted text-muted-foreground border border-transparent"
+                "px-2 py-1 rounded-md font-mono text-xs font-medium transition-colors tabular-nums",
+                shouldCount
+                    ? "bg-emerald-50/50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400"
+                    : isTaskInProgress && !isGloballyWorking
+                        ? "bg-orange-50/50 text-orange-600/70 dark:bg-orange-950/20 dark:text-orange-400/70"
+                        : "bg-muted/30 text-muted-foreground/70"
             )}>
-                <span className="flex-1 text-center">{formatTime(displaySeconds)}</span>
-
-                {!disabled && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                            "h-5 w-5 -mr-1 hover:bg-transparent",
-                            isCurrentUserRunning ? "text-green-600 hover:text-green-800" : "text-muted-foreground hover:text-foreground"
-                        )}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggle();
-                        }}
-                    >
-                        {isCurrentUserRunning ? (
-                            <Pause className="h-3 w-3 fill-current" />
-                        ) : (
-                            <Play className="h-3 w-3 fill-current" />
-                        )}
-                    </Button>
-                )}
+                {formatTime(displaySeconds)}
             </div>
         </div>
     );

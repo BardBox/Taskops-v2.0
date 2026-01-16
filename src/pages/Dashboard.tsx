@@ -52,6 +52,7 @@ const Dashboard = () => {
   const [preferences, setPreferences] = useState<DashboardPreferences>(DEFAULT_PREFERENCES);
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(DEFAULT_COLUMN_WIDTHS);
   const columnWidthSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Enable real-time notifications
   useTaskNotifications(user?.id);
@@ -289,6 +290,7 @@ const Dashboard = () => {
               setDuplicateData(data);
               setDialogOpen(true);
             }}
+            refreshTrigger={refreshTrigger}
           />
         </div>
       </div>
@@ -302,6 +304,7 @@ const Dashboard = () => {
           }}
           userRole={userRole}
           duplicateData={duplicateData}
+          onTaskSaved={() => setRefreshTrigger(prev => prev + 1)}
         />
       )}
     </MainLayout>

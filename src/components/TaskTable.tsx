@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FilterState } from "@/components/GlobalFilters";
 import { Button } from "@/components/ui/button";
@@ -106,6 +106,7 @@ export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
 };
 
 interface TaskTableProps {
+  refreshTrigger?: number;
   userRole: string;
   userId: string;
   filters?: FilterState;
@@ -121,7 +122,7 @@ interface TaskTableProps {
   isFocusMode?: boolean;
 }
 
-export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange, onResetPreferences, columnWidths: externalColumnWidths, onColumnWidthsChange, isFocusMode = false }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange, onResetPreferences, columnWidths: externalColumnWidths, onColumnWidthsChange, isFocusMode = false, refreshTrigger = 0 }: TaskTableProps) => {
   const columns = visibleColumns ?? {
     date: true,
     client: true,
@@ -227,49 +228,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     setCollaboratorsExpanded(prev => !prev);
   };
 
-  useEffect(() => {
-    fetchTasks();
-    fetchAppreciations();
-    fetchNotifications();
-
-    const channel = supabase
-      .channel("tasks-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "tasks",
-        },
-        () => fetchTasks()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "task_comments",
-        },
-        () => fetchTasks()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications",
-        },
-        () => fetchNotifications()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [filters, userRole, userId]);
 
 
-  const fetchAppreciations = async () => {
+
+  const fetchAppreciations = useCallback(async () => {
     const { data } = await supabase
       .from("task_appreciations" as any)
       .select("task_id, given_by_id")
@@ -280,9 +242,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       appreciationMap.set(app.task_id, true);
     });
     setTaskAppreciations(appreciationMap);
-  };
+  }, [userId]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     const { data } = await supabase
       .from("notifications")
       .select("task_id")
@@ -295,7 +257,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       }
     });
     setNotifiedTaskIds(notifiedIds);
-  };
+  }, [userId]);
+
+
 
   const toggleAppreciation = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -335,7 +299,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     }
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     let query = supabase
       .from("tasks")
       .select(`
@@ -390,7 +354,48 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     });
 
     setTasks(processedTasks);
-  };
+  }, [userRole, userId]);
+
+  useEffect(() => {
+    fetchTasks();
+    fetchAppreciations();
+    fetchNotifications();
+
+    const channel = supabase
+      .channel("tasks-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "tasks",
+        },
+        () => fetchTasks()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "task_comments",
+        },
+        () => fetchTasks()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+        },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchTasks, fetchAppreciations, fetchNotifications, refreshTrigger]);
 
   const getStatusColor = (status: string) => {
     const statusItem = statuses.find(s => s.label === status);
@@ -1460,19 +1465,11 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                               .filter((r: any) => r.is_running && r.started_at)
                               .map((r: any) => r.started_at as string);
 
-                            const userRecord = records.find((r: any) => r.user_id === userId);
-                            const isCurrentUserRunning = userRecord?.is_running || false;
-
                             return (
                               <TaskTimer
                                 totalSecondsSnapshot={totalSeconds}
                                 runningStartTimes={activeStartTimes}
-                                isCurrentUserRunning={isCurrentUserRunning}
-                                onToggle={() => {
-                                  const newStatus = isCurrentUserRunning ? "On Hold" : "In Progress";
-                                  handleStatusChange(task.id, newStatus);
-                                }}
-                                disabled={!canEdit(task)}
+                                taskStatus={task.status}
                               />
                             );
                           })()}

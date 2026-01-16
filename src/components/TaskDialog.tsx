@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskTimeline } from "@/components/TaskTimeline";
 
 interface TaskDialogProps {
+  onTaskSaved?: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: any;
@@ -61,7 +62,7 @@ const taskSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplicateData }: TaskDialogProps) => {
+export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplicateData, onTaskSaved }: TaskDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
@@ -517,6 +518,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         }
 
         toast.success("Task updated successfully!");
+        if (onTaskSaved) onTaskSaved();
       } else {
         const { data: newTask, error } = await supabase
           .from("tasks")
@@ -531,6 +533,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         }
 
         toast.success("Task created successfully!");
+        if (onTaskSaved) onTaskSaved();
       }
 
       if (keepOpen) {
