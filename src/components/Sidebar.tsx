@@ -20,12 +20,23 @@ import {
 interface SidebarProps {
     userRole?: string;
     className?: string;
+    collapsed?: boolean;
+    onCollapseChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ userRole, className }: SidebarProps) {
+export function Sidebar({ userRole, className, collapsed: controlledCollapsed, onCollapseChange }: SidebarProps) {
     const navigate = useNavigate();
     const location = useLocation();
-    const [collapsed, setCollapsed] = useState(true);
+    const [internalCollapsed, setInternalCollapsed] = useState(true);
+
+    const collapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
+
+    const setCollapsed = (val: boolean | ((prev: boolean) => boolean)) => {
+        const newVal = typeof val === 'function' ? val(collapsed) : val;
+        setInternalCollapsed(newVal);
+        onCollapseChange?.(newVal);
+    };
+
     const [userName, setUserName] = useState<string>("");
     const [avatarUrl, setAvatarUrl] = useState<string>("");
     const { theme, setTheme } = useTheme();
@@ -187,7 +198,7 @@ export function Sidebar({ userRole, className }: SidebarProps) {
             {/* Header / Toggle */}
             <div className="h-14 flex items-center justify-between px-3 border-b border-border/50">
                 <div className={cn("flex items-center gap-2 overflow-hidden transition-all duration-300", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>
-                    <img src="/bardbox-logo.png" alt="BardBox" className="h-6 w-auto object-contain" />
+                    <img src="/bardbox-logo.png" alt="BardBox" className="h-6 w-auto object-contain dark:invert" />
                     <span className="font-bold text-sm tracking-tight whitespace-nowrap">TaskOPS</span>
                 </div>
                 <Button
@@ -246,33 +257,43 @@ export function Sidebar({ userRole, className }: SidebarProps) {
             {/* Bottom Controls (Personal & Theme) */}
             <div className="p-2 flex flex-col gap-2 border-t border-border/50">
                 {/* Theme Toggle - Compressed Row */}
-                <div className={cn("flex items-center justify-center transition-all", collapsed ? "flex-col gap-2" : "flex-row justify-between px-2")}>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-[#F6BE00]"
-                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        title="Toggle Theme"
-                    >
-                        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                    </Button>
-                    {!collapsed && <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Appearance</span>}
-                </div>
+                <Button
+                    variant="ghost"
+                    className={cn(
+                        "w-full justify-start gap-3 relative group overflow-hidden transition-all duration-200",
+                        collapsed ? "px-0 justify-center h-10 w-10 mx-auto" : "px-3 w-full",
+                        "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    title="Toggle Theme"
+                >
+                    {theme === "dark" ?
+                        <Sun className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-[#F6BE00]" /> :
+                        <Moon className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-[#F6BE00]" />
+                    }
+                    <span className={cn(
+                        "transition-all duration-300 transform whitespace-nowrap",
+                        collapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto"
+                    )}>
+                        {theme === "dark" ? "Dark Mode" : "Light Mode"}
+                    </span>
+                </Button>
 
                 {/* Status & Mood - Compressed or Expanded */}
-                <div className={cn("flex items-center gap-1 transition-all", collapsed ? "flex-col" : "flex-row justify-between")}>
+                <div className={cn("flex flex-col gap-1 transition-all pt-2", collapsed ? "items-center" : "items-stretch px-2")}>
                     {/* Status */}
                     <Popover open={statusOpen} onOpenChange={setStatusOpen}>
                         <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary relative group">
+                            <Button variant="ghost" className={cn("justify-start gap-3 relative group", collapsed ? "h-8 w-8 justify-center px-0" : "w-full px-2")}>
                                 {(() => {
                                     const Icon = getStatusIcon(status);
-                                    return <Icon className={cn("h-4 w-4",
+                                    return <Icon className={cn("h-4 w-4 flex-shrink-0",
                                         status === "Available" ? "text-green-500" :
                                             status === "Busy" ? "text-red-500" :
                                                 status === "Out of Office" ? "text-orange-500" : "text-muted-foreground"
                                     )} />;
                                 })()}
+                                {!collapsed && <span className="text-sm truncate">{status || "Set Status"}</span>}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-48 p-2" align="start" side="right">
@@ -290,8 +311,9 @@ export function Sidebar({ userRole, className }: SidebarProps) {
                     {/* Mood */}
                     <Popover open={moodOpen} onOpenChange={setMoodOpen}>
                         <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                                {mood ? <span className="text-sm">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4" />}
+                            <Button variant="ghost" className={cn("justify-start gap-3", collapsed ? "h-8 w-8 justify-center px-0" : "w-full px-2")}>
+                                {mood ? <span className="text-base leading-none flex-shrink-0">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4 flex-shrink-0" />}
+                                {!collapsed && <span className="text-sm truncate">{mood ? mood.substring(mood.indexOf(" ") + 1) : "Set Mood"}</span>}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-2" align="start" side="right">

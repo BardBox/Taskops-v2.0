@@ -264,194 +264,194 @@ export const NotificationCenter = ({ userId }: NotificationCenterProps) => {
   return (
     <>
       <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary">
-            <Bell className="h-6 w-6 text-secondary" strokeWidth={3} />
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="relative">
+            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary">
+              <Bell className="h-6 w-6 text-secondary dark:text-black" strokeWidth={3} />
+            </div>
+            {unreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs pointer-events-none"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-96">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">Notifications</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => navigate("/notifications")}
+              >
+                <ListTodo className="h-4 w-4" />
+              </Button>
+            </div>
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="h-8 text-xs"
+              >
+                <CheckCheck className="h-4 w-4 mr-1" />
+                Mark all read
+              </Button>
+            )}
           </div>
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs pointer-events-none"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-96">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold">Notifications</h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => navigate("/notifications")}
-            >
-              <ListTodo className="h-4 w-4" />
-            </Button>
-          </div>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              className="h-8 text-xs"
-            >
-              <CheckCheck className="h-4 w-4 mr-1" />
-              Mark all read
-            </Button>
-          )}
-        </div>
-        {notifications.length > 0 && (
-          <>
-            <div className="flex items-center justify-between px-6 pb-3">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSelectAll}
-                  className="h-7 text-xs"
-                >
-                  Select All
-                </Button>
+          {notifications.length > 0 && (
+            <>
+              <div className="flex items-center justify-between px-6 pb-3">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="h-7 text-xs"
+                  >
+                    Select All
+                  </Button>
+                  {selectedNotifications.length > 0 && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearSelection}
+                        className="h-7 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Clear
+                      </Button>
+                      <Badge variant="secondary" className="text-xs">
+                        {selectedNotifications.length} selected
+                      </Badge>
+                    </>
+                  )}
+                </div>
                 {selectedNotifications.length > 0 && (
-                  <>
+                  <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleClearSelection}
+                      onClick={handleMarkSelectedAsRead}
                       className="h-7 text-xs"
                     >
-                      <X className="h-3 w-3 mr-1" />
-                      Clear
+                      <Check className="h-3 w-3 mr-1" />
+                      Read
                     </Button>
-                    <Badge variant="secondary" className="text-xs">
-                      {selectedNotifications.length} selected
-                    </Badge>
-                  </>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDeleteSelected}
+                      className="h-7 text-xs text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
                 )}
               </div>
-              {selectedNotifications.length > 0 && (
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleMarkSelectedAsRead}
-                    className="h-7 text-xs"
-                  >
-                    <Check className="h-3 w-3 mr-1" />
-                    Read
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDeleteSelected}
-                    className="h-7 text-xs text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-        <Separator />
-        <ScrollArea className="h-[400px]">
-          {loading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Loading notifications...
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="p-8 text-center">
-              <Bell className="h-12 w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
-              <p className="text-sm text-muted-foreground">No notifications yet</p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={cn(
-                    "flex items-start gap-4 px-6 py-4 hover:bg-accent/50 transition-colors",
-                    !notification.is_read && "bg-accent/20"
-                  )}
-                >
-                  <Checkbox
-                    checked={selectedNotifications.includes(notification.id)}
-                    onCheckedChange={() => handleToggleNotification(notification.id)}
-                    className="mt-2"
-                  />
+            </>
+          )}
+          <Separator />
+          <ScrollArea className="h-[400px]">
+            {loading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Loading notifications...
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-8 text-center">
+                <Bell className="h-12 w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
+                <p className="text-sm text-muted-foreground">No notifications yet</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {notifications.map((notification) => (
                   <div
-                    className="flex items-start gap-3 flex-1 cursor-pointer"
-                    onClick={() => handleNotificationClick(notification)}
+                    key={notification.id}
+                    className={cn(
+                      "flex items-start gap-4 px-6 py-4 hover:bg-accent/50 transition-colors",
+                      !notification.is_read && "bg-accent/20"
+                    )}
                   >
-                    <Avatar className="h-8 w-8 mt-1">
-                      <AvatarImage src={notification.actor_avatar_url || ""} />
-                      <AvatarFallback className="text-xs">
-                        {notification.actor_name?.split(" ").map(n => n[0]).join("") || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
+                    <Checkbox
+                      checked={selectedNotifications.includes(notification.id)}
+                      onCheckedChange={() => handleToggleNotification(notification.id)}
+                      className="mt-2"
+                    />
+                    <div
+                      className="flex items-start gap-3 flex-1 cursor-pointer"
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <Avatar className="h-8 w-8 mt-1">
+                        <AvatarImage src={notification.actor_avatar_url || ""} />
+                        <AvatarFallback className="text-xs">
+                          {notification.actor_name?.split(" ").map(n => n[0]).join("") || "U"}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm">
-                          {notification.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {notification.message}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-xs text-muted-foreground">
-                            by {notification.actor_name || "System"}
-                          </p>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(
-                              new Date(notification.created_at),
-                              { addSuffix: true }
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm">
+                              {notification.title}
+                            </p>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-muted-foreground">
+                                by {notification.actor_name || "System"}
+                              </p>
+                              <span className="text-xs text-muted-foreground">•</span>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(
+                                  new Date(notification.created_at),
+                                  { addSuffix: true }
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {!notification.is_read && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(notification.id);
+                                }}
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
                             )}
-                          </p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notification.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        {!notification.is_read && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              markAsRead(notification.id);
-                            }}
-                          >
-                            <Check className="h-3 w-3" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteNotification(notification.id);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
                       </div>
                     </div>
                   </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <TaskDetailDialog
         open={taskDialogOpen}

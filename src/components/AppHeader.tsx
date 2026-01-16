@@ -94,15 +94,14 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
         {/* Branding */}
         <div className={cn(
           "flex items-center gap-2 transition-all duration-300",
-          (isCompact || isFocusMode) ? "scale-90" : "scale-100",
-          isFocusMode ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"
+          (isCompact || isFocusMode) ? "scale-90" : "scale-100"
         )}>
           <img
             src="/bardbox-logo.png"
             alt="BardBox"
-            className="h-6 w-auto object-contain drop-shadow-sm"
+            className={cn("w-auto object-contain drop-shadow-sm dark:invert", isFocusMode ? "h-5" : "h-6")}
           />
-          <h1 className={cn("font-bold tracking-tight transition-colors flex items-center gap-1", isCompact ? "text-sm" : "text-base")}>
+          <h1 className={cn("font-bold tracking-tight transition-colors flex items-center gap-1", (isCompact || isFocusMode) ? "text-sm" : "text-base")}>
             TaskOPS<sup className="text-[8px] text-primary">™</sup>
           </h1>
         </div>

@@ -54,6 +54,34 @@ export const GrowthDashboard = () => {
 
 
 
+    // Keyboard shortcut for New Lead/Contact
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement;
+            if (
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.isContentEditable
+            ) {
+                return;
+            }
+
+            if (e.key.toLowerCase() === 'n') {
+                e.preventDefault();
+                if (activeTab === "pipeline") {
+                    setSelectedLead(null);
+                    setLeadDialogOpen(true);
+                } else if (activeTab === "contacts") {
+                    setSelectedContact(null);
+                    setContactDialogOpen(true);
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [activeTab]);
+
     const loadRates = async () => {
         const rates = await fetchExchangeRates();
         setExchangeRates(rates);

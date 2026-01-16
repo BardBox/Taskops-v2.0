@@ -24,6 +24,7 @@ import { DashboardCustomization, DashboardPreferences } from "./DashboardCustomi
 import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMultipleTasksTimeTracking, formatTimeTracking } from "@/hooks/useTaskTimeTracking";
+import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
@@ -116,9 +117,10 @@ interface TaskTableProps {
   onResetPreferences?: () => void;
   columnWidths?: ColumnWidths;
   onColumnWidthsChange?: (widths: ColumnWidths) => void;
+  isFocusMode?: boolean;
 }
 
-export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange, onResetPreferences, columnWidths: externalColumnWidths, onColumnWidthsChange }: TaskTableProps) => {
+export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColumns, canCreateTasks, onCreateTask, preferences, onPreferencesChange, onResetPreferences, columnWidths: externalColumnWidths, onColumnWidthsChange, isFocusMode = false }: TaskTableProps) => {
   const columns = visibleColumns ?? {
     date: true,
     client: true,
@@ -205,6 +207,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   const [viewMode, setViewMode] = useState<"table" | "cards" | "kanban" | "gantt">(isMobile ? "cards" : "table");
   const [notifiedTaskIds, setNotifiedTaskIds] = useState<Set<string>>(new Set());
   const [collaboratorsExpanded, setCollaboratorsExpanded] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   // Update view mode when mobile state changes
   useEffect(() => {
@@ -819,11 +822,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allTaskIds = new Set(filteredTasks.map(task => task.id));
-      setSelectedTaskIds(allTaskIds);
-    } else {
+    if (!checked) {
       setSelectedTaskIds(new Set());
+    } else {
+      toast.info("Mass selection is disabled. Please select tasks individually.");
     }
   };
 
@@ -850,9 +852,42 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     } else {
       toast.success(`${selectedTaskIds.size} task(s) deleted successfully`);
       setSelectedTaskIds(new Set());
+      setIsSelectionMode(false);
       fetchTasks();
     }
   };
+
+  // Keyboard Shortcuts for View Modes
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      switch (e.key) {
+        case "1":
+          setViewMode("table");
+          break;
+        case "2":
+          setViewMode("cards");
+          break;
+        case "3":
+          setViewMode("kanban");
+          break;
+        case "4":
+          setViewMode("gantt");
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const filteredTasks = getFilteredAndSortedTasks();
 
@@ -866,7 +901,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   return (
     <>
       {/* View Toggle and Bulk Actions Bar - Sticky */}
-      <div className="sticky top-[5.5rem] z-30 bg-background py-2 -mx-3 md:-mx-4 px-3 md:px-4 mb-2 flex items-center justify-between gap-2 md:gap-4 flex-wrap border-b border-border/30">
+      <div className={cn("z-30 bg-background py-2 flex items-center justify-between gap-2 md:gap-4 flex-wrap border-b border-border/30", isFocusMode ? "relative px-2 flex-none w-full" : "sticky top-[5.5rem] -mx-3 md:-mx-4 px-3 md:px-4 mb-2")}>
         {/* Mobile: Dropdown | Desktop: Button Grid */}
         {isMobile ? (
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
@@ -901,7 +936,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
             </SelectContent>
           </Select>
         ) : (
-          <div className="bg-muted/50 rounded-lg p-1 grid grid-cols-4 gap-1 w-full max-w-3xl">
+          <div className="bg-muted/50 rounded-lg p-1 grid grid-cols-4 gap-1 max-w-3xl">
             {viewModeOptions.map((option) => {
               const Icon = option.icon;
               return (
@@ -920,7 +955,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className={cn("flex items-center gap-2", isFocusMode && "mr-24")}>
           {canCreateTasks && onCreateTask && (
             <Button
               onClick={onCreateTask}
@@ -958,41 +993,57 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               onPreferencesChange={onPreferencesChange}
             />
           )}
-        </div>
-
-        {selectedTaskIds.size > 0 && userRole === "project_owner" && (
-          <div className="flex items-center gap-2 md:gap-3 bg-primary/5 border border-primary/20 rounded-lg px-3 md:px-4 py-2 animate-fade-in w-full md:w-auto">
-            <span className="text-xs md:text-sm font-medium">
-              {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
-            </span>
+          {(userRole === "project_manager" || userRole === "project_owner") && (
             <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDeleteSelected}
-              className="text-xs md:text-sm"
+              onClick={() => {
+                if (isSelectionMode && selectedTaskIds.size > 0) {
+                  handleDeleteSelected();
+                } else {
+                  if (isSelectionMode) {
+                    setIsSelectionMode(false);
+                    setSelectedTaskIds(new Set());
+                  } else {
+                    setIsSelectionMode(true);
+                    toast.info("Select tasks to delete");
+                  }
+                }
+              }}
+              size="icon"
+              className={cn(
+                "h-10 w-10 rounded-full transition-colors",
+                isSelectionMode && selectedTaskIds.size > 0
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg scale-105"
+                  : isSelectionMode
+                    ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    : "bg-background text-foreground border border-border hover:bg-muted"
+              )}
+              title={isSelectionMode ? (selectedTaskIds.size > 0 ? "Delete Selected" : "Cancel Selection") : "Delete Tasks"}
             >
-              <Trash2 className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Delete</span>
+              <Trash2 className="h-5 w-5" />
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Task Diary View */}
       {viewMode === "table" && (
-        <div className="rounded-lg border bg-card animate-fade-in relative group/scroll">
+        <div className={cn("rounded-lg border bg-card animate-fade-in relative group/scroll", isFocusMode && "h-full border-0 rounded-none shadow-none flex flex-col bg-background p-0 m-0")}>
           {/* Scroll edge indicators */}
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
-          <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-6 bg-gradient-to-r from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
-          <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-6 bg-gradient-to-l from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
-          <div className="overflow-auto max-h-[70vh]">
+          {!isFocusMode && (
+            <>
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
+              <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-6 bg-gradient-to-r from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
+              <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-6 bg-gradient-to-l from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
+            </>
+          )}
+          <div className={cn("overflow-auto custom-scrollbar scroll-smooth", isFocusMode ? "flex-1 max-h-none h-full" : "max-h-[70vh]")}>
             <Table className="table-fixed">
               <TableHeader className="sticky top-0 z-20 bg-card">
                 <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
-                  {userRole === "project_owner" && (
+                  {isSelectionMode && (userRole === "project_owner" || userRole === "project_manager") && (
                     <TableHead className="w-12 bg-card">
                       <Checkbox
-                        checked={selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0}
+                        checked={selectedTaskIds.size > 0}
                         onCheckedChange={handleSelectAll}
                       />
                     </TableHead>
@@ -1205,7 +1256,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       className={`cursor-pointer transition-all group ${highlightClass}`}
                       onClick={() => handleTaskClick(task.id)}
                     >
-                      {userRole === "project_owner" && (
+                      {isSelectionMode && (userRole === "project_owner" || userRole === "project_manager") && (
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={selectedTaskIds.has(task.id)}
@@ -1468,118 +1519,127 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
             </Table>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* White Board View */}
-      {viewMode === "cards" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-          {filteredTasks.map((task, index) => {
-            const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
-            const highlightClass = getTaskHighlightClass(task, delayDays);
-            return (
-              <div
-                key={task.id}
-                style={{
-                  animationDelay: `${index * 50}ms`,
-                  animationFillMode: 'both'
-                }}
-                className={`animate-fade-in-up rounded-lg ${highlightClass}`}
-              >
-                <TaskCard
-                  task={task}
-                  userRole={userRole}
-                  isSelected={selectedTaskIds.has(task.id)}
-                  isAppreciated={taskAppreciations.get(task.id)}
-                  statuses={
-                    userRole === "team_member"
-                      ? statuses.filter(s => ["Not Started", "In Progress", "Waiting for Approval"].includes(s.label))
-                      : statuses
-                  }
-                  urgencies={urgencies}
-                  onSelect={(checked) => handleSelectTask(task.id, checked)}
-                  onEdit={() => handleEditTask(task)}
-                  onClick={() => handleTaskClick(task.id)}
-                  onStatusChange={
-                    userRole === "team_member" && task.status && !canTeamMemberChangeStatus(task.status)
-                      ? undefined
-                      : (newStatus) => handleStatusChange(task.id, newStatus)
-                  }
-                  onUrgencyChange={userRole !== "team_member" ? (newUrgency) => handleUrgencyChange(task.id, newUrgency) : undefined}
-                  onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
-                  onSubmit={() => {
-                    setSelectedTaskForSubmit(task);
-                    setSubmitDialogOpen(true);
+      {
+        viewMode === "cards" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+            {filteredTasks.map((task, index) => {
+              const delayDays = calculateDelay(task.deadline, task.actual_delivery, task.status);
+              const highlightClass = getTaskHighlightClass(task, delayDays);
+              return (
+                <div
+                  key={task.id}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                    animationFillMode: 'both'
                   }}
-                  onNotesClick={() => {
-                    setSelectedTask(task);
-                    setNotesDialogOpen(true);
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  className={`animate-fade-in-up rounded-lg ${highlightClass}`}
+                >
+                  <TaskCard
+                    task={task}
+                    userRole={userRole}
+                    isSelected={selectedTaskIds.has(task.id)}
+                    isAppreciated={taskAppreciations.get(task.id)}
+                    statuses={
+                      userRole === "team_member"
+                        ? statuses.filter(s => ["Not Started", "In Progress", "Waiting for Approval"].includes(s.label))
+                        : statuses
+                    }
+                    urgencies={urgencies}
+                    onSelect={(checked) => handleSelectTask(task.id, checked)}
+                    onEdit={() => handleEditTask(task)}
+                    onClick={() => handleTaskClick(task.id)}
+                    onStatusChange={
+                      userRole === "team_member" && task.status && !canTeamMemberChangeStatus(task.status)
+                        ? undefined
+                        : (newStatus) => handleStatusChange(task.id, newStatus)
+                    }
+                    onUrgencyChange={userRole !== "team_member" ? (newUrgency) => handleUrgencyChange(task.id, newUrgency) : undefined}
+                    onAppreciationToggle={(e) => toggleAppreciation(task.id, e)}
+                    onSubmit={() => {
+                      setSelectedTaskForSubmit(task);
+                      setSubmitDialogOpen(true);
+                    }}
+                    onNotesClick={() => {
+                      setSelectedTask(task);
+                      setNotesDialogOpen(true);
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )
+      }
 
       {/* Sticky Notes View */}
-      {viewMode === "kanban" && (
-        <KanbanBoard
-          tasks={filteredTasks}
-          userRole={userRole}
-          userId={userId}
-          statuses={statuses}
-          urgencies={urgencies}
-          selectedTaskIds={selectedTaskIds}
-          taskAppreciations={taskAppreciations}
-          onTaskClick={handleTaskClick}
-          onSelectTask={handleSelectTask}
-          onEditTask={handleEditTask}
-          onStatusChange={
-            userRole === "team_member"
-              ? (taskId: string, newStatus: string) => {
-                const task = tasks.find(t => t.id === taskId);
-                if (task && canTeamMemberChangeStatus(task.status)) {
-                  const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
-                  if (allowedStatuses.includes(newStatus)) {
-                    handleStatusChange(taskId, newStatus);
+      {
+        viewMode === "kanban" && (
+          <KanbanBoard
+            tasks={filteredTasks}
+            userRole={userRole}
+            userId={userId}
+            statuses={statuses}
+            urgencies={urgencies}
+            selectedTaskIds={selectedTaskIds}
+            taskAppreciations={taskAppreciations}
+            onTaskClick={handleTaskClick}
+            onSelectTask={handleSelectTask}
+            onEditTask={handleEditTask}
+            onStatusChange={
+              userRole === "team_member"
+                ? (taskId: string, newStatus: string) => {
+                  const task = tasks.find(t => t.id === taskId);
+                  if (task && canTeamMemberChangeStatus(task.status)) {
+                    const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
+                    if (allowedStatuses.includes(newStatus)) {
+                      handleStatusChange(taskId, newStatus);
+                    }
                   }
                 }
-              }
-              : handleStatusChange
-          }
-          onUrgencyChange={userRole !== "team_member" ? handleUrgencyChange : () => { }}
-          onAppreciationToggle={toggleAppreciation}
-          onSubmit={(taskData: any) => {
-            setSelectedTaskForSubmit(taskData);
-            setSubmitDialogOpen(true);
-          }}
-          onNotesClick={(taskData: any) => {
-            setSelectedTask(taskData);
-            setNotesDialogOpen(true);
-          }}
-        />
-      )}
+                : handleStatusChange
+            }
+            onUrgencyChange={userRole !== "team_member" ? handleUrgencyChange : () => { }}
+            onAppreciationToggle={toggleAppreciation}
+            onSubmit={(taskData: any) => {
+              setSelectedTaskForSubmit(taskData);
+              setSubmitDialogOpen(true);
+            }}
+            onNotesClick={(taskData: any) => {
+              setSelectedTask(taskData);
+              setNotesDialogOpen(true);
+            }}
+          />
+        )
+      }
 
       {/* Calendar View */}
-      {viewMode === "gantt" && (
-        <GanttChart
-          tasks={filteredTasks}
-          statuses={statuses}
-          onTaskClick={handleTaskClick}
-        />
-      )}
+      {
+        viewMode === "gantt" && (
+          <GanttChart
+            tasks={filteredTasks}
+            statuses={statuses}
+            onTaskClick={handleTaskClick}
+          />
+        )
+      }
 
-      {filteredTasks.length === 0 && (
-        <div className="text-center py-16 px-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-            <Trash2 className="h-8 w-8 text-muted-foreground" />
+      {
+        filteredTasks.length === 0 && (
+          <div className="text-center py-16 px-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+              <Trash2 className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No tasks found</h3>
+            <p className="text-muted-foreground">
+              Try adjusting your filters or create a new task to get started.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold mb-2">No tasks found</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your filters or create a new task to get started.
-          </p>
-        </div>
-      )}
+        )
+      }
 
       <TaskDialog
         open={dialogOpen}

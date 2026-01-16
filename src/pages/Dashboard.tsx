@@ -78,6 +78,28 @@ const Dashboard = () => {
     checkAuth();
   }, []);
 
+  // Keyboard support for New Task 'n'
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setDialogOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Cleanup debounce timer on unmount
   useEffect(() => {
     return () => {
@@ -220,21 +242,25 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className={cn("container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6 transition-all", isFocusMode && "max-w-full px-2 py-2 space-y-2")}>
-        {!isFocusMode && (
-          <div className="flex items-center justify-between">
-            <Breadcrumbs />
+      <div className={cn("transition-all duration-300", isFocusMode ? "w-screen h-screen overflow-hidden bg-background flex flex-col" : "container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6")}>
+        <div className={cn("flex items-center justify-between", isFocusMode && "hidden")}>
+          <Breadcrumbs />
+        </div>
+
+        {preferences.showMetrics && (
+          <div className={isFocusMode ? "hidden" : ""}>
+            <DashboardMetrics filters={filters} />
           </div>
         )}
 
-        {preferences.showMetrics && !isFocusMode && <DashboardMetrics filters={filters} />}
-
-        {preferences.showFilters && !isFocusMode && (
-          <GlobalFilters filters={filters} onFiltersChange={setFilters} />
+        {preferences.showFilters && (
+          <div className={isFocusMode ? "hidden" : ""}>
+            <GlobalFilters filters={filters} onFiltersChange={setFilters} />
+          </div>
         )}
 
-        {preferences.showQuickFilters && !isFocusMode && (
-          <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
+        {preferences.showQuickFilters && (
+          <div className={cn("sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30", isFocusMode && "hidden")}>
             <div className="flex items-center justify-center overflow-hidden">
               <QuickFilters
                 activeFilters={filters.quickFilter}
@@ -245,9 +271,10 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-        <div className="space-y-4 mt-2">
+        <div className={cn(isFocusMode ? "flex-1 w-full overflow-hidden min-h-0 flex flex-col" : "space-y-4 mt-2")}>
           <TaskTable
             filters={filters}
+            isFocusMode={isFocusMode}
             userRole={userRole}
             userId={user?.id || ""}
             visibleColumns={preferences.visibleColumns}

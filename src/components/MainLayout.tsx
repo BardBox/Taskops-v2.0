@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { TimeBar } from "@/components/layout/TimeBar";
@@ -13,10 +13,42 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userRole, setUserRole] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+
+  // Global Navigation Shortcuts
+  useEffect(() => {
+    const handleNavigationKeys = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        navigate("/dashboard");
+      }
+      if (e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        navigate("/growth");
+      }
+      if (e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        setSidebarCollapsed(prev => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleNavigationKeys);
+    return () => window.removeEventListener("keydown", handleNavigationKeys);
+  }, [navigate]);
 
   useEffect(() => {
     checkAuth();
@@ -33,12 +65,20 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
   }, [navigate]);
 
   const checkAuth = async () => {
+    // Optimistic check: if we already have a session in local storage (handled by supabase client), 
+    // we might not need to show loading?
+    // But getSession() is fast.
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      navigate("/auth");
+      if (location.pathname !== "/auth") { // Prevent redirection loop if already on auth
+        navigate("/auth");
+      }
       return;
     }
-    await fetchUserData(session.user.id);
+    // Only fetch user data if we don't have it or if it's a fresh mount
+    if (!userName || !userRole) {
+      await fetchUserData(session.user.id);
+    }
     setLoading(false);
   };
 
@@ -131,7 +171,7 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
   return (
     <div className="h-screen w-full overflow-hidden flex bg-background">
       {/* Sidebar Navigation */}
-      <Sidebar userRole={userRole} className="flex-shrink-0 sticky top-0 h-screen" />
+      <Sidebar userRole={userRole} className="flex-shrink-0 sticky top-0 h-screen" collapsed={sidebarCollapsed} onCollapseChange={setSidebarCollapsed} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden transition-all duration-300">
