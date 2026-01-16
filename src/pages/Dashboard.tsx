@@ -13,8 +13,6 @@ import { DashboardPreferences, DEFAULT_PREFERENCES } from "@/components/Dashboar
 import { Plus } from "lucide-react";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { MainLayout } from "@/components/MainLayout";
-import { GrowthDashboard } from "./GrowthDashboard";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 interface ColumnWidths {
@@ -220,60 +218,46 @@ const Dashboard = () => {
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
           <Breadcrumbs />
-          {userRole === "project_owner" && (
-            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'ops' | 'growth')} className="w-[400px]">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="ops">Ops Center</TabsTrigger>
-                <TabsTrigger value="growth">Growth Engine</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
         </div>
 
-        {viewMode === 'ops' ? (
-          <>
-            {preferences.showMetrics && <DashboardMetrics filters={filters} />}
+        {preferences.showMetrics && <DashboardMetrics filters={filters} />}
 
-            {preferences.showFilters && (
-              <GlobalFilters filters={filters} onFiltersChange={setFilters} />
-            )}
+        {preferences.showFilters && (
+          <GlobalFilters filters={filters} onFiltersChange={setFilters} />
+        )}
 
-            {preferences.showQuickFilters && (
-              <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
-                <div className="flex items-center justify-center overflow-hidden">
-                  <QuickFilters
-                    activeFilters={filters.quickFilter}
-                    onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })}
-                    userRole={userRole}
-                    userId={user?.id}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-4 mt-2">
-              <TaskTable
-                filters={filters}
+        {preferences.showQuickFilters && (
+          <div className="sticky top-14 z-40 bg-background py-2 md:py-3 -mx-3 md:-mx-4 px-3 md:px-4 border-b border-border/30">
+            <div className="flex items-center justify-center overflow-hidden">
+              <QuickFilters
+                activeFilters={filters.quickFilter}
+                onFiltersChange={(quickFilter) => setFilters({ ...filters, quickFilter })}
                 userRole={userRole}
-                userId={user?.id || ""}
-                visibleColumns={preferences.visibleColumns}
-                canCreateTasks={canCreateTasks}
-                onCreateTask={() => setDialogOpen(true)}
-                preferences={preferences}
-                onPreferencesChange={setPreferences}
-                onResetPreferences={handleResetPreferences}
-                columnWidths={columnWidths}
-                onColumnWidthsChange={handleColumnWidthsChange}
-                onDuplicate={(data) => {
-                  setDuplicateData(data);
-                  setDialogOpen(true);
-                }}
+                userId={user?.id}
               />
             </div>
-          </>
-        ) : (
-          <GrowthDashboard />
+          </div>
         )}
+
+        <div className="space-y-4 mt-2">
+          <TaskTable
+            filters={filters}
+            userRole={userRole}
+            userId={user?.id || ""}
+            visibleColumns={preferences.visibleColumns}
+            canCreateTasks={canCreateTasks}
+            onCreateTask={() => setDialogOpen(true)}
+            preferences={preferences}
+            onPreferencesChange={setPreferences}
+            onResetPreferences={handleResetPreferences}
+            columnWidths={columnWidths}
+            onColumnWidthsChange={handleColumnWidthsChange}
+            onDuplicate={(data) => {
+              setDuplicateData(data);
+              setDialogOpen(true);
+            }}
+          />
+        </div>
       </div>
 
       {dialogOpen && (

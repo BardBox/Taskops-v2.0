@@ -11,14 +11,14 @@ import {
 
 export const Breadcrumbs = () => {
   const location = useLocation();
-  
+
   // Don't show breadcrumbs on dashboard/homepage
   if (location.pathname === "/dashboard") {
     return null;
   }
 
   const pathSegments = location.pathname.split("/").filter(Boolean);
-  
+
   const getPageTitle = (segment: string) => {
     switch (segment) {
       case "analytics":
@@ -33,6 +33,8 @@ export const Breadcrumbs = () => {
         return "My Team";
       case "profile":
         return "My Profile";
+      case "growth":
+        return "Growth Engine";
       default:
         return segment.charAt(0).toUpperCase() + segment.slice(1);
     }
@@ -43,7 +45,7 @@ export const Breadcrumbs = () => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-          <Link to="/dashboard" className="flex items-center gap-1">
+            <Link to="/dashboard" className="flex items-center gap-1">
               <Home className="h-4 w-4" />
               <span>Dashboard</span>
             </Link>
@@ -52,7 +54,7 @@ export const Breadcrumbs = () => {
         {pathSegments.map((segment, index) => {
           const isLast = index === pathSegments.length - 1;
           const path = `/${pathSegments.slice(0, index + 1).join("/")}`;
-          
+
           return (
             <div key={segment} className="flex items-center gap-1.5">
               <BreadcrumbSeparator />

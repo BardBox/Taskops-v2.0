@@ -88,7 +88,7 @@ export const TimeTrackingProvider = ({ children }: { children: ReactNode }) => {
             const today = new Date().toISOString().split('T')[0];
 
             // Fetch ALL records for today
-            const { data, error } = await (supabase as any)
+            const { data, error } = await supabase
                 .from('daily_timesheets')
                 .select('*')
                 .eq('user_id', uid)

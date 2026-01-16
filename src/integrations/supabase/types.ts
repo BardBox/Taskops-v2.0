@@ -55,6 +55,98 @@ export type Database = {
           },
         ]
       }
+      daily_timesheets: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          status: "active" | "break" | "completed"
+          clock_in_time: string
+          clock_out_time: string | null
+          total_break_seconds: number
+          last_break_start: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          date?: string
+          status?: "active" | "break" | "completed"
+          clock_in_time?: string
+          clock_out_time?: string | null
+          total_break_seconds?: number
+          last_break_start?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          date?: string
+          status?: "active" | "break" | "completed"
+          clock_in_time?: string
+          clock_out_time?: string | null
+          total_break_seconds?: number
+          last_break_start?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_timesheets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      task_time_sessions: {
+        Row: {
+          id: string
+          task_id: string
+          user_id: string
+          started_at: string
+          ended_at: string | null
+          duration_seconds: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          user_id: string
+          started_at?: string
+          ended_at?: string | null
+          duration_seconds?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          task_id?: string
+          user_id?: string
+          started_at?: string
+          ended_at?: string | null
+          duration_seconds?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_time_sessions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_time_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       chat_reactions: {
         Row: {
           created_at: string

@@ -15,6 +15,8 @@ import { ContactDetailPanel } from "@/components/sales/ContactDetailPanel";
 import { SmartMetricCards } from "@/components/sales/SmartMetricCards";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
+import { MainLayout } from "@/components/MainLayout";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export const GrowthDashboard = () => {
     // Lead State
@@ -50,28 +52,7 @@ export const GrowthDashboard = () => {
     const navigate = useNavigate();
     const [userRole, setUserRole] = useState<string | null>(null);
 
-    const checkAccess = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
 
-        const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", session.user.id)
-            .single();
-
-        const role = roleData?.role;
-        setUserRole(role);
-
-        // Roles allowed to access Growth Engine
-        const allowedRoles = ["project_owner", "business_head", "sales_team"];
-        const isAllowed = allowedRoles.includes(role);
-
-        if (role && !isAllowed) {
-            toast.error("You do not have access to the Growth Engine");
-            navigate("/dashboard?view=ops");
-        }
-    };
 
     const loadRates = async () => {
         const rates = await fetchExchangeRates();
@@ -136,7 +117,7 @@ export const GrowthDashboard = () => {
 
         if (data) {
             const map: Record<string, string> = {};
-            data.forEach((item: any) => {
+            data.forEach((item: { user_id: string; profiles: { full_name: string } | null }) => {
                 if (item.profiles && item.profiles.full_name) {
                     map[item.user_id] = item.profiles.full_name;
                 }
@@ -146,12 +127,35 @@ export const GrowthDashboard = () => {
     };
 
     useEffect(() => {
+        const checkAccess = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+
+            const { data: roleData } = await supabase
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", session.user.id)
+                .single();
+
+            const role = roleData?.role;
+            setUserRole(role);
+
+            // Roles allowed to access Growth Engine
+            const allowedRoles = ["project_owner", "business_head", "sales_team"];
+            const isAllowed = allowedRoles.includes(role);
+
+            if (role && !isAllowed) {
+                toast.error("You do not have access to the Growth Engine");
+                navigate("/dashboard?view=ops");
+            }
+        };
+
         checkAccess();
         fetchLeads();
         fetchContacts();
         loadRates();
         fetchUsers();
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         if (selectedLeadForPanel) {
@@ -241,13 +245,13 @@ export const GrowthDashboard = () => {
             fetchContacts();
             // Also refresh leads as some might have missing contacts now (or CASCADE handled it)
             fetchLeads();
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error deleting contact:', error);
             // Check for Foreign Key violation (Postgres code 23503)
-            if (error.code === '23503') {
+            if ((error as any).code === '23503') {
                 toast.error("Cannot delete contact because it is linked to active leads. Please archive or unlink it first.");
             } else {
-                toast.error("Failed to delete contact: " + (error.message || "Unknown error"));
+                toast.error("Failed to delete contact: " + ((error as any).message || "Unknown error"));
             }
         } finally {
             setDeleteContactDialogOpen(false);
@@ -290,161 +294,166 @@ export const GrowthDashboard = () => {
     };
 
     return (
-        <div className="space-y-6 relative" onClick={closePanels}>
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
-                    <p className="text-muted-foreground">Manage your pipeline, leads, and contacts.</p>
+        <MainLayout>
+            <div className="space-y-6 relative p-4 md:p-8 min-h-full" onClick={closePanels}>
+
+                <Breadcrumbs />
+
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
+                        <p className="text-muted-foreground">Manage your pipeline, leads, and contacts.</p>
+                    </div>
+                    {activeTab === "pipeline" ? (
+                        <Button onClick={handleAddLead}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Lead
+                        </Button>
+                    ) : (
+                        <Button onClick={handleAddContact}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Contact
+                        </Button>
+                    )}
                 </div>
-                {activeTab === "pipeline" ? (
-                    <Button onClick={handleAddLead}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Lead
-                    </Button>
-                ) : (
-                    <Button onClick={handleAddContact}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Contact
-                    </Button>
-                )}
-            </div>
 
-            <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
+                <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-                    <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pipeline" className="space-y-4">
-                    <LeadTable
-                        leads={leads}
-                        onEdit={handleEditLead}
-                        onDelete={confirmDeleteLead}
-                        onAddToCalendar={() => toast.info("Calendar integration coming soon")}
-                        onLeadClick={handleLeadClick}
-                        userMap={userMap}
-                    />
-                </TabsContent>
-                <TabsContent value="contacts" className="space-y-4">
-                    <ContactTable
-                        contacts={contacts}
-                        onEdit={handleEditContact}
-                        onDelete={confirmDeleteContact}
-                        onContactClick={handleContactClick}
-                    />
-                </TabsContent>
-            </Tabs>
-
-            <Sheet
-                open={!!selectedLeadForPanel || !!selectedContactForPanel}
-                onOpenChange={(open) => !open && closePanels()}
-                modal={false}
-            >
-                <SheetContent
-                    side="right"
-                    className="p-0 border-l border-slate-200 w-[450px] sm:max-w-[450px]"
-                    overlayClassName="hidden"
-                    onInteractOutside={(e) => e.preventDefault()} // Prevent auto-closing by Radix, we handle it manually via click
-                    onClick={(e) => e.stopPropagation()} // Prevent React event bubbling to the parent div which closes panels
-                >
-                    {selectedLeadForPanel ? (
-                        <SalesOpsPanel
-                            lead={selectedLeadForPanel}
-                            events={activities}
-                            onClose={() => setSelectedLeadForPanel(null)}
-                            onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <TabsList>
+                        <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+                        <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="pipeline" className="space-y-4">
+                        <LeadTable
+                            leads={leads}
                             onEdit={handleEditLead}
-                            onViewContact={handleViewContact}
-                            onMarkWon={async (lead) => {
-                                try {
-                                    const { error } = await supabase
-                                        .from('leads')
-                                        .update({ status: 'Won' })
-                                        .eq('id', lead.id);
-
-                                    if (error) throw error;
-
-                                    toast.success("Lead marked as Won!");
-                                    fetchLeads(); // Refresh leads
-                                    // Refresh the specific panel lead if it's the one open (it is)
-                                    setSelectedLeadForPanel({ ...lead, status: 'Won' });
-                                } catch (error) {
-                                    console.error("Error marking lead as won:", error);
-                                    toast.error("Failed to update lead status");
-                                }
-                            }}
+                            onDelete={confirmDeleteLead}
+                            onAddToCalendar={() => toast.info("Calendar integration coming soon")}
+                            onLeadClick={handleLeadClick}
                             userMap={userMap}
                         />
-                    ) : selectedContactForPanel ? (
-                        <ContactDetailPanel
-                            contact={selectedContactForPanel}
-                            onClose={() => setSelectedContactForPanel(null)}
-                            onEdit={(contact) => {
-                                handleEditContact(contact);
-                            }}
-                            onLeadClick={(lead) => {
-                                // Switch to pipeline view and open the lead panel
-                                setActiveTab("pipeline");
-                                setSelectedContactForPanel(null);
-                                setSelectedLeadForPanel(lead);
-                            }}
+                    </TabsContent>
+                    <TabsContent value="contacts" className="space-y-4">
+                        <ContactTable
+                            contacts={contacts}
+                            onEdit={handleEditContact}
+                            onDelete={confirmDeleteContact}
+                            onContactClick={handleContactClick}
                         />
-                    ) : null}
-                </SheetContent>
-            </Sheet>
+                    </TabsContent>
+                </Tabs>
 
-            <LeadDialog
-                open={leadDialogOpen}
-                onOpenChange={setLeadDialogOpen}
-                lead={selectedLead}
-                onSuccess={fetchLeads}
-            />
+                <Sheet
+                    open={!!selectedLeadForPanel || !!selectedContactForPanel}
+                    onOpenChange={(open) => !open && closePanels()}
+                    modal={false}
+                >
+                    <SheetContent
+                        side="right"
+                        className="p-0 border-l border-slate-200 w-[450px] sm:max-w-[450px]"
+                        overlayClassName="hidden"
+                        onInteractOutside={(e) => e.preventDefault()} // Prevent auto-closing by Radix, we handle it manually via click
+                        onClick={(e) => e.stopPropagation()} // Prevent React event bubbling to the parent div which closes panels
+                    >
+                        {selectedLeadForPanel ? (
+                            <SalesOpsPanel
+                                lead={selectedLeadForPanel}
+                                events={activities}
+                                onClose={() => setSelectedLeadForPanel(null)}
+                                onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
+                                onEdit={handleEditLead}
+                                onViewContact={handleViewContact}
+                                onMarkWon={async (lead) => {
+                                    try {
+                                        const { error } = await supabase
+                                            .from('leads')
+                                            .update({ status: 'Won' })
+                                            .eq('id', lead.id);
 
-            <ContactDialog
-                open={contactDialogOpen}
-                onOpenChange={setContactDialogOpen}
-                contact={selectedContact}
-                onSuccess={() => {
-                    fetchContacts();
-                    fetchLeads(); // Refresh leads in case contact details changed
-                }}
-            />
+                                        if (error) throw error;
 
-            <AlertDialog open={deleteLeadDialogOpen} onOpenChange={setDeleteLeadDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the lead.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete Lead
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                                        toast.success("Lead marked as Won!");
+                                        fetchLeads(); // Refresh leads
+                                        // Refresh the specific panel lead if it's the one open (it is)
+                                        setSelectedLeadForPanel({ ...lead, status: 'Won' });
+                                    } catch (error) {
+                                        console.error("Error marking lead as won:", error);
+                                        toast.error("Failed to update lead status");
+                                    }
+                                }}
+                                userMap={userMap}
+                            />
+                        ) : selectedContactForPanel ? (
+                            <ContactDetailPanel
+                                contact={selectedContactForPanel}
+                                onClose={() => setSelectedContactForPanel(null)}
+                                onEdit={(contact) => {
+                                    handleEditContact(contact);
+                                }}
+                                onLeadClick={(lead) => {
+                                    // Switch to pipeline view and open the lead panel
+                                    setActiveTab("pipeline");
+                                    setSelectedContactForPanel(null);
+                                    setSelectedLeadForPanel(lead);
+                                }}
+                            />
+                        ) : null}
+                    </SheetContent>
+                </Sheet>
 
-            <AlertDialog open={deleteContactDialogOpen} onOpenChange={setDeleteContactDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the contact.
-                            Any leads associated with this contact might also be affected.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete Contact
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </div>
+                <LeadDialog
+                    open={leadDialogOpen}
+                    onOpenChange={setLeadDialogOpen}
+                    lead={selectedLead}
+                    onSuccess={fetchLeads}
+                />
+
+                <ContactDialog
+                    open={contactDialogOpen}
+                    onOpenChange={setContactDialogOpen}
+                    contact={selectedContact}
+                    onSuccess={() => {
+                        fetchContacts();
+                        fetchLeads(); // Refresh leads in case contact details changed
+                    }}
+                />
+
+                <AlertDialog open={deleteLeadDialogOpen} onOpenChange={setDeleteLeadDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the lead.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete Lead
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog open={deleteContactDialogOpen} onOpenChange={setDeleteContactDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the contact.
+                                Any leads associated with this contact might also be affected.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete Contact
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </MainLayout>
     );
 };

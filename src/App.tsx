@@ -17,6 +17,7 @@ import AccountSettings from "./pages/AccountSettings";
 import Preferences from "./pages/Preferences";
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./pages/admin/AdminLayout";
+import { GrowthDashboard } from "./pages/GrowthDashboard";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AdminOverview from "./pages/admin/Overview";
 import AdminUsers from "./pages/admin/Users";
@@ -53,6 +54,7 @@ function AnimatedRoutes() {
         <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+        <Route path="/growth" element={<PageTransition><GrowthDashboard /></PageTransition>} />
         <Route path="/analytics" element={<PageTransition><Analytics /></PageTransition>} />
         <Route path="/analytics/overview" element={<PageTransition><Overview /></PageTransition>} />
         <Route path="/analytics/personal" element={<PageTransition><PersonalAnalytics /></PageTransition>} />

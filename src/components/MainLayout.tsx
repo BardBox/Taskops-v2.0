@@ -77,19 +77,32 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
     const handleScroll = () => {
       if (mainRef.current) {
         const currentScrollTop = mainRef.current.scrollTop;
+        const lastScroll = lastScrollTop.current;
+        const delta = currentScrollTop - lastScroll; // Positive = Down, Negative = Up
 
-        // Always expand at the very top
+        // Constants for Asymmetric Hysteresis
+        const SCROLL_DOWN_THRESHOLD = 0;   // Immediate triggering for any downward scroll
+        const SCROLL_UP_THRESHOLD = 40;    // Significant upward scroll required to expand (prevents flicker)
+
+        // Always expand at the very top (buffer of 20px)
         if (currentScrollTop < 20) {
           setIsCompact(false);
+          lastScrollTop.current = currentScrollTop;
+          return;
         }
-        // Scroll Down -> Compact
-        else if (currentScrollTop > lastScrollTop.current) {
+
+        // Logic:
+        // 1. If scrolling DOWN significant amount -> Compact
+        if (delta > SCROLL_DOWN_THRESHOLD) {
           setIsCompact(true);
         }
-        // Scroll Up -> Expand
-        else if (currentScrollTop < lastScrollTop.current - 5) { // Small threshold to prevent jitter
+        // 2. If scrolling UP significant amount -> Expand
+        else if (delta < -SCROLL_UP_THRESHOLD) {
           setIsCompact(false);
         }
+
+        // Note: If delta is between -50 and 10, do NOTHING. 
+        // This 'dead zone' filters out jitter and momentum bounces.
 
         lastScrollTop.current = currentScrollTop;
       }
@@ -105,7 +118,7 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
         mainElement.removeEventListener("scroll", handleScroll);
       }
     };
-  }, []);
+  }, [loading]);
 
   if (loading) {
     return (
@@ -121,7 +134,7 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
       <Sidebar userRole={userRole} className="flex-shrink-0 sticky top-0 h-screen" />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden transition-all duration-300">
         <AppHeader
           userRole={userRole}
           userName={userName}
@@ -133,14 +146,14 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
         {/* TimeBar Container - Slides in/out based on compact mode */}
         <div className={cn(
           "transition-all duration-300 ease-in-out overflow-hidden",
-          isCompact ? "max-h-0 opacity-0 -translate-y-full" : "max-h-20 opacity-100 translate-y-0"
+          isCompact ? "max-h-0 opacity-0 -translate-y-full" : "max-h-24 opacity-100 translate-y-0"
         )}>
           <TimeBar />
         </div>
 
         <main
           ref={mainRef}
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto scroll-smooth"
         >
           {children}
         </main>
