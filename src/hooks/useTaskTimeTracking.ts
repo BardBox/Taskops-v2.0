@@ -118,6 +118,7 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
   }, [fetchTimeTracking]);
 
   // Subscribe to real-time updates
+  // Subscribe to real-time updates for TASK TIME TRACKING
   useEffect(() => {
     if (!taskId) return;
 
@@ -141,6 +142,35 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
       supabase.removeChannel(channel);
     };
   }, [taskId, fetchTimeTracking]);
+
+  // GLOBAL SUBSCRIPTION: Listen to user_work_sessions
+  // If the global session pauses/stops, we need to reflect that in task timers immediately
+  useEffect(() => {
+    if (!userId) return;
+
+    const globalChannel = supabase
+      .channel(`global-session-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_work_sessions",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          // When global session changes, re-fetch task tracking
+          // The DB trigger sync_task_timers_with_work_session should have updated the task rows
+          // so fetching again will show the paused state.
+          fetchTimeTracking();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(globalChannel);
+    };
+  }, [userId, fetchTimeTracking]);
 
   // Get total time for a specific user
   const getUserTotalTime = useCallback((uid: string): number => {

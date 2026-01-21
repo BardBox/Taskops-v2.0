@@ -25,6 +25,7 @@ import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMultipleTasksTimeTracking, formatTimeTracking } from "@/hooks/useTaskTimeTracking";
 import { cn } from "@/lib/utils";
+import { TaskTimeDisplay } from "./TaskTimeDisplay";
 import { TaskTimer } from "./TaskTimer";
 
 interface Task {
@@ -753,6 +754,8 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     return false;
   };
 
+
+
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     if (!["project_manager", "project_owner", "team_member"].includes(userRole)) {
       toast.error("You do not have permission to change status");
@@ -765,6 +768,22 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         toast.error("You can only update your own tasks");
         return;
       }
+    }
+
+    // TIME TRACKING 2.0: Force Stop Failsafe
+    // Ensure that if status changes to anything other than "In Progress", we explicitly stop the timer
+    // This assumes the current user is the one tracking (or we are stopping for the assignee)
+    // The DB trigger handles the assignee, but this acts as a frontend-initiated failsafe for the current user session
+    if (newStatus !== "In Progress") {
+      // We don't await this to avoid blocking the UI update
+      supabase
+        .from("task_time_tracking")
+        .update({ is_running: false, paused_at: new Date().toISOString() })
+        .eq("task_id", taskId)
+        .eq("user_id", userId) // Stop for the current user
+        .then(({ error }) => {
+          if (error) console.error("Force stop timer failed", error);
+        });
     }
 
     // Optimistically update local state
@@ -1458,21 +1477,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       )}
                       {columns.time && (
                         <TableCell>
-                          {(() => {
-                            const records = getTaskRecords(task.id);
-                            const totalSeconds = getTaskTotalTime(task.id);
-                            const activeStartTimes = records
-                              .filter((r: any) => r.is_running && r.started_at)
-                              .map((r: any) => r.started_at as string);
-
-                            return (
-                              <TaskTimer
-                                totalSecondsSnapshot={totalSeconds}
-                                runningStartTimes={activeStartTimes}
-                                taskStatus={task.status}
-                              />
-                            );
-                          })()}
+                          <TaskTimeDisplay taskId={task.id} />
                         </TableCell>
                       )}
                       {columns.status && (
@@ -1487,7 +1492,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                               options={
                                 userRole === "team_member"
                                   ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
-                                  : statuses
+                                  : userRole === "project_manager"
+                                    ? statuses.filter(s => !["Not Started", "In Progress", "In Approval"].includes(s.label))
+                                    : statuses
                               }
                               onChange={(value) => handleStatusChange(task.id, value)}
                               disabled={!canEdit(task)}
