@@ -45,6 +45,7 @@ interface TaskDialogProps {
     reference_link_3?: string;
     notes?: string;
     reference_image?: string;
+    estimated_minutes?: number;
   };
 }
 
@@ -60,32 +61,10 @@ const taskSchema = z.object({
   reference_link_2: z.string().url().optional().or(z.literal("")),
   reference_link_3: z.string().url().optional().or(z.literal("")),
   notes: z.string().max(1000).optional(),
+  estimated_minutes: z.number().optional(),
 });
 
 export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplicateData, onTaskSaved }: TaskDialogProps) => {
-  const [loading, setLoading] = useState(false);
-  const [clients, setClients] = useState<any[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [currentUserRole, setCurrentUserRole] = useState<string>("");
-  const [referenceImage, setReferenceImage] = useState<File | null>(null);
-  const [existingImageUrl, setExistingImageUrl] = useState<string>("");
-  const [imagePreview, setImagePreview] = useState<string>("");
-  const [collaborators, setCollaborators] = useState<any[]>([]);
-  const [assignedBy, setAssignedBy] = useState<any>(null);
-  const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
-
-  // New State for List UIs
-  const [referenceLinks, setReferenceLinks] = useState<string[]>([]);
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [newLink, setNewLink] = useState("");
-  const [showCollaboratorInput, setShowCollaboratorInput] = useState(false);
-
-  const { statuses, urgencies, isLoading: isLoadingSettings } = useStatusUrgency();
-
-  const effectiveRole = userRole || currentUserRole;
-  const canEditNotes = effectiveRole === "project_manager" || effectiveRole === "project_owner";
 
   const [formData, setFormData] = useState({
     task_name: "",
@@ -99,7 +78,29 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
     reference_link_2: "",
     reference_link_3: "",
     notes: "",
+    estimated_minutes: 0,
   });
+
+  const { statuses, urgencies, isLoading: isLoadingSettings } = useStatusUrgency();
+  const [currentUserRole, setCurrentUserRole] = useState(userRole || "");
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [clients, setClients] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
+  const [showCollaboratorInput, setShowCollaboratorInput] = useState(false);
+  const [assignedBy, setAssignedBy] = useState<any>(null);
+  const [referenceLinks, setReferenceLinks] = useState<string[]>([]);
+  const [newLink, setNewLink] = useState("");
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [referenceImage, setReferenceImage] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Allow note editing if user is admin, manager, assignee, or creator
+  const canEditNotes = currentUserRole === "admin" || currentUserRole === "manager" || (currentUserId && (currentUserId === task?.assignee_id || currentUserId === task?.assigned_by_id));
 
   useEffect(() => {
     if (open) {
@@ -135,6 +136,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
             reference_link_2: task.reference_link_2 || "",
             reference_link_3: task.reference_link_3 || "",
             notes: task.notes || "",
+            estimated_minutes: task.estimated_minutes || 0,
           });
 
           // Populate reference links array
@@ -178,6 +180,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
               reference_link_2: duplicateData.reference_link_2 || "",
               reference_link_3: duplicateData.reference_link_3 || "",
               notes: duplicateData.notes || "",
+              estimated_minutes: duplicateData.estimated_minutes || 0,
             });
 
             if (duplicateData.client_id) {
@@ -202,6 +205,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
               reference_link_2: "",
               reference_link_3: "",
               notes: "",
+              estimated_minutes: 0,
             });
 
             if (defaultProject?.client_id) {
@@ -559,6 +563,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
           reference_link_2: "",
           reference_link_3: "",
           notes: "",
+          estimated_minutes: 0,
         });
       } else {
         onOpenChange(false);
@@ -604,6 +609,25 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                   placeholder="Enter a clear, descriptive task name"
                   className="text-base"
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="estimated_hours" className="text-sm font-medium">Estimated Duration (Hours)</Label>
+                <Input
+                  id="estimated_hours"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={formData.estimated_minutes ? formData.estimated_minutes / 60 : ""}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setFormData({
+                      ...formData,
+                      estimated_minutes: isNaN(val) ? 0 : Math.round(val * 60)
+                    });
+                  }}
+                  placeholder="e.g. 2.5"
                 />
               </div>
 
@@ -712,6 +736,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                             type="button"
                             onClick={() => handleRemoveCollaborator(collab.id)}
                             className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                            aria-label="Remove collaborator"
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
@@ -733,6 +758,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                               type="button"
                               onClick={() => setSelectedCollaborators(selectedCollaborators.filter(id => id !== userId))}
                               className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                              aria-label="Remove collaborator"
                             >
                               <X className="h-3.5 w-3.5" />
                             </button>
@@ -901,6 +927,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                         type="button"
                         onClick={() => handleRemoveLink(idx)}
                         className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                        aria-label="Remove reference link"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -929,7 +956,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                         className="flex-1"
                       />
                       <Button type="button" onClick={handleAddLink} size="sm">Add</Button>
-                      <Button type="button" variant="ghost" onClick={() => setShowLinkInput(false)} size="icon"><X className="h-4 w-4" /></Button>
+                      <Button type="button" variant="ghost" onClick={() => setShowLinkInput(false)} size="icon" aria-label="Cancel"><X className="h-4 w-4" /></Button>
                     </div>
                   )}
                 </div>
@@ -984,6 +1011,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                       size="icon"
                       className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={handleRemoveFile}
+                      aria-label="Remove file"
                     >
                       <X className="h-3 w-3" />
                     </Button>

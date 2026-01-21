@@ -1,4 +1,4 @@
-```
+
 import React from "react";
 import { TimerPieChart } from "./TimerPieChart";
 import { formatTimeTrackingFull, formatTimeTracking, useTaskTimeTracking } from "@/hooks/useTaskTimeTracking";
@@ -9,9 +9,10 @@ interface TaskTimeDisplayProps {
     taskId: string;
     className?: string;
     showLabel?: boolean;
+    budgetSeconds?: number;
 }
 
-export const TaskTimeDisplay = ({ taskId, className, showLabel = true }: TaskTimeDisplayProps) => {
+export const TaskTimeDisplay = ({ taskId, className, showLabel = true, budgetSeconds = 3600 }: TaskTimeDisplayProps) => {
     const { getTotalTime, isAnyoneTracking } = useTaskTimeTracking({ taskId });
 
     const totalSeconds = getTotalTime();
@@ -19,7 +20,7 @@ export const TaskTimeDisplay = ({ taskId, className, showLabel = true }: TaskTim
 
     // TODO: Fetch actual budget from task/project if available. 
     // For now using 2 hours (7200s) as a visual standard or 0 to show just presence.
-    const budgetSeconds = 7200;
+
 
     const formattedTime = formatTimeTrackingFull(totalSeconds, isRunning);
     // Short format for inside the donut (e.g. 1:30)

@@ -25,12 +25,12 @@ interface TimeTrackingRecord {
 // Local calculation function to avoid import issues
 const calcTotalTime = (record: TimeTrackingRecord): number => {
   let totalSeconds = record.total_seconds;
-  
+
   if (record.tracking_status === 'active' && record.last_active_at) {
     const elapsed = Math.floor((Date.now() - new Date(record.last_active_at).getTime()) / 1000);
     totalSeconds += elapsed;
   }
-  
+
   return totalSeconds;
 };
 
@@ -93,7 +93,7 @@ export function TimeTrackingBadge({
   // Get status icon
   const StatusIcon = () => {
     if (!showStatus) return null;
-    
+
     const hasActive = records.some(r => r.tracking_status === 'active');
     const hasPaused = records.some(r => r.tracking_status === 'paused');
     const hasStopped = records.some(r => r.tracking_status === 'stopped');
@@ -198,18 +198,18 @@ export function TimeTrackingBadge({
             <p className="text-2xl font-bold">{fullTimeDisplay}</p>
           </div>
         </div>
-        {showStatus && (
+        {showStatus && (records.some(r => ['active', 'paused', 'stopped'].includes(r.tracking_status))) && (
           <div className="flex items-center gap-1.5">
             <StatusIcon />
             <span className="text-xs text-muted-foreground capitalize">
               {records.some(r => r.tracking_status === 'active') ? 'Active' :
-               records.some(r => r.tracking_status === 'paused') ? 'Paused' :
-               records.some(r => r.tracking_status === 'stopped') ? 'Completed' : 'Idle'}
+                records.some(r => r.tracking_status === 'paused') ? 'Paused' :
+                  'Completed'}
             </span>
           </div>
         )}
       </div>
-      
+
       {records.length > 1 && (
         <div className="mt-3 pt-3 border-t space-y-2">
           <p className="text-xs font-medium text-muted-foreground">By contributor</p>

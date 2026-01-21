@@ -57,6 +57,7 @@ interface Task {
   assigned_by: { full_name: string; avatar_url: string | null } | null;
   task_comments?: Array<{ message: string; created_at: string }>;
   collaborators?: Array<{ user_id: string; profiles: { full_name: string; avatar_url: string | null } }>;
+  estimated_minutes?: number;
 }
 
 interface VisibleColumns {
@@ -1477,7 +1478,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       )}
                       {columns.time && (
                         <TableCell>
-                          <TaskTimeDisplay taskId={task.id} />
+                          <TaskTimeDisplay
+                            taskId={task.id}
+                            budgetSeconds={task.estimated_minutes ? task.estimated_minutes * 60 : 3600}
+                          />
                         </TableCell>
                       )}
                       {columns.status && (
