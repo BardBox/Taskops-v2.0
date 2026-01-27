@@ -193,6 +193,9 @@ export const TimeTrackingProvider = ({ children }: { children: ReactNode }) => {
                 sessionId: data.id,
             }));
 
+            // Auto-start active tasks
+            await startInProgressTasks(userId);
+
             toast.success("Clocked in successfully");
         } catch (error: any) {
             console.error("Clock in error:", error);
@@ -290,6 +293,49 @@ export const TimeTrackingProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const startInProgressTasks = async (uid: string) => {
+        try {
+            // 1. Find tasks assigned to user that are "In Progress"
+            const { data: tasks, error: tasksError } = await supabase
+                .from('tasks')
+                .select('id')
+                .eq('assignee_id', uid)
+                .eq('status', 'In Progress');
+
+            if (tasksError) throw tasksError;
+            if (!tasks || tasks.length === 0) return;
+
+            // 2. Resume tracking for these tasks
+            // We use the ID to update task_time_tracking
+            const taskIds = tasks.map(t => t.id);
+
+            // We need to upsert or update. 
+            // Update is safer if record exists. If not, maybe we shouldn't auto-start? 
+            // Requirement says "resume... start the task timer". 
+            // Usually tracking records exist. Let's try update first.
+
+            // To ensure we don't overwrite if it's somehow already running (redundant but safe)
+            const { error: updateError } = await supabase
+                .from('task_time_tracking')
+                .update({
+                    is_running: true,
+                    started_at: new Date().toISOString(),
+                    paused_at: null // Clear pause
+                })
+                .in('task_id', taskIds)
+                .eq('user_id', uid);
+
+            if (updateError) {
+                console.error("Failed to auto-resume tasks", updateError);
+            } else {
+                toast.info(`Resumed ${tasks.length} active task(s)`);
+            }
+
+        } catch (error) {
+            console.error("Error auto-starting tasks:", error);
+        }
+    };
+
     const resumeWork = async () => {
         if (!state.sessionId || !userId || !state.lastBreakStart) return;
 
@@ -315,6 +361,9 @@ export const TimeTrackingProvider = ({ children }: { children: ReactNode }) => {
                 lastBreakStart: null,
                 totalBreakSeconds: newTotalBreak,
             }));
+
+            // Auto-resume tasks
+            await startInProgressTasks(userId);
 
             toast.success("Work resumed");
         } catch (error) {

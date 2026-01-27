@@ -684,6 +684,47 @@ export function TaskDetailDialog({
       if (error) throw error;
       setTask({ ...task, status: newStatus });
 
+      const now = new Date().toISOString();
+
+      // START/RESUME condition
+      if (newStatus === "In Progress") {
+        try {
+          const { data: existingRecord } = await supabase
+            .from('task_time_tracking')
+            .select('*')
+            .eq('task_id', task.id)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (existingRecord) {
+            await supabase
+              .from('task_time_tracking')
+              .update({
+                tracking_status: 'active',
+                is_running: true,
+                last_active_at: now,
+                paused_at: null,
+                stopped_at: null
+              })
+              .eq('id', existingRecord.id);
+          } else {
+            await supabase
+              .from('task_time_tracking')
+              .insert({
+                task_id: task.id,
+                user_id: userId,
+                tracking_status: 'active',
+                is_running: true,
+                last_active_at: now,
+                total_seconds: 0
+              });
+          }
+          toast.success("Timer started");
+        } catch (error) {
+          console.error("Error starting timer:", error);
+        }
+      }
+
       // Handle timer logic based on status
       const { data: activeTimers } = await supabase
         .from('task_time_tracking')

@@ -243,7 +243,7 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className={cn("transition-all duration-300", isFocusMode ? "w-screen h-screen overflow-hidden bg-background flex flex-col" : "container mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6")}>
+      <div className={cn("transition-all duration-300", isFocusMode ? "w-screen h-screen overflow-hidden bg-background flex flex-col" : "mx-auto w-full max-w-[1920px] px-4 sm:px-8 py-4 sm:py-6 space-y-4")}>
         <div className={cn("flex items-center justify-between", isFocusMode && "hidden")}>
           <Breadcrumbs />
         </div>

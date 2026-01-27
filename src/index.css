@@ -69,7 +69,7 @@ All colors MUST be HSL.
     --status-periwinkle-foreground: 220 50% 25%;
     --status-ice-blue: 190 60% 90%;
     --status-ice-blue-foreground: 190 50% 20%;
-    
+
     /* Soft Greens */
     --status-mint: 150 60% 88%;
     --status-mint-foreground: 150 50% 20%;
@@ -79,7 +79,7 @@ All colors MUST be HSL.
     --status-seafoam-foreground: 165 50% 20%;
     --status-pistachio: 140 50% 88%;
     --status-pistachio-foreground: 140 50% 20%;
-    
+
     /* Soft Yellows/Oranges */
     --status-cream: 45 80% 92%;
     --status-cream-foreground: 45 50% 20%;
@@ -89,7 +89,7 @@ All colors MUST be HSL.
     --status-apricot-foreground: 25 60% 20%;
     --status-buttercup: 50 75% 88%;
     --status-buttercup-foreground: 50 50% 20%;
-    
+
     /* Soft Pinks/Roses */
     --status-blush: 340 80% 90%;
     --status-blush-foreground: 340 50% 25%;
@@ -99,7 +99,7 @@ All colors MUST be HSL.
     --status-coral-foreground: 10 60% 25%;
     --status-mauve: 320 50% 88%;
     --status-mauve-foreground: 320 50% 25%;
-    
+
     /* Soft Purples */
     --status-lavender: 270 60% 90%;
     --status-lavender-foreground: 270 50% 25%;
@@ -107,7 +107,7 @@ All colors MUST be HSL.
     --status-lilac-foreground: 280 50% 25%;
     --status-periwinkle-purple: 260 50% 88%;
     --status-periwinkle-purple-foreground: 260 50% 25%;
-    
+
     /* Soft Grays */
     --status-pearl: 220 15% 90%;
     --status-pearl-foreground: 220 20% 20%;
@@ -122,7 +122,7 @@ All colors MUST be HSL.
     --urgency-3-foreground: 190 60% 20%;
     --urgency-4: 185 63% 80%;
     --urgency-4-foreground: 185 60% 20%;
-    
+
     /* 5-8: Cyan to Teal (Cool/Low) */
     --urgency-5: 180 60% 78%;
     --urgency-5-foreground: 180 55% 20%;
@@ -132,7 +132,7 @@ All colors MUST be HSL.
     --urgency-7-foreground: 170 55% 20%;
     --urgency-8: 165 53% 75%;
     --urgency-8-foreground: 165 55% 20%;
-    
+
     /* 9-12: Yellow (Moderate) */
     --urgency-9: 55 68% 82%;
     --urgency-9-foreground: 55 60% 18%;
@@ -142,7 +142,7 @@ All colors MUST be HSL.
     --urgency-11-foreground: 48 60% 18%;
     --urgency-12: 46 73% 79%;
     --urgency-12-foreground: 46 60% 18%;
-    
+
     /* 13-16: Amber to Orange (Getting Urgent) */
     --urgency-13: 42 75% 78%;
     --urgency-13-foreground: 42 65% 18%;
@@ -152,7 +152,7 @@ All colors MUST be HSL.
     --urgency-15-foreground: 32 65% 18%;
     --urgency-16: 28 78% 75%;
     --urgency-16-foreground: 28 65% 18%;
-    
+
     /* 17-20: Orange-Red to Red (Most Urgent) */
     --urgency-17: 20 75% 78%;
     --urgency-17-foreground: 20 65% 18%;
@@ -241,7 +241,7 @@ All colors MUST be HSL.
     --status-periwinkle-foreground: 220 80% 15%;
     --status-ice-blue: 190 50% 75%;
     --status-ice-blue-foreground: 190 70% 15%;
-    
+
     /* Soft Greens */
     --status-mint: 150 50% 70%;
     --status-mint-foreground: 150 70% 15%;
@@ -251,7 +251,7 @@ All colors MUST be HSL.
     --status-seafoam-foreground: 165 65% 15%;
     --status-pistachio: 140 45% 72%;
     --status-pistachio-foreground: 140 65% 15%;
-    
+
     /* Soft Yellows/Oranges */
     --status-cream: 45 70% 75%;
     --status-cream-foreground: 45 70% 15%;
@@ -261,7 +261,7 @@ All colors MUST be HSL.
     --status-apricot-foreground: 25 80% 15%;
     --status-buttercup: 50 65% 72%;
     --status-buttercup-foreground: 50 70% 15%;
-    
+
     /* Soft Pinks/Roses */
     --status-blush: 340 70% 75%;
     --status-blush-foreground: 340 75% 15%;
@@ -271,7 +271,7 @@ All colors MUST be HSL.
     --status-coral-foreground: 10 75% 15%;
     --status-mauve: 320 45% 72%;
     --status-mauve-foreground: 320 65% 15%;
-    
+
     /* Soft Purples */
     --status-lavender: 270 55% 75%;
     --status-lavender-foreground: 270 70% 15%;
@@ -279,7 +279,7 @@ All colors MUST be HSL.
     --status-lilac-foreground: 280 70% 15%;
     --status-periwinkle-purple: 260 45% 72%;
     --status-periwinkle-purple-foreground: 260 70% 15%;
-    
+
     /* Soft Grays */
     --status-pearl: 220 15% 70%;
     --status-pearl-foreground: 220 30% 15%;
@@ -348,42 +348,60 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+
   /* Micro-interactions */
   .hover-lift {
     @apply transition-all duration-300 ease-out;
   }
-  
+
   .hover-lift:hover {
     @apply -translate-y-1 shadow-lg;
   }
-  
+
   .hover-scale {
     @apply transition-transform duration-200 ease-out;
   }
-  
+
   .hover-scale:hover {
     @apply scale-105;
   }
-  
+
   .hover-glow {
     @apply transition-shadow duration-300 ease-out;
   }
-  
+
   .hover-glow:hover {
-    @apply shadow-[0_0_20px_rgba(var(--primary),0.3)];
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
-  
+
   /* Status indicator bar */
   .status-indicator {
     @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full opacity-80;
   }
-  
+
   /* Slide-in actions on hover */
   .slide-in-actions {
     @apply opacity-0 translate-x-2 transition-all duration-200 ease-out;
   }
-  
+
   .group:hover .slide-in-actions {
     @apply opacity-100 translate-x-0;
+  }
+
+  /* Custom Animations */
+  @keyframes pulse-subtle {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }

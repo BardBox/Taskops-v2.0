@@ -93,7 +93,7 @@ interface ColumnWidths {
 
 export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   date: 100,
-  task: 200,
+  task: 300,
   client: 120,
   project: 120,
   taskOwner: 140,
@@ -1299,7 +1299,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         </TableCell>
                       )}
                       <TableCell className="font-medium">
-                        <div className="relative flex items-center gap-2 group/name max-w-[140px]">
+                        <div className="relative flex items-center gap-2 group/name w-full">
                           <span className="truncate" title={task.task_name}>{task.task_name}</span>
                           {task.revision_count > 0 && (
                             <div className="flex-shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[10px] font-semibold">
@@ -1308,11 +1308,11 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                           )}
                         </div>
                       </TableCell>
-                      {columns.client && <TableCell><span className="truncate block max-w-[80px]" title={task.clients?.name || "-"}>{task.clients?.name || "-"}</span></TableCell>}
-                      {columns.project && <TableCell><span className="truncate block max-w-[70px]" title={task.projects?.name || "-"}>{task.projects?.name || "-"}</span></TableCell>}
+                      {columns.client && <TableCell><span className="truncate block w-full" title={task.clients?.name || "-"}>{task.clients?.name || "-"}</span></TableCell>}
+                      {columns.project && <TableCell><span className="truncate block w-full" title={task.projects?.name || "-"}>{task.projects?.name || "-"}</span></TableCell>}
                       {columns.taskOwner && userRole !== "team_member" && (
                         <TableCell>
-                          <div className="flex items-center gap-1.5 max-w-[100px]">
+                          <div className="flex items-center gap-1.5 w-full">
                             {task.assignee_id === userId ? (
                               <>
                                 <Avatar className="h-5 w-5 flex-shrink-0">
@@ -1339,7 +1339,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       )}
                       {columns.pm && (
                         <TableCell>
-                          <div className="flex items-center gap-1.5 max-w-[90px]">
+                          <div className="flex items-center gap-1.5 w-full">
                             <Avatar className="h-5 w-5 flex-shrink-0">
                               <AvatarImage src={task.assigned_by?.avatar_url || undefined} alt={task.assigned_by?.full_name} />
                               <AvatarFallback className="text-[10px]">

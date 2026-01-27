@@ -39,7 +39,7 @@ export const TimerPieChart = ({
                 width={size}
                 height={size}
                 viewBox={`0 0 ${size} ${size}`}
-                className={cn("transform -rotate-90 transition-all duration-1000", isRunning ? "animate-pulse-subtle" : "")}
+                className="transform -rotate-90 transition-all duration-1000"
             >
                 {/* Background Ring (Gray) */}
                 <circle
@@ -65,14 +65,15 @@ export const TimerPieChart = ({
                     strokeLinecap="round"
                     className={cn(
                         "transition-all duration-500 ease-in-out",
-                        isOverBudget ? "text-red-500" : (isRunning ? "text-blue-500" : "text-green-500")
+                        isOverBudget ? "text-red-500" : "text-green-500"
                     )}
                 />
             </svg>
             {text && (
                 <div className={cn(
                     "absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums",
-                    isOverBudget ? "text-red-500" : "text-foreground"
+                    isOverBudget ? "text-red-500" : "text-foreground",
+                    isRunning && "animate-pulse-subtle"
                 )}>
                     {text}
                 </div>

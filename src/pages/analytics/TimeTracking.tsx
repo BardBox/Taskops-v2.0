@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { formatTimeTrackingFull } from "@/hooks/useTaskTimeTracking";
+import { cn } from "@/lib/utils";
 
 interface TimeTrackingData {
   id: string;
@@ -50,7 +51,100 @@ interface ClientTimeStats {
   taskCount: number;
 }
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTimeReports } from "@/hooks/useTimeReports";
+import { Legend } from "recharts";
+
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
+const ReportsView = ({ dateFrom, dateTo }: { dateFrom?: Date, dateTo?: Date }) => {
+  const { reportData, summary, loading } = useTimeReports(dateFrom, dateTo);
+
+  if (loading) {
+    return (
+      <div className="grid gap-6">
+        <div className="grid gap-6 md:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
+        </div>
+        <Skeleton className="h-[400px]" />
+      </div>
+    );
+  }
+
+  // Prepare chart data: Top 10 tasks by efficiency deviance
+  const chartData = reportData.slice(0, 10).map(task => ({
+    name: task.taskName.length > 20 ? task.taskName.substring(0, 20) + '...' : task.taskName,
+    estimated: task.estimatedMinutes / 60, // hours
+    actual: task.actualMinutes / 60,       // hours
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Estimated</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{(summary.totalEstimatedMinutes / 60).toFixed(1)}h</div>
+            <p className="text-xs text-muted-foreground">Budgeted hours</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Actual</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={cn("text-2xl font-bold", summary.totalActualMinutes > summary.totalEstimatedMinutes ? "text-red-500" : "text-green-500")}>
+              {(summary.totalActualMinutes / 60).toFixed(1)}h
+            </div>
+            <p className="text-xs text-muted-foreground">Tracked hours</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Over Budget Tasks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-500">{summary.overBudgetTaskCount}</div>
+            <p className="text-xs text-muted-foreground">Tasks exceeding estimate</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Under Budget Tasks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-500">{summary.underBudgetTaskCount}</div>
+            <p className="text-xs text-muted-foreground">Tasks within estimate</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Budget vs Actual (Hours)</CardTitle>
+          <CardDescription>Top tasks by variance</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="estimated" name="Estimated (h)" fill="#8884d8" />
+                <Bar dataKey="actual" name="Actual (h)" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const TimeTracking = () => {
   const navigate = useNavigate();
@@ -225,171 +319,184 @@ const TimeTracking = () => {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card className="border-l-4 border-l-primary">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                Total Time Tracked
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatTimeTrackingFull(totalTime, false, null)}</div>
-              <p className="text-xs text-muted-foreground">{timeData.length} tracking records</p>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="analytics" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="analytics">Analytics Dashboard</TabsTrigger>
+            <TabsTrigger value="reports">Project Reports</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Timer className="h-4 w-4 text-green-500" />
-                Active Timers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeTrackers}</div>
-              <p className="text-xs text-muted-foreground">Currently tracking</p>
-            </CardContent>
-          </Card>
+          <TabsContent value="analytics" className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid gap-6 md:grid-cols-4">
+              <Card className="border-l-4 border-l-primary">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-primary" />
+                    Total Time Tracked
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatTimeTrackingFull(totalTime, false, null)}</div>
+                  <p className="text-xs text-muted-foreground">{timeData.length} tracking records</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-500" />
-                Team Members
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{userStats.length}</div>
-              <p className="text-xs text-muted-foreground">With time records</p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Timer className="h-4 w-4 text-green-500" />
+                    Active Timers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{activeTrackers}</div>
+                  <p className="text-xs text-muted-foreground">Currently tracking</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-purple-500" />
-                Clients
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{clientStats.length}</div>
-              <p className="text-xs text-muted-foreground">With time allocated</p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    Team Members
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{userStats.length}</div>
+                  <p className="text-xs text-muted-foreground">With time records</p>
+                </CardContent>
+              </Card>
 
-        {/* Charts */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Time by Team Member</CardTitle>
-              <CardDescription>Hours tracked per person</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={{
-                  hours: { label: "Hours", color: "hsl(var(--chart-1))" },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={userStats.slice(0, 10).map(u => ({
-                    name: u.userName.split(' ')[0],
-                    hours: Math.round(u.totalSeconds / 3600 * 10) / 10,
-                  }))}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="hours" fill="hsl(var(--chart-1))" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-purple-500" />
+                    Clients
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{clientStats.length}</div>
+                  <p className="text-xs text-muted-foreground">With time allocated</p>
+                </CardContent>
+              </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Time by Client</CardTitle>
-              <CardDescription>Distribution across clients</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={{
-                  value: { label: "Hours", color: "hsl(var(--chart-2))" },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={clientStats.slice(0, 5).map(c => ({
-                        name: c.clientName,
-                        value: Math.round(c.totalSeconds / 3600 * 10) / 10,
-                      }))}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}h`}
-                    >
-                      {clientStats.slice(0, 5).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+            {/* Charts */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Time by Team Member</CardTitle>
+                  <CardDescription>Hours tracked per person</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={{
+                      hours: { label: "Hours", color: "hsl(var(--chart-1))" },
+                    }}
+                    className="h-[300px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={userStats.slice(0, 10).map(u => ({
+                        name: u.userName.split(' ')[0],
+                        hours: Math.round(u.totalSeconds / 3600 * 10) / 10,
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="hours" fill="hsl(var(--chart-1))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
 
-        {/* Team Leaderboard */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Time Leaderboard</CardTitle>
-            <CardDescription>Ranked by total time tracked</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Team Member</TableHead>
-                  <TableHead className="text-right">Tasks</TableHead>
-                  <TableHead className="text-right">Total Time</TableHead>
-                  <TableHead className="text-right">Avg per Task</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {userStats.slice(0, 10).map((user, index) => (
-                  <TableRow key={user.userId}>
-                    <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatarUrl || undefined} />
-                          <AvatarFallback>{user.userName.split(' ').map(n => n[0]).join('').slice(0, 2)}</AvatarFallback>
-                        </Avatar>
-                        <span>{user.userName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{user.taskCount}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatTimeTrackingFull(user.totalSeconds, false, null)}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {formatTimeTrackingFull(Math.round(user.totalSeconds / (user.taskCount || 1)), false, null)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Time by Client</CardTitle>
+                  <CardDescription>Distribution across clients</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={{
+                      value: { label: "Hours", color: "hsl(var(--chart-2))" },
+                    }}
+                    className="h-[300px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={clientStats.slice(0, 5).map(c => ({
+                            name: c.clientName,
+                            value: Math.round(c.totalSeconds / 3600 * 10) / 10,
+                          }))}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}h`}
+                        >
+                          {clientStats.slice(0, 5).map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Team Leaderboard */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Team Time Leaderboard</CardTitle>
+                <CardDescription>Ranked by total time tracked</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">#</TableHead>
+                      <TableHead>Team Member</TableHead>
+                      <TableHead className="text-right">Tasks</TableHead>
+                      <TableHead className="text-right">Total Time</TableHead>
+                      <TableHead className="text-right">Avg per Task</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {userStats.slice(0, 10).map((user, index) => (
+                      <TableRow key={user.userId}>
+                        <TableCell className="font-medium">{index + 1}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={user.avatarUrl || undefined} />
+                              <AvatarFallback>{user.userName.split(' ').map(n => n[0]).join('').slice(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <span>{user.userName}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{user.taskCount}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatTimeTrackingFull(user.totalSeconds, false, null)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatTimeTrackingFull(Math.round(user.totalSeconds / (user.taskCount || 1)), false, null)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <ReportsView dateFrom={dateFrom} dateTo={dateTo} />
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );
