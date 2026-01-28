@@ -4,16 +4,20 @@ import { Clock, Play, Pause, Square } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatTimeTracking, formatTimeTrackingFull } from "@/hooks/useTaskTimeTracking";
 
+// Use TimeTrackingRecord consistent with useTaskTimeTracking
 interface TimeTrackingRecord {
   id: string;
   task_id: string;
   user_id: string;
-  tracking_status: 'idle' | 'active' | 'paused' | 'stopped';
+  // Modern fields
+  is_running: boolean;
   started_at: string | null;
   paused_at: string | null;
-  stopped_at: string | null;
   total_seconds: number;
-  last_active_at: string | null;
+  last_status: string | null;
+  // Legacy fields (optional for compatibility if needed, but we prefer modern)
+  tracking_status?: 'idle' | 'active' | 'paused' | 'stopped';
+  last_active_at?: string | null;
   created_at?: string;
   updated_at?: string;
   profiles?: {
@@ -26,8 +30,8 @@ interface TimeTrackingRecord {
 const calcTotalTime = (record: TimeTrackingRecord): number => {
   let totalSeconds = record.total_seconds;
 
-  if (record.tracking_status === 'active' && record.last_active_at) {
-    const elapsed = Math.floor((Date.now() - new Date(record.last_active_at).getTime()) / 1000);
+  if (record.is_running && record.started_at) {
+    const elapsed = Math.floor((Date.now() - new Date(record.started_at).getTime()) / 1000);
     totalSeconds += elapsed;
   }
 
@@ -59,7 +63,7 @@ export function TimeTrackingBadge({
 
   // Check if any record is active
   const checkIsActive = () => {
-    return records.some(r => r.tracking_status === 'active');
+    return records.some(r => r.is_running);
   };
 
   // Update display time
@@ -94,20 +98,19 @@ export function TimeTrackingBadge({
   const StatusIcon = () => {
     if (!showStatus) return null;
 
-    const hasActive = records.some(r => r.tracking_status === 'active');
-    const hasPaused = records.some(r => r.tracking_status === 'paused');
-    const hasStopped = records.some(r => r.tracking_status === 'stopped');
+    const hasActive = records.some(r => r.is_running);
+    // Legacy mapping or just assume paused if not running but has time?
+    // Modern schema doesn't have explicit 'paused' status string in is_running (it's strict boolean)
+    // But we might have last_status.
+    const isPaused = !hasActive && totalSeconds > 0;
 
     if (hasActive) {
       return <Play className="h-2.5 w-2.5 fill-current animate-pulse" />;
     }
-    if (hasPaused) {
+    if (isPaused) {
       return <Pause className="h-2.5 w-2.5" />;
     }
-    if (hasStopped) {
-      return <Square className="h-2.5 w-2.5 fill-current" />;
-    }
-    return null;
+    return <Square className="h-2.5 w-2.5 fill-current" />;
   };
 
   // Size classes
@@ -119,14 +122,12 @@ export function TimeTrackingBadge({
 
   // Status colors
   const getStatusColor = () => {
-    if (records.some(r => r.tracking_status === 'active')) {
+    if (records.some(r => r.is_running)) {
       return 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30';
     }
-    if (records.some(r => r.tracking_status === 'paused')) {
+    if (totalSeconds > 0) {
+      // Paused/Inactive
       return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30';
-    }
-    if (records.some(r => r.tracking_status === 'stopped')) {
-      return 'bg-muted text-muted-foreground border-border';
     }
     return 'bg-muted/50 text-muted-foreground border-border/50';
   };
@@ -198,13 +199,12 @@ export function TimeTrackingBadge({
             <p className="text-2xl font-bold">{fullTimeDisplay}</p>
           </div>
         </div>
-        {showStatus && (records.some(r => ['active', 'paused', 'stopped'].includes(r.tracking_status))) && (
+        {showStatus && (records.some(r => r.is_running || r.total_seconds > 0)) && (
           <div className="flex items-center gap-1.5">
             <StatusIcon />
             <span className="text-xs text-muted-foreground capitalize">
-              {records.some(r => r.tracking_status === 'active') ? 'Active' :
-                records.some(r => r.tracking_status === 'paused') ? 'Paused' :
-                  'Completed'}
+              {records.some(r => r.is_running) ? 'Active' :
+                'Paused'}
             </span>
           </div>
         )}

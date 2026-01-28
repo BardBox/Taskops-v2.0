@@ -55,6 +55,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
     status: task?.status || "Not Started",
     urgency: task?.urgency || "Medium",
     notes: task?.notes || "",
+    estimated_minutes: task?.estimated_minutes || 0,
   });
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
       status: task?.status || "Not Started",
       urgency: task?.urgency || "Medium",
       notes: task?.notes || "",
+      estimated_minutes: task?.estimated_minutes || 0,
     });
 
     setImagePreview(task?.reference_image || "");
@@ -332,6 +334,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
         reference_link_2: referenceLinks[1] || null,
         reference_link_3: referenceLinks[2] || null,
         reference_image: referenceImageUrl,
+        estimated_minutes: formData.estimated_minutes || null,
       };
 
       if (userRole !== "team_member") {
@@ -554,17 +557,39 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
             />
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="deadline" className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-3.5 w-3.5" />
-              Deadline
-            </Label>
-            <Input
-              id="deadline"
-              type="date"
-              value={formData.deadline}
-              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-            />
+          {/* Deadline & Estimation Row */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="deadline" className="text-sm font-medium flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5" />
+                Deadline
+              </Label>
+              <Input
+                id="deadline"
+                type="date"
+                value={formData.deadline}
+                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="estimated_hours" className="text-sm font-medium">Estimated Duration (Hours)</Label>
+              <Input
+                id="estimated_hours"
+                type="number"
+                min="0"
+                step="0.5"
+                value={formData.estimated_minutes ? formData.estimated_minutes / 60 : ""}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  setFormData({
+                    ...formData,
+                    estimated_minutes: isNaN(val) ? 0 : Math.round(val * 60)
+                  });
+                }}
+                placeholder="e.g. 2.5"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

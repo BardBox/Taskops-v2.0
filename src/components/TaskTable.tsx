@@ -222,9 +222,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   const { statuses, urgencies } = useStatusUrgency();
 
-  // Get task IDs for time tracking
+  // Get task IDs for time tracking - pass userId to enable global session subscription
   const taskIds = tasks.map(t => t.id);
-  const { getTaskTotalTime, isTaskActive, getTaskRecords } = useMultipleTasksTimeTracking(taskIds);
+  const { getTaskTotalTime, isTaskActive, getTaskRecords } = useMultipleTasksTimeTracking(taskIds, userId);
 
   const toggleCollaboratorsColumn = () => {
     setCollaboratorsExpanded(prev => !prev);
@@ -771,17 +771,49 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
       }
     }
 
-    // TIME TRACKING 2.0: Force Stop Failsafe
-    // Ensure that if status changes to anything other than "In Progress", we explicitly stop the timer
-    // This assumes the current user is the one tracking (or we are stopping for the assignee)
-    // The DB trigger handles the assignee, but this acts as a frontend-initiated failsafe for the current user session
-    if (newStatus !== "In Progress") {
-      // We don't await this to avoid blocking the UI update
+    const task = tasks.find(t => t.id === taskId);
+    const oldStatus = task?.status;
+
+    // TIME TRACKING 2.0: Timer Start/Stop based on status change
+    if (newStatus === "In Progress" && oldStatus !== "In Progress") {
+      // STARTING task - start the timer (upsert to handle case where no record exists)
+      supabase
+        .from("task_time_tracking")
+        .upsert({
+          task_id: taskId,
+          user_id: userId,
+          is_running: true,
+          started_at: new Date().toISOString(),
+          paused_at: null,
+          total_seconds: 0, // Default for new record, existing records preserve via on conflict
+        }, {
+          onConflict: 'task_id,user_id',
+          ignoreDuplicates: false
+        })
+        .then(({ error }) => {
+          if (error) {
+            // Fallback: try update if upsert fails
+            supabase
+              .from("task_time_tracking")
+              .update({
+                is_running: true,
+                started_at: new Date().toISOString(),
+                paused_at: null
+              })
+              .eq("task_id", taskId)
+              .eq("user_id", userId)
+              .then(({ error: updateError }) => {
+                if (updateError) console.error("Start timer failed", updateError);
+              });
+          }
+        });
+    } else if (newStatus !== "In Progress" && oldStatus === "In Progress") {
+      // LEAVING In Progress - stop the timer
       supabase
         .from("task_time_tracking")
         .update({ is_running: false, paused_at: new Date().toISOString() })
         .eq("task_id", taskId)
-        .eq("user_id", userId) // Stop for the current user
+        .eq("user_id", userId)
         .then(({ error }) => {
           if (error) console.error("Force stop timer failed", error);
         });
@@ -1480,7 +1512,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         <TableCell>
                           <TaskTimeDisplay
                             taskId={task.id}
+                            userId={userId}
                             budgetSeconds={task.estimated_minutes ? task.estimated_minutes * 60 : 3600}
+                            overrideTotalSeconds={getTaskTotalTime(task.id)}
+                            overrideIsRunning={isTaskActive(task.id)}
                           />
                         </TableCell>
                       )}

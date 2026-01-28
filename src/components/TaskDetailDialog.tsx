@@ -30,8 +30,10 @@ import { RequestRevisionDialog } from "@/components/RequestRevisionDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MentionInput } from "@/components/hive/MentionInput";
 import { MessageWithMentions } from "@/components/hive/MessageWithMentions";
-import { useTaskTimeTracking } from "@/hooks/useTaskTimeTracking";
+import { useTaskTimeTracking, calculateTotalTime } from "@/hooks/useTaskTimeTracking";
 import { TimeTrackingBadge } from "@/components/TimeTrackingBadge";
+import { TimerPieChart } from "@/components/TimerPieChart";
+import { formatTimeTracking, formatTimeTrackingFull } from "@/hooks/useTaskTimeTracking";
 
 interface Task {
   id: string;
@@ -57,6 +59,7 @@ interface Task {
   is_posted?: boolean;
   posted_at?: string | null;
   posted_by?: string | null;
+  estimated_minutes?: number;
 }
 
 interface Comment {
@@ -142,8 +145,19 @@ export function TaskDetailDialog({
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const typingChannelRef = useRef<any>(null);
 
-  // Time tracking hook
-  const { records: timeRecords, isLoading: timeLoading } = useTaskTimeTracking({ taskId: taskId || undefined });
+  // Time tracking hook - pass userId to enable global session subscription
+  const { records: timeRecords, isLoading: timeLoading } = useTaskTimeTracking({ taskId: taskId || undefined, userId });
+
+  // Force re-render for live timer in the dialog
+  const isTimerRunning = timeRecords.some(r => r.is_running);
+  const [_, setTimerTick] = useState(0);
+  useEffect(() => {
+    if (!isTimerRunning) return;
+    const interval = setInterval(() => setTimerTick(t => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+
 
   const reactionEmojis = [
     { type: 'thumbs_up', emoji: '👍', label: 'Like' },
@@ -737,7 +751,7 @@ export function TaskDetailDialog({
 
         // PAUSE conditions
         if (['in_approval', 'hold'].includes(newStatus)) {
-          for (const timer of activeTimers) {
+          for (const timer of (activeTimers as any[])) {
             const duration = Math.floor((new Date(now).getTime() - new Date(timer.last_active_at || now).getTime()) / 1000);
 
             // Create session
@@ -763,7 +777,7 @@ export function TaskDetailDialog({
 
         // STOP conditions
         if (['approved', 'cancelled', 'rejected'].includes(newStatus)) {
-          for (const timer of activeTimers) {
+          for (const timer of (activeTimers as any[])) {
             const duration = Math.floor((new Date(now).getTime() - new Date(timer.last_active_at || now).getTime()) / 1000);
 
             // Create session
@@ -1251,7 +1265,28 @@ export function TaskDetailDialog({
                       Time Tracked
                     </Label>
                   </div>
-                  <TimeTrackingBadge records={timeRecords} variant="card" showStatus />
+
+                  {task.estimated_minutes ? (
+                    <div className="flex items-center gap-4">
+                      <TimerPieChart
+                        totalSeconds={timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0)}
+                        budgetSeconds={task.estimated_minutes * 60}
+                        isRunning={timeRecords.some(r => r.is_running)}
+                        size={48}
+                        text={formatTimeTracking(timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0))}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {formatTimeTrackingFull(timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0))}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          of {task.estimated_minutes / 60}h estimated
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <TimeTrackingBadge records={timeRecords} variant="card" showStatus />
+                  )}
                 </div>
               )}
 

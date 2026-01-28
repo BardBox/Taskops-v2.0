@@ -72,8 +72,9 @@ export const TimerPieChart = ({
             {text && (
                 <div className={cn(
                     "absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums",
-                    isOverBudget ? "text-red-500" : "text-foreground",
-                    isRunning && "animate-pulse-subtle"
+                    isRunning
+                        ? "text-blue-500 animate-pulse"
+                        : "text-muted-foreground"
                 )}>
                     {text}
                 </div>

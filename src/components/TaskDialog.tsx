@@ -612,24 +612,7 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="estimated_hours" className="text-sm font-medium">Estimated Duration (Hours)</Label>
-                <Input
-                  id="estimated_hours"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={formData.estimated_minutes ? formData.estimated_minutes / 60 : ""}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setFormData({
-                      ...formData,
-                      estimated_minutes: isNaN(val) ? 0 : Math.round(val * 60)
-                    });
-                  }}
-                  placeholder="e.g. 2.5"
-                />
-              </div>
+
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -841,8 +824,8 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                 />
               )}
 
-              {/* Deadline input for new tasks */}
-              {!task && (
+              {/* Deadline & Estimation Row */}
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="deadline" className="text-sm font-medium flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5" />
@@ -855,7 +838,26 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   />
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="estimated_hours" className="text-sm font-medium">Estimated Duration (Hours)</Label>
+                  <Input
+                    id="estimated_hours"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={formData.estimated_minutes ? formData.estimated_minutes / 60 : ""}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setFormData({
+                        ...formData,
+                        estimated_minutes: isNaN(val) ? 0 : Math.round(val * 60)
+                      });
+                    }}
+                    placeholder="e.g. 2.5"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 

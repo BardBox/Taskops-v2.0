@@ -132,7 +132,7 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
           table: "task_time_tracking",
           filter: `task_id=eq.${taskId}`,
         },
-        () => {
+        (payload) => {
           fetchTimeTracking();
         }
       )
@@ -143,8 +143,7 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
     };
   }, [taskId, fetchTimeTracking]);
 
-  // GLOBAL SUBSCRIPTION: Listen to user_work_sessions
-  // If the global session pauses/stops, we need to reflect that in task timers immediately
+  // Global subscription: Listen to user_work_sessions for the current user
   useEffect(() => {
     if (!userId) return;
 
@@ -159,9 +158,7 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          // When global session changes, re-fetch task tracking
-          // The DB trigger sync_task_timers_with_work_session should have updated the task rows
-          // so fetching again will show the paused state.
+          // When global session changes, re-fetch to reflect paused/stopped state
           fetchTimeTracking();
         }
       )
@@ -207,45 +204,99 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
 };
 
 // Hook for fetching time tracking for multiple tasks at once
-export const useMultipleTasksTimeTracking = (taskIds: string[]) => {
+export const useMultipleTasksTimeTracking = (taskIds: string[], userId?: string) => {
   const [timeMap, setTimeMap] = useState<Map<string, TimeTrackingRecord[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      if (taskIds.length === 0) {
-        setTimeMap(new Map());
-        setIsLoading(false);
-        return;
-      }
+  const fetchAll = useCallback(async () => {
+    if (taskIds.length === 0) {
+      setTimeMap(new Map());
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        const { data, error } = await supabase
-          .from("task_time_tracking")
-          .select(`
-            *,
-            profiles:user_id(full_name, avatar_url)
-          `)
-          .in("task_id", taskIds);
+    try {
+      const { data, error } = await supabase
+        .from("task_time_tracking")
+        .select(`
+          *,
+          profiles:user_id(full_name, avatar_url)
+        `)
+        .in("task_id", taskIds);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const map = new Map<string, TimeTrackingRecord[]>();
-        (data as unknown as TimeTrackingRecord[] || []).forEach(record => {
-          const existing = map.get(record.task_id) || [];
-          map.set(record.task_id, [...existing, record]);
-        });
+      const map = new Map<string, TimeTrackingRecord[]>();
+      (data as unknown as TimeTrackingRecord[] || []).forEach(record => {
+        const existing = map.get(record.task_id) || [];
+        map.set(record.task_id, [...existing, record]);
+      });
 
-        setTimeMap(map);
-      } catch (err) {
-        console.error("Error fetching time tracking:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAll();
+      setTimeMap(map);
+    } catch (err) {
+      console.error("Error fetching time tracking:", err);
+    } finally {
+      setIsLoading(false);
+    }
   }, [taskIds.join(",")]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  // Real-time subscription for task_time_tracking changes
+  useEffect(() => {
+    if (taskIds.length === 0) return;
+
+    const channel = supabase
+      .channel(`multi-time-tracking-${taskIds.slice(0, 5).join("-")}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "task_time_tracking",
+        },
+        (payload) => {
+          // Check if payload relates to any of our tracked tasks
+          const payloadTaskId = (payload.new as any)?.task_id || (payload.old as any)?.task_id;
+          if (payloadTaskId && taskIds.includes(payloadTaskId)) {
+            fetchAll();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [taskIds.join(","), fetchAll]);
+
+  // Global subscription: Listen to user_work_sessions for the current user
+  useEffect(() => {
+    if (!userId) return;
+
+    const globalChannel = supabase
+      .channel(`global-session-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_work_sessions",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          // When global session changes, re-fetch to reflect paused/stopped state
+          fetchAll();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(globalChannel);
+    };
+  }, [userId, fetchAll]);
 
   const getTaskTotalTime = useCallback((taskId: string): number => {
     const records = timeMap.get(taskId) || [];
@@ -267,5 +318,6 @@ export const useMultipleTasksTimeTracking = (taskIds: string[]) => {
     getTaskTotalTime,
     getTaskRecords,
     isTaskActive,
+    refetch: fetchAll,
   };
 };
