@@ -24,6 +24,7 @@ import { DashboardCustomization, DashboardPreferences } from "./DashboardCustomi
 import { canTeamMemberChangeStatus } from "@/utils/roleHelpers";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMultipleTasksTimeTracking, formatTimeTracking } from "@/hooks/useTaskTimeTracking";
+import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { cn } from "@/lib/utils";
 import { TaskTimeDisplay } from "./TaskTimeDisplay";
 import { TaskTimer } from "./TaskTimer";
@@ -222,9 +223,21 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
   const { statuses, urgencies } = useStatusUrgency();
 
+  // Get global work session state to react to clock in/out/break
+  const { state: globalWorkState } = useTimeTracking();
+
   // Get task IDs for time tracking - pass userId to enable global session subscription
   const taskIds = tasks.map(t => t.id);
-  const { getTaskTotalTime, isTaskActive, getTaskRecords } = useMultipleTasksTimeTracking(taskIds, userId);
+  const { getTaskTotalTime, isTaskActive, getTaskRecords, refetch: refetchTimeTracking } = useMultipleTasksTimeTracking(taskIds, userId);
+
+  // Refetch task timers when global work session status changes (clock in/out, break/resume)
+  useEffect(() => {
+    // Give db a moment to update records after clock in/out
+    const timer = setTimeout(() => {
+      refetchTimeTracking();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [globalWorkState.status, refetchTimeTracking]);
 
   const toggleCollaboratorsColumn = () => {
     setCollaboratorsExpanded(prev => !prev);
@@ -774,49 +787,108 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     const task = tasks.find(t => t.id === taskId);
     const oldStatus = task?.status;
 
-    // TIME TRACKING 2.0: Timer Start/Stop based on status change
-    if (newStatus === "In Progress" && oldStatus !== "In Progress") {
-      // STARTING task - start the timer (upsert to handle case where no record exists)
-      supabase
+    // TIME TRACKING 2.0: Hybrid Approach - Client handles timer + DB trigger as safety net
+    // IMPORTANT: Timer tracks the ASSIGNEE's time, not the person changing status
+    const assigneeId = task?.assignee_id;
+    console.log("[Timer Debug] Status Change:", { taskId, oldStatus, newStatus, assigneeId, task: task?.title });
+
+    if (newStatus === "In Progress" && oldStatus !== "In Progress" && assigneeId) {
+      // STARTING task - start the timer
+      console.log("[Timer Debug] Starting timer for task:", taskId, "assignee:", assigneeId);
+      const now = new Date().toISOString();
+
+      // First check if a record exists
+      const { data: existingRecord, error: checkError } = await supabase
         .from("task_time_tracking")
-        .upsert({
-          task_id: taskId,
-          user_id: userId,
-          is_running: true,
-          started_at: new Date().toISOString(),
-          paused_at: null,
-          total_seconds: 0, // Default for new record, existing records preserve via on conflict
-        }, {
-          onConflict: 'task_id,user_id',
-          ignoreDuplicates: false
-        })
-        .then(({ error }) => {
-          if (error) {
-            // Fallback: try update if upsert fails
-            supabase
-              .from("task_time_tracking")
-              .update({
-                is_running: true,
-                started_at: new Date().toISOString(),
-                paused_at: null
-              })
-              .eq("task_id", taskId)
-              .eq("user_id", userId)
-              .then(({ error: updateError }) => {
-                if (updateError) console.error("Start timer failed", updateError);
-              });
-          }
-        });
-    } else if (newStatus !== "In Progress" && oldStatus === "In Progress") {
-      // LEAVING In Progress - stop the timer
-      supabase
-        .from("task_time_tracking")
-        .update({ is_running: false, paused_at: new Date().toISOString() })
+        .select("id")
         .eq("task_id", taskId)
-        .eq("user_id", userId)
-        .then(({ error }) => {
-          if (error) console.error("Force stop timer failed", error);
-        });
+        .eq("user_id", assigneeId)
+        .maybeSingle();
+
+      console.log("[Timer Debug] Check result:", { existingRecord, checkError });
+
+      if (checkError) {
+        console.error("[Timer Debug] Error checking timer record:", checkError);
+      } else if (existingRecord) {
+        // Record exists - UPDATE it
+        console.log("[Timer Debug] Record exists, updating...");
+        const { error: updateError, data: updateData } = await supabase
+          .from("task_time_tracking")
+          .update({
+            is_running: true,
+            started_at: now,
+            paused_at: null,
+            last_status: 'In Progress',
+            updated_at: now,
+          })
+          .eq("task_id", taskId)
+          .eq("user_id", assigneeId)
+          .select();
+
+        console.log("[Timer Debug] Update result:", { updateData, updateError });
+        if (updateError) console.error("[Timer Debug] Timer update failed:", updateError);
+        else console.log("[Timer Debug] Timer UPDATE SUCCESS!");
+      } else {
+        // No record - INSERT new one
+        console.log("[Timer Debug] No record exists, inserting...");
+        const { error: insertError, data: insertData } = await supabase
+          .from("task_time_tracking")
+          .insert({
+            task_id: taskId,
+            user_id: assigneeId,
+            is_running: true,
+            started_at: now,
+            paused_at: null,
+            last_status: 'In Progress',
+            total_seconds: 0,
+          })
+          .select();
+
+        console.log("[Timer Debug] Insert result:", { insertData, insertError });
+        if (insertError) console.error("[Timer Debug] Timer insert failed:", insertError);
+        else console.log("[Timer Debug] Timer INSERT SUCCESS!");
+      }
+
+      // Immediately refetch time tracking data to update UI
+      console.log("[Timer Debug] Triggering refetch...");
+      setTimeout(() => refetchTimeTracking(), 100);
+    } else if (newStatus !== "In Progress" && oldStatus === "In Progress" && assigneeId) {
+      // LEAVING In Progress - stop the timer and accumulate time
+      const now = new Date().toISOString();
+
+      // First get the current record to calculate elapsed time
+      const { data: record, error: fetchError } = await supabase
+        .from("task_time_tracking")
+        .select("*")
+        .eq("task_id", taskId)
+        .eq("user_id", assigneeId)
+        .maybeSingle();
+
+      if (fetchError || !record) {
+        console.error("Could not fetch timer record:", fetchError);
+      } else {
+        // Calculate elapsed time since started_at
+        let elapsedSeconds = 0;
+        if (record.started_at && record.is_running) {
+          elapsedSeconds = Math.floor((Date.now() - new Date(record.started_at).getTime()) / 1000);
+        }
+
+        const { error: updateError } = await supabase
+          .from("task_time_tracking")
+          .update({
+            is_running: false,
+            paused_at: now,
+            total_seconds: (record.total_seconds || 0) + elapsedSeconds,
+            last_status: newStatus,
+          })
+          .eq("task_id", taskId)
+          .eq("user_id", assigneeId);
+
+        if (updateError) console.error("Timer stop failed:", updateError);
+
+        // Immediately refetch time tracking data to update UI
+        setTimeout(() => refetchTimeTracking(), 100);
+      }
     }
 
     // Optimistically update local state

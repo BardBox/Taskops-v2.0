@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { TimerPieChart } from "./TimerPieChart";
 import { formatTimeTrackingFull, formatTimeTracking, useTaskTimeTracking } from "@/hooks/useTaskTimeTracking";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,6 @@ interface TaskTimeDisplayProps {
     className?: string;
     showLabel?: boolean;
     budgetSeconds?: number;
-    // Add override props
     overrideTotalSeconds?: number;
     overrideIsRunning?: boolean;
 }
@@ -24,23 +23,75 @@ export const TaskTimeDisplay = ({
     overrideTotalSeconds,
     overrideIsRunning
 }: TaskTimeDisplayProps) => {
-    // Only fetch if overrides are not provided (or we want to fetch anyway for other details, but let's prefer overrides)
-    const { getTotalTime, isAnyoneTracking } = useTaskTimeTracking({ taskId, userId });
+    // When override props are provided, skip the hook to avoid extra subscriptions
+    const hasOverrides = overrideTotalSeconds !== undefined && overrideIsRunning !== undefined;
 
-    const totalSeconds = overrideTotalSeconds !== undefined ? overrideTotalSeconds : getTotalTime();
-    const isRunning = overrideIsRunning !== undefined ? overrideIsRunning : isAnyoneTracking();
+    // Only call the hook if we don't have override props
+    const hookResult = useTaskTimeTracking({
+        taskId: hasOverrides ? '' : taskId,
+        userId
+    });
 
-    // Force re-render every second if running to show live ticking time
-    const [_, setTick] = useState(0);
+    // Use override props if provided, otherwise fall back to hook values
+    const baseSeconds = hasOverrides ? overrideTotalSeconds : hookResult.getTotalTime();
+    const isRunning = hasOverrides ? overrideIsRunning : hookResult.isAnyoneTracking();
+
+    // Refs for stable timer tracking
+    const timerStartRef = useRef<number | null>(null);
+    const baseSecondsAtStartRef = useRef<number>(0);
+    const prevIsRunningRef = useRef<boolean>(false);
+    const baseSecondsLatestRef = useRef(baseSeconds);
+
+    // Keep baseSeconds ref updated
     useEffect(() => {
-        if (!isRunning) return;
-        const interval = setInterval(() => setTick(t => t + 1), 1000);
-        return () => clearInterval(interval);
-    }, [isRunning]);
+        baseSecondsLatestRef.current = baseSeconds;
+    });
 
-    const formattedTime = formatTimeTrackingFull(totalSeconds, isRunning);
-    // Short format for inside the donut (e.g. 1:30)
-    const shortFormat = formatTimeTracking(totalSeconds, isRunning);
+    // State for the displayed time
+    const [displaySeconds, setDisplaySeconds] = useState(baseSeconds);
+
+    // Main timer effect - ONLY reacts to isRunning changes
+    useEffect(() => {
+        // Detect transition from not-running to running
+        if (isRunning && !prevIsRunningRef.current) {
+            timerStartRef.current = Date.now();
+            baseSecondsAtStartRef.current = baseSecondsLatestRef.current;
+        }
+
+        // Detect transition from running to not-running
+        if (!isRunning && prevIsRunningRef.current) {
+            timerStartRef.current = null;
+            setDisplaySeconds(baseSecondsLatestRef.current);
+        }
+
+        prevIsRunningRef.current = isRunning;
+
+        if (!isRunning) {
+            setDisplaySeconds(baseSecondsLatestRef.current);
+            return;
+        }
+
+        // Running - set up the interval
+        const calculateElapsed = () => {
+            if (timerStartRef.current === null) {
+                return baseSecondsLatestRef.current;
+            }
+            const elapsed = Math.floor((Date.now() - timerStartRef.current) / 1000);
+            return baseSecondsAtStartRef.current + elapsed;
+        };
+
+        setDisplaySeconds(calculateElapsed());
+
+        const interval = setInterval(() => {
+            setDisplaySeconds(calculateElapsed());
+        }, 1000);
+
+        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRunning, taskId]);
+
+    const formattedTime = formatTimeTrackingFull(displaySeconds, isRunning);
+    const shortFormat = formatTimeTracking(displaySeconds, isRunning);
 
     return (
         <TooltipProvider>
@@ -48,7 +99,7 @@ export const TaskTimeDisplay = ({
                 <TooltipTrigger asChild>
                     <div className={cn("flex items-center gap-2", className)}>
                         <TimerPieChart
-                            totalSeconds={totalSeconds}
+                            totalSeconds={displaySeconds}
                             budgetSeconds={budgetSeconds}
                             isRunning={isRunning}
                             size={42}
