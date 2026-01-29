@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Play, Clock, LogOut, Coffee } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY_PREFIX = "auto_clock_out_state_";
 
@@ -88,9 +89,10 @@ export const AutoClockOutManager = () => {
         }, IDLE_TIMEOUT_MS);
     };
 
-    const handleAutoClockOut = () => {
+    const handleAutoClockOut = async () => {
         toast.info("Auto clocked out due to inactivity after 6:10 PM reminder.");
-        clockOut();
+        await clockOut();
+        await supabase.auth.signOut();
         setIsOpen(false);
         if (clockOutTimerRef.current) clearTimeout(clockOutTimerRef.current);
     };
@@ -110,9 +112,10 @@ export const AutoClockOutManager = () => {
         toast.info("Extended for 30 minutes.");
     };
 
-    const handleClockOutUser = () => {
+    const handleClockOutUser = async () => {
         // "Clock Out"
-        clockOut();
+        await clockOut();
+        await supabase.auth.signOut();
         closeDialog();
     };
 
