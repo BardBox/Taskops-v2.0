@@ -10,12 +10,18 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MoreVertical, Trash2, Edit, AlertCircle, User, Users } from "lucide-react";
+import { useRef } from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+// Removed Import/Export related imports
+import { Download, Upload, Loader2, FileSpreadsheet } from "lucide-react";
+// Removed excelHelpers import
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { format, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -64,9 +70,13 @@ interface LeadTableProps {
     getFollowUpStatus?: (lead: Lead) => 'overdue' | 'today' | 'upcoming' | 'future' | null;
     onSnooze?: (leadId: string) => void;
     onMarkCompleted?: (leadId: string) => void;
+    onImportSuccess?: () => void; // Kept for interface compatibility but effectively unused here now, checking usages in parent
 }
 
 export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClick, userMap, getFollowUpStatus, onSnooze, onMarkCompleted }: LeadTableProps) => {
+    // Removed isImporting state and fileInputRef
+
+    // Removed handleExportTemplate and handleImportLeads logic (lifted to parent)
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -126,154 +136,157 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
     };
 
     return (
-        <div className="rounded-md border bg-white shadow-sm overflow-hidden">
-            <Table>
-                <TableHeader className="bg-slate-50">
-                    <TableRow>
-                        <TableHead className="w-[80px]">Lead ID</TableHead>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Producer</TableHead>
-                        <TableHead>Manager</TableHead>
-                        <TableHead>Value</TableHead>
-                        {/* Removed Priority */}
-                        <TableHead>Status</TableHead>
-                        <TableHead>Follow Up</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {leads.length === 0 ? (
+        <div className="space-y-4">
+            {/* Toolbar removed, logic lifted */}
+            <div className="rounded-md border bg-white shadow-sm overflow-hidden">
+                <Table>
+                    <TableHeader className="bg-slate-50">
                         <TableRow>
-                            <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
-                                No leads found. Add one to get started!
-                            </TableCell>
+                            <TableHead className="w-[80px]">Lead ID</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Contact</TableHead>
+                            <TableHead>Company</TableHead>
+                            <TableHead>Producer</TableHead>
+                            <TableHead>Manager</TableHead>
+                            <TableHead>Value</TableHead>
+                            {/* Removed Priority */}
+                            <TableHead>Status</TableHead>
+                            <TableHead>Follow Up</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                    ) : (
-                        leads.map((lead) => {
-                            const overdue = isOverdue(lead.next_follow_up, lead.status);
-                            return (
-                                <TableRow
-                                    key={lead.id}
-                                    className={cn(
-                                        "cursor-pointer hover:bg-slate-50 transition-colors",
-                                        overdue && "bg-red-50 hover:bg-red-100"
-                                    )}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onLeadClick(lead);
-                                    }}
-                                >
-                                    <TableCell className="font-mono text-xs text-muted-foreground">
-                                        L-{String(lead.lead_code).padStart(4, '0')}
-                                    </TableCell>
-                                    <TableCell className="font-medium">
-                                        {lead.title}
-                                        {lead.probability !== null && (
-                                            <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                                                {/* Convert back to 1-10 for display? or % */}
-                                                <span className={cn(
-                                                    "w-1.5 h-1.5 rounded-full",
-                                                    (lead.probability || 0) <= 30 ? "bg-blue-500" :
-                                                        (lead.probability || 0) <= 60 ? "bg-yellow-500" : "bg-red-500"
-                                                )} />
-                                                {(lead.probability || 0) / 10}/10 Heat
-                                            </div>
+                    </TableHeader>
+                    <TableBody>
+                        {leads.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                                    No leads found. Add one to get started!
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            leads.map((lead) => {
+                                const overdue = isOverdue(lead.next_follow_up, lead.status);
+                                return (
+                                    <TableRow
+                                        key={lead.id}
+                                        className={cn(
+                                            "cursor-pointer hover:bg-slate-50 transition-colors",
+                                            overdue && "bg-red-50 hover:bg-red-100"
                                         )}
-                                    </TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">
-                                        {format(new Date(lead.created_at), 'MMM d, yyyy')}
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="text-sm font-medium">{lead.contact?.name}</span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="text-sm text-muted-foreground">
-                                            {lead.contact?.company_name || '-'}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="text-sm">
-                                        <div className="flex items-center gap-1">
-                                            <User size={12} className="text-slate-400" />
-                                            {lead.owner_id ? (userMap[lead.owner_id] || 'Unknown') : '-'}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-sm">
-                                        {lead.lead_manager_id ? (
-                                            <div className="flex items-center gap-1">
-                                                <Users size={12} className="text-slate-400" />
-                                                {userMap[lead.lead_manager_id] || 'Unknown'}
-                                            </div>
-                                        ) : '-'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {lead.expected_value ? (
-                                            <span className="font-semibold text-slate-700">
-                                                {getCurrencySymbol(lead.currency)}
-                                                {lead.expected_value.toLocaleString()}
-                                            </span>
-                                        ) : '-'}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={cn("font-normal border-0", getStatusColor(lead.status))}>
-                                            {lead.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell id={`lead-${lead.id}`}>
-                                        <div className={cn("text-sm flex flex-col gap-1", overdue ? "text-red-600 font-bold" : "text-slate-600")}>
-                                            <div className="flex items-center gap-2">
-                                                {lead.next_follow_up ? format(new Date(lead.next_follow_up), 'MMM d') : '-'}
-                                                {getFollowUpBadge(lead)}
-                                            </div>
-                                            {lead.follow_up_level && (
-                                                <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded w-fit">
-                                                    {lead.follow_up_level}
-                                                </span>
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onLeadClick(lead);
+                                        }}
+                                    >
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            L-{String(lead.lead_code).padStart(4, '0')}
+                                        </TableCell>
+                                        <TableCell className="font-medium">
+                                            {lead.title}
+                                            {lead.probability !== null && (
+                                                <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                                    {/* Convert back to 1-10 for display? or % */}
+                                                    <span className={cn(
+                                                        "w-1.5 h-1.5 rounded-full",
+                                                        (lead.probability || 0) <= 30 ? "bg-blue-500" :
+                                                            (lead.probability || 0) <= 60 ? "bg-yellow-500" : "bg-red-500"
+                                                    )} />
+                                                    {(lead.probability || 0) / 10}/10 Heat
+                                                </div>
                                             )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => onEdit(lead)}>
-                                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => onAddToCalendar(lead)}>
-                                                    <Calendar className="mr-2 h-4 w-4" /> Add to Calendar
-                                                </DropdownMenuItem>
-                                                {lead.next_follow_up && onSnooze && (
-                                                    <DropdownMenuItem onClick={() => onSnooze(lead.id)} className="text-blue-600 focus:text-blue-600">
-                                                        <AlertCircle className="mr-2 h-4 w-4" /> Snooze +1 Day
-                                                    </DropdownMenuItem>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground">
+                                            {format(new Date(lead.created_at), 'MMM d, yyyy')}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-sm font-medium">{lead.contact?.name}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-sm text-muted-foreground">
+                                                {lead.contact?.company_name || '-'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            <div className="flex items-center gap-1">
+                                                <User size={12} className="text-slate-400" />
+                                                {lead.owner_id ? (userMap[lead.owner_id] || 'Unknown') : '-'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            {lead.lead_manager_id ? (
+                                                <div className="flex items-center gap-1">
+                                                    <Users size={12} className="text-slate-400" />
+                                                    {userMap[lead.lead_manager_id] || 'Unknown'}
+                                                </div>
+                                            ) : '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {lead.expected_value ? (
+                                                <span className="font-semibold text-slate-700">
+                                                    {getCurrencySymbol(lead.currency)}
+                                                    {lead.expected_value.toLocaleString()}
+                                                </span>
+                                            ) : '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={cn("font-normal border-0", getStatusColor(lead.status))}>
+                                                {lead.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell id={`lead-${lead.id}`}>
+                                            <div className={cn("text-sm flex flex-col gap-1", overdue ? "text-red-600 font-bold" : "text-slate-600")}>
+                                                <div className="flex items-center gap-2">
+                                                    {lead.next_follow_up ? format(new Date(lead.next_follow_up), 'MMM d') : '-'}
+                                                    {getFollowUpBadge(lead)}
+                                                </div>
+                                                {lead.follow_up_level && (
+                                                    <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded w-fit">
+                                                        {lead.follow_up_level}
+                                                    </span>
                                                 )}
-                                                {lead.next_follow_up && onMarkCompleted && (
-                                                    <DropdownMenuItem onClick={() => onMarkCompleted(lead.id)} className="text-green-600 focus:text-green-600">
-                                                        <Calendar className="mr-2 h-4 w-4" /> Mark Completed
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => onEdit(lead)}>
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit
                                                     </DropdownMenuItem>
-                                                )}
-                                                <DropdownMenuItem
-                                                    onClick={() => onDelete(lead.id)}
-                                                    className="text-red-600 focus:text-red-600"
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })
-                    )}
-                </TableBody>
-            </Table>
+                                                    <DropdownMenuItem onClick={() => onAddToCalendar(lead)}>
+                                                        <Calendar className="mr-2 h-4 w-4" /> Add to Calendar
+                                                    </DropdownMenuItem>
+                                                    {lead.next_follow_up && onSnooze && (
+                                                        <DropdownMenuItem onClick={() => onSnooze(lead.id)} className="text-blue-600 focus:text-blue-600">
+                                                            <AlertCircle className="mr-2 h-4 w-4" /> Snooze +1 Day
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {lead.next_follow_up && onMarkCompleted && (
+                                                        <DropdownMenuItem onClick={() => onMarkCompleted(lead.id)} className="text-green-600 focus:text-green-600">
+                                                            <Calendar className="mr-2 h-4 w-4" /> Mark Completed
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    <DropdownMenuItem
+                                                        onClick={() => onDelete(lead.id)}
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
         </div >
     );
 };

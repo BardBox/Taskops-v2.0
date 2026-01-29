@@ -426,32 +426,34 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
             onSuccess();
             if (keepOpen) {
                 toast.success(lead ? "Lead updated!" : "Lead created! Ready for next one.");
-                form.reset({
-                    title: "",
-                    contact_id: "null",
-                    new_contact_name: "",
-                    new_contact_email: "",
-                    new_contact_phone: "",
-                    owner_id: currentUser || "",
-                    lead_manager_id: null,
-                    source: "Direct",
-                    referral_name: null,
-                    status: "New",
-                    follow_up_level: "L0",
-                    next_follow_up: undefined,
-                    expected_value: 0,
-                    currency: "INR",
-                    probability: 5,
-                    website: null,
-                    linkedin: null,
-                    facebook: null,
-                    instagram: null,
-                    project_links: [],
-                    project_files: [],
-                    new_contact_designation: "",
-                    new_contact_company: "",
-                });
-                setIsNewContact(false);
+                if (!lead) {
+                    form.reset({
+                        title: "",
+                        contact_id: "null",
+                        new_contact_name: "",
+                        new_contact_email: "",
+                        new_contact_phone: "",
+                        owner_id: currentUser || "",
+                        lead_manager_id: null,
+                        source: "Direct",
+                        referral_name: null,
+                        status: "New",
+                        follow_up_level: "L0",
+                        next_follow_up: undefined,
+                        expected_value: 0,
+                        currency: "INR",
+                        probability: 5,
+                        website: null,
+                        linkedin: null,
+                        facebook: null,
+                        instagram: null,
+                        project_links: [],
+                        project_files: [],
+                        new_contact_designation: "",
+                        new_contact_company: "",
+                    });
+                    setIsNewContact(false);
+                }
             } else {
                 onOpenChange(false);
             }
@@ -477,9 +479,21 @@ export function LeadDialog({ open, onOpenChange, lead, onSuccess }: LeadDialogPr
         return "bg-red-500";
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit((values) => onSubmit(values, true))();
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            form.handleSubmit((values) => onSubmit(values, false))();
+        }
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto" onKeyDown={handleKeyDown}>
                 <DialogHeader>
                     <DialogTitle>{lead ? "Edit Lead" : "Create New Lead"}</DialogTitle>
                     <DialogDescription>

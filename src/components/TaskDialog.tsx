@@ -547,30 +547,32 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
       }
 
       if (keepOpen) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        if (!task) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-        setReferenceImage(null);
-        setExistingImageUrl("");
-        setImagePreview("");
-        setReferenceLinks([]);
-        setSelectedCollaborators([]);
+          setReferenceImage(null);
+          setExistingImageUrl("");
+          setImagePreview("");
+          setReferenceLinks([]);
+          setSelectedCollaborators([]);
 
-        setFormData({
-          task_name: "",
-          client_id: "",
-          project_id: "",
-          assignee_id: "",
-          deadline: tomorrowStr,
-          status: "Not Started",
-          urgency: "Medium",
-          reference_link_1: "",
-          reference_link_2: "",
-          reference_link_3: "",
-          notes: "",
-          estimated_minutes: 0,
-        });
+          setFormData({
+            task_name: "",
+            client_id: "",
+            project_id: "",
+            assignee_id: "",
+            deadline: tomorrowStr,
+            status: "Not Started",
+            urgency: "Medium",
+            reference_link_1: "",
+            reference_link_2: "",
+            reference_link_3: "",
+            notes: "",
+            estimated_minutes: 0,
+          });
+        }
       } else {
         onOpenChange(false);
         if (onClose) onClose();
@@ -586,9 +588,21 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSubmit(e as unknown as React.FormEvent, true);
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
+      e.preventDefault();
+      handleSubmit(e as unknown as React.FormEvent, false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent side="right" className="sm:max-w-[800px] w-full overflow-y-auto">
+      <DialogContent side="right" className="sm:max-w-[800px] w-full overflow-y-auto" onKeyDown={handleKeyDown}>
         <DialogHeader>
           <DialogTitle className="text-2xl">{task ? "Edit Task" : "Create New Task"}</DialogTitle>
           <DialogDescription>

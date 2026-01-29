@@ -106,7 +106,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
         }
     }, [open, contact, form]);
 
-    const onSubmit = async (values: ContactFormValues) => {
+    const onSubmit = async (values: ContactFormValues, keepOpen: boolean = false) => {
         setLoading(true);
         try {
             const tagsArray = values.tags
@@ -142,7 +142,26 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                 toast.success("Contact created successfully");
             }
             onSuccess();
-            onOpenChange(false);
+            if (keepOpen) {
+                toast.success(contact ? "Contact updated!" : "Contact created! Ready for next one.");
+                if (!contact) {
+                    form.reset({
+                        name: "",
+                        company_name: "",
+                        designation: "",
+                        email: "",
+                        phone: "",
+                        tags: "",
+                        website: "",
+                        linkedin: "",
+                        facebook: "",
+                        instagram: "",
+                        address: "",
+                    });
+                }
+            } else {
+                onOpenChange(false);
+            }
         } catch (error: any) {
             console.error("Error saving contact:", error);
             toast.error(error.message || "Failed to save contact");
@@ -151,9 +170,22 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit((values) => onSubmit(values, true))();
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            // Allow default behavior for textareas if we had any (none currently, but good practice)
+            if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            form.handleSubmit((values) => onSubmit(values, false))();
+        }
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px]" onKeyDown={handleKeyDown}>
                 <DialogHeader>
                     <DialogTitle>{contact ? "Edit Contact" : "Add New Contact"}</DialogTitle>
                     <DialogDescription>
@@ -161,7 +193,7 @@ export function ContactDialog({ open, onOpenChange, contact, onSuccess }: Contac
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="name"

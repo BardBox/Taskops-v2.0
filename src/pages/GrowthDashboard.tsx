@@ -18,9 +18,11 @@ import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
 import { MainLayout } from "@/components/MainLayout";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useFollowUpReminders } from "@/hooks/useFollowUpReminders";
-import { Search, Filter, SortAsc } from "lucide-react";
+import { Search, Filter, SortAsc, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { generateExcelTemplate, parseExcel } from "@/utils/excelHelpers";
+import { useRef } from "react";
 
 export const GrowthDashboard = () => {
     // Lead State
@@ -61,6 +63,10 @@ export const GrowthDashboard = () => {
     const [statusFilters, setStatusFilters] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState<'created_at' | 'next_follow_up' | 'expected_value' | 'lead_code'>('created_at');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+    // Import/Export State
+    const [isImporting, setIsImporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
 
 
@@ -103,6 +109,11 @@ export const GrowthDashboard = () => {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [activeTab]);
+
+    // Clear search query when switching tabs for cleaner UX
+    useEffect(() => {
+        setSearchQuery("");
     }, [activeTab]);
 
     const loadRates = async () => {
@@ -398,6 +409,142 @@ export const GrowthDashboard = () => {
         }
     };
 
+    // --- Import / Export Logic (Lifted) ---
+
+    const handleExport = () => {
+        if (activeTab === "pipeline") {
+            const columns = [
+                { header: "Title", key: "title", width: 30 },
+                { header: "Contact Email", key: "contact_email", width: 30 },
+                { header: "Status", key: "status", width: 15, dropdown: ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'] },
+                { header: "Expected Value", key: "expected_value", width: 15 },
+                { header: "Currency", key: "currency", width: 10, dropdown: ['USD', 'INR', 'EUR', 'GBP'] },
+                { header: "Probability (0-100)", key: "probability", width: 15 },
+                { header: "Source", key: "source", width: 15 },
+                { header: "Next Follow Up (YYYY-MM-DD)", key: "next_follow_up", width: 20 },
+                { header: "Follow Up Level", key: "follow_up_level", width: 15, dropdown: ['L1', 'L2', 'L3', 'L4', 'L5'] }
+            ];
+            generateExcelTemplate(columns, "Leads", "leads_template.xlsx");
+            toast.success("Lead template exported!");
+        } else {
+            const columns = [
+                { header: "Name", key: "name", width: 20 },
+                { header: "Email", key: "email", width: 25 },
+                { header: "Phone", key: "phone", width: 20 },
+                { header: "Company Name", key: "company_name", width: 25 },
+                { header: "Designation", key: "designation", width: 20 },
+                { header: "Tags (comma separated)", key: "tags", width: 30 },
+                { header: "Website", key: "website", width: 25 },
+                { header: "LinkedIn", key: "linkedin", width: 25 },
+                { header: "Facebook", key: "facebook", width: 25 },
+                { header: "Instagram", key: "instagram", width: 25 }
+            ];
+            generateExcelTemplate(columns, "Contacts", "contacts_template.xlsx");
+            toast.success("Contact template exported!");
+        }
+    };
+
+    const handleImportFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        try {
+            if (activeTab === "pipeline") {
+                await importLeads(file);
+            } else {
+                await importContacts(file);
+            }
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Import failed: " + error.message);
+        } finally {
+            setIsImporting(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const importLeads = async (file: File) => {
+        const data = await parseExcel<any>(file);
+        const leadsToInsert = [];
+
+        for (const row of data) {
+            if (!row["Title"] && !row["title"]) continue;
+
+            const title = row["Title"] || row["title"];
+            const contactEmail = row["Contact Email"] || row["contact_email"];
+            const status = row["Status"] || row["status"];
+            const expectedValue = row["Expected Value"] || row["expected_value"];
+            const currency = row["Currency"] || row["currency"];
+            const probability = row["Probability (0-100)"] || row["probability"];
+            const source = row["Source"] || row["source"];
+            const nextFollowUp = row["Next Follow Up (YYYY-MM-DD)"] || row["next_follow_up"];
+            const followUpLevel = row["Follow Up Level"] || row["follow_up_level"];
+
+            let contactId = null;
+            if (contactEmail) {
+                const { data: contact } = await supabase
+                    .from('contacts')
+                    .select('id')
+                    .eq('email', contactEmail)
+                    .single();
+                if (contact) contactId = contact.id;
+            }
+
+            leadsToInsert.push({
+                title: title,
+                contact_id: contactId,
+                status: status || 'New',
+                expected_value: expectedValue ? parseFloat(expectedValue) : null,
+                currency: currency || 'USD',
+                probability: probability ? parseInt(probability) : null,
+                source: source || null,
+                next_follow_up: nextFollowUp ? new Date(nextFollowUp).toISOString() : null,
+                follow_up_level: followUpLevel || null,
+            });
+        }
+
+        if (leadsToInsert.length === 0) {
+            toast.error("No valid leads found in file");
+            return;
+        }
+
+        const { error } = await supabase.from('leads').insert(leadsToInsert);
+        if (error) throw error;
+
+        toast.success(`Successfully imported ${leadsToInsert.length} leads`);
+        fetchLeads();
+    };
+
+    const importContacts = async (file: File) => {
+        const data = await parseExcel<any>(file);
+        const contactsToInsert = data.map(row => {
+            return {
+                name: row["Name"] || row["name"],
+                email: row["Email"] || row["email"] || null,
+                phone: row["Phone"] || row["phone"] || null,
+                company_name: row["Company Name"] || row["company_name"] || null,
+                designation: row["Designation"] || row["designation"] || null,
+                tags: (row["Tags (comma separated)"] || row["tags"]) ? (row["Tags (comma separated)"] || row["tags"]).split(',').map((t: string) => t.trim()) : [],
+                website: row["Website"] || row["website"] || null,
+                linkedin: row["LinkedIn"] || row["linkedin"] || null,
+                facebook: row["Facebook"] || row["facebook"] || null,
+                instagram: row["Instagram"] || row["instagram"] || null
+            };
+        }).filter(c => c.name);
+
+        if (contactsToInsert.length === 0) {
+            toast.error("No valid contacts found in file");
+            return;
+        }
+
+        const { error } = await supabase.from('contacts').insert(contactsToInsert);
+        if (error) throw error;
+
+        toast.success(`Successfully imported ${contactsToInsert.length} contacts`);
+        fetchContacts();
+    };
+
     const handleViewContact = (contactId: string) => {
         // 1. Find the contact
         const contact = contacts.find(c => c.id === contactId);
@@ -486,50 +633,83 @@ export const GrowthDashboard = () => {
                     </div>
                 </div>
 
-                <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
-
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                    <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
                         <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
                         <TabsTrigger value="contacts">Contacts</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="pipeline" className="space-y-4">
-                        {/* Search and Filters */}
-                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white p-4 rounded-lg border">
-                            {/* Search */}
-                            <div className="relative flex-1 max-w-md">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search leads by title, contact, or company..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10"
+
+                    {/* Common Toolbar */}
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white p-4 rounded-lg border shadow-sm">
+                        {/* Search */}
+                        <div className="relative flex-1 w-full sm:max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder={`Search ${activeTab === 'pipeline' ? 'leads' : 'contacts'}...`}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto">
+                                <Download className="mr-2 h-4 w-4" />
+                                Template
+                            </Button>
+                            <div className="relative w-full sm:w-auto">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isImporting}
+                                    className="w-full sm:w-auto"
+                                >
+                                    {isImporting ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Upload className="mr-2 h-4 w-4" />
+                                    )}
+                                    Import
+                                </Button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept=".xlsx, .xls, .csv"
+                                    onChange={handleImportFileChange}
+                                    title="Import Data"
                                 />
                             </div>
-
-                            {/* Sort */}
-                            <div className="flex items-center gap-2">
-                                <SortAsc className="h-4 w-4 text-muted-foreground" />
-                                <select
-                                    value={`${sortBy}-${sortOrder}`}
-                                    onChange={(e) => {
-                                        const [field, order] = e.target.value.split('-');
-                                        setSortBy(field as any);
-                                        setSortOrder(order as 'asc' | 'desc');
-                                    }}
-                                    className="text-sm border rounded-md px-2 py-1.5 bg-white"
-                                >
-                                    <option value="created_at-desc">Newest First</option>
-                                    <option value="created_at-asc">Oldest First</option>
-                                    <option value="next_follow_up-asc">Follow-up (Earliest)</option>
-                                    <option value="next_follow_up-desc">Follow-up (Latest)</option>
-                                    <option value="expected_value-desc">Value (High to Low)</option>
-                                    <option value="expected_value-asc">Value (Low to High)</option>
-                                    <option value="lead_code-desc">Lead Code (Desc)</option>
-                                    <option value="lead_code-asc">Lead Code (Asc)</option>
-                                </select>
-                            </div>
+                            {/* Sort (only for pipeline for now, can extend) */}
+                            {activeTab === 'pipeline' && (
+                                <div className="flex items-center gap-1 sm:ml-2">
+                                    <SortAsc className="h-4 w-4 text-muted-foreground" />
+                                    <select
+                                        value={`${sortBy}-${sortOrder}`}
+                                        onChange={(e) => {
+                                            const [field, order] = e.target.value.split('-');
+                                            setSortBy(field as any);
+                                            setSortOrder(order as 'asc' | 'desc');
+                                        }}
+                                        className="text-sm border rounded-md px-2 py-2 bg-white w-full sm:w-auto"
+                                        title="Sort Leads"
+                                        aria-label="Sort Leads"
+                                    >
+                                        <option value="created_at-desc">Newest First</option>
+                                        <option value="created_at-asc">Oldest First</option>
+                                        <option value="next_follow_up-asc">Follow-up (Earliest)</option>
+                                        <option value="next_follow_up-desc">Follow-up (Latest)</option>
+                                        <option value="expected_value-desc">Value (High to Low)</option>
+                                        <option value="expected_value-asc">Value (Low to High)</option>
+                                        <option value="lead_code-desc">Lead Code (Desc)</option>
+                                        <option value="lead_code-asc">Lead Code (Asc)</option>
+                                    </select>
+                                </div>
+                            )}
                         </div>
+                    </div>
+                    <TabsContent value="pipeline" className="space-y-4">
+                        <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
 
                         {/* Status Filters */}
                         <div className="flex items-center gap-2 flex-wrap bg-white p-3 rounded-lg border">
@@ -586,7 +766,15 @@ export const GrowthDashboard = () => {
                     </TabsContent>
                     <TabsContent value="contacts" className="space-y-4">
                         <ContactTable
-                            contacts={contacts}
+                            contacts={contacts.filter(contact => {
+                                if (!searchQuery) return true;
+                                const query = searchQuery.toLowerCase();
+                                return (
+                                    contact.name.toLowerCase().includes(query) ||
+                                    (contact.email && contact.email.toLowerCase().includes(query)) ||
+                                    (contact.company_name && contact.company_name.toLowerCase().includes(query))
+                                );
+                            })}
                             onEdit={handleEditContact}
                             onDelete={confirmDeleteContact}
                             onContactClick={handleContactClick}
