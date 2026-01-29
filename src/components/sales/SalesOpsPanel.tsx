@@ -62,6 +62,12 @@ const TimelineItem = ({ event }: { event: Activity }) => {
     };
     const Icon = getIcon(event.type);
 
+    // Combine summary and note effectively, or just rely on summary since the logger merges them.
+    // However, legacy data might have 'note'.
+    const fullContent = event.note ? `${event.summary}\n${event.note}` : event.summary;
+    const isLongContent = fullContent.length > 80; // Character threshold for expansion
+    const isClickable = isLongContent;
+
     return (
         <div className="flex gap-3 mb-6 last:mb-0 relative group">
             <div className="absolute left-[19px] top-10 bottom-[-24px] w-0.5 bg-slate-100 group-last:hidden" />
@@ -71,10 +77,10 @@ const TimelineItem = ({ event }: { event: Activity }) => {
             </div>
             <div className="flex-1">
                 <div
-                    className={`bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors ${event.note && event.note.length > 100 ? 'cursor-pointer' : ''
+                    className={`bg-white p-3 rounded-xl border border-slate-100 shadow-sm transition-all duration-200 ${isClickable ? 'cursor-pointer hover:border-blue-200 hover:shadow-md active:scale-[0.99]' : ''
                         }`}
                     onClick={() => {
-                        if (event.note && event.note.length > 100) {
+                        if (isClickable) {
                             setIsExpanded(!isExpanded);
                         }
                     }}
@@ -83,13 +89,26 @@ const TimelineItem = ({ event }: { event: Activity }) => {
                         <span className="text-xs font-bold text-slate-700">{event.type}</span>
                         <span className="text-[10px] font-medium text-slate-400">{format(new Date(event.created_at), 'MMM d, h:mm a')}</span>
                     </div>
-                    <h4 className="text-sm font-medium text-slate-900 mb-1">{event.summary}</h4>
-                    {event.note && (
-                        <p className={`text-xs text-slate-600 bg-slate-50 p-2 rounded-lg mt-2 leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''
-                            }`}>
-                            {event.note}
-                        </p>
+
+                    {/* Render content with truncation logic */}
+                    <div className={`relative ${isClickable ? 'pr-2' : ''}`}>
+                        <h4 className={`text-sm font-medium text-slate-900 mb-1 leading-relaxed whitespace-pre-line ${!isExpanded && isClickable ? 'line-clamp-2' : ''}`}>
+                            {fullContent}
+                        </h4>
+
+                        {!isExpanded && isClickable && (
+                            <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+                        )}
+                    </div>
+
+                    {isClickable && (
+                        <div className="mt-1 flex justify-end">
+                            <span className="text-[10px] font-semibold text-blue-500 hover:underline">
+                                {isExpanded ? 'Show less' : 'Read more'}
+                            </span>
+                        </div>
                     )}
+
                     {event.outcome_tag && (
                         <div className="mt-2">
                             <Badge variant="secondary" className="text-[10px] h-5 bg-slate-100 text-slate-600 border-slate-200">
@@ -164,7 +183,7 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onView
                         >
                             <Pencil size={20} />
                         </button>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                        <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-xl transition-colors" aria-label="Close Panel">
                             <X size={20} className="text-slate-400" />
                         </button>
                     </div>

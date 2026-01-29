@@ -15,7 +15,21 @@ export const logActivity = async (
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not authenticated");
 
-        const finalSummary = note ? `${summary} - ${note}` : summary;
+        let finalSummary = note ? `${summary}\n${note}` : summary;
+
+        // Append follow-up details if present
+        if (nextFollowUp) {
+            const dateStr = nextFollowUp.toLocaleDateString(undefined, {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const agendaStr = agenda ? ` - ${agenda}` : '';
+            finalSummary += `\n\n📅 Follow-up: ${dateStr}${agendaStr}`;
+        }
 
         const { error: activityError } = await supabase
             .from('sales_activities')

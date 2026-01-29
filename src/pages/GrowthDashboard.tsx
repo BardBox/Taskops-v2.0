@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { SalesOpsPanel, Activity } from "@/components/sales/SalesOpsPanel";
 import { ContactDetailPanel } from "@/components/sales/ContactDetailPanel";
 import { SmartMetricCards } from "@/components/sales/SmartMetricCards";
+import { TodaysAgendaCard } from "@/components/sales/TodaysAgendaCard";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
 import { MainLayout } from "@/components/MainLayout";
@@ -581,205 +582,217 @@ export const GrowthDashboard = () => {
 
     return (
         <MainLayout>
-            <div className="space-y-6 relative p-4 md:p-8 min-h-full" onClick={closePanels}>
+            <div className="space-y-6 relative min-h-full" onClick={closePanels}>
 
-                <Breadcrumbs />
+                <div className="p-4 md:p-8 pb-0 space-y-6">
+                    <Breadcrumbs />
 
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
-                        <p className="text-muted-foreground">Manage your pipeline, leads, and contacts.</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {activeTab === "pipeline" ? (
-                            <>
-                                <Button
-                                    size="icon"
-                                    className="h-14 w-14 rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg"
-                                    onClick={handleAddLead}
-                                >
-                                    <Plus className="h-6 w-6" />
-                                </Button>
-                                <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-14 w-14 rounded-full shadow-md"
-                                    onClick={() => fetchLeads()}
-                                    title="Refresh leads"
-                                >
-                                    <Loader2 className="h-5 w-5" />
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button
-                                    size="icon"
-                                    className="h-14 w-14 rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg"
-                                    onClick={handleAddContact}
-                                >
-                                    <Plus className="h-6 w-6" />
-                                </Button>
-                                <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-14 w-14 rounded-full shadow-md"
-                                    onClick={() => fetchContacts()}
-                                    title="Refresh contacts"
-                                >
-                                    <Loader2 className="h-5 w-5" />
-                                </Button>
-                            </>
-                        )}
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Growth Engine</h1>
+                            <p className="text-muted-foreground">Manage your pipeline, leads, and contacts.</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {activeTab === "pipeline" ? (
+                                <>
+                                    <Button
+                                        size="icon"
+                                        className="h-14 w-14 rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg"
+                                        onClick={handleAddLead}
+                                    >
+                                        <Plus className="h-6 w-6" />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        variant="outline"
+                                        className="h-14 w-14 rounded-full shadow-md"
+                                        onClick={() => fetchLeads()}
+                                        title="Refresh leads"
+                                    >
+                                        <Loader2 className="h-5 w-5" />
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button
+                                        size="icon"
+                                        className="h-14 w-14 rounded-full bg-slate-900 hover:bg-slate-800 shadow-lg"
+                                        onClick={handleAddContact}
+                                    >
+                                        <Plus className="h-6 w-6" />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        variant="outline"
+                                        className="h-14 w-14 rounded-full shadow-md"
+                                        onClick={() => fetchContacts()}
+                                        title="Refresh contacts"
+                                    >
+                                        <Loader2 className="h-5 w-5" />
+                                    </Button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-                        <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-                        <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                    </TabsList>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+                    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 md:px-8 py-4 space-y-4 shadow-sm">
+                        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+                            <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+                            <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                        </TabsList>
 
-                    {/* Common Toolbar */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white p-4 rounded-lg border shadow-sm">
-                        {/* Search */}
-                        <div className="relative flex-1 w-full sm:max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder={`Search ${activeTab === 'pipeline' ? 'leads' : 'contacts'}...`}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto">
-                                <Download className="mr-2 h-4 w-4" />
-                                Template
-                            </Button>
-                            <div className="relative w-full sm:w-auto">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isImporting}
-                                    className="w-full sm:w-auto"
-                                >
-                                    {isImporting ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Upload className="mr-2 h-4 w-4" />
-                                    )}
-                                    Import
-                                </Button>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    accept=".xlsx, .xls, .csv"
-                                    onChange={handleImportFileChange}
-                                    title="Import Data"
+                        {/* Common Toolbar */}
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                            {/* Search */}
+                            <div className="relative flex-1 w-full sm:max-w-md">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder={`Search ${activeTab === 'pipeline' ? 'leads' : 'contacts'}...`}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10 bg-white"
                                 />
                             </div>
-                            {/* Sort (only for pipeline for now, can extend) */}
-                            {activeTab === 'pipeline' && (
-                                <div className="flex items-center gap-1 sm:ml-2">
-                                    <SortAsc className="h-4 w-4 text-muted-foreground" />
-                                    <select
-                                        value={`${sortBy}-${sortOrder}`}
-                                        onChange={(e) => {
-                                            const [field, order] = e.target.value.split('-');
-                                            setSortBy(field as any);
-                                            setSortOrder(order as 'asc' | 'desc');
-                                        }}
-                                        className="text-sm border rounded-md px-2 py-2 bg-white w-full sm:w-auto"
-                                        title="Sort Leads"
-                                        aria-label="Sort Leads"
+
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto bg-white">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Template
+                                </Button>
+                                <div className="relative w-full sm:w-auto">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isImporting}
+                                        className="w-full sm:w-auto bg-white"
                                     >
-                                        <option value="created_at-desc">Newest First</option>
-                                        <option value="created_at-asc">Oldest First</option>
-                                        <option value="next_follow_up-asc">Follow-up (Earliest)</option>
-                                        <option value="next_follow_up-desc">Follow-up (Latest)</option>
-                                        <option value="expected_value-desc">Value (High to Low)</option>
-                                        <option value="expected_value-asc">Value (Low to High)</option>
-                                        <option value="lead_code-desc">Lead Code (Desc)</option>
-                                        <option value="lead_code-asc">Lead Code (Asc)</option>
-                                    </select>
+                                        {isImporting ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Upload className="mr-2 h-4 w-4" />
+                                        )}
+                                        Import
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept=".xlsx, .xls, .csv"
+                                        onChange={handleImportFileChange}
+                                        title="Import Data"
+                                    />
                                 </div>
-                            )}
+                                {/* Sort (only for pipeline for now, can extend) */}
+                                {activeTab === 'pipeline' && (
+                                    <div className="flex items-center gap-1 sm:ml-2">
+                                        <SortAsc className="h-4 w-4 text-muted-foreground" />
+                                        <select
+                                            value={`${sortBy}-${sortOrder}`}
+                                            onChange={(e) => {
+                                                const [field, order] = e.target.value.split('-');
+                                                setSortBy(field as any);
+                                                setSortOrder(order as 'asc' | 'desc');
+                                            }}
+                                            className="text-sm border rounded-md px-2 py-2 bg-white w-full sm:w-auto"
+                                            title="Sort Leads"
+                                            aria-label="Sort Leads"
+                                        >
+                                            <option value="created_at-desc">Newest First</option>
+                                            <option value="created_at-asc">Oldest First</option>
+                                            <option value="next_follow_up-asc">Follow-up (Earliest)</option>
+                                            <option value="next_follow_up-desc">Follow-up (Latest)</option>
+                                            <option value="expected_value-desc">Value (High to Low)</option>
+                                            <option value="expected_value-asc">Value (Low to High)</option>
+                                            <option value="lead_code-desc">Lead Code (Desc)</option>
+                                            <option value="lead_code-asc">Lead Code (Asc)</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                    <TabsContent value="pipeline" className="space-y-4">
-                        <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
 
-                        {/* Status Filters */}
-                        <div className="flex items-center gap-2 flex-wrap bg-white p-3 rounded-lg border">
-                            <Filter className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium text-muted-foreground">Status:</span>
-                            {['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'].map((status) => {
-                                const count = leads.filter(l => l.status === status).length;
-                                const isActive = statusFilters.includes(status);
-                                return (
-                                    <Badge
-                                        key={status}
-                                        variant={isActive ? "default" : "outline"}
-                                        className={`cursor-pointer transition-all ${isActive ? '' : 'hover:bg-slate-100'}`}
-                                        onClick={() => {
-                                            if (isActive) {
-                                                setStatusFilters(statusFilters.filter(s => s !== status));
-                                            } else {
-                                                setStatusFilters([...statusFilters, status]);
-                                            }
-                                        }}
+                    <div className="p-4 md:p-8 space-y-4">
+                        <TabsContent value="pipeline" className="space-y-4 mt-0">
+                            <TodaysAgendaCard
+                                leads={followUpStats.today}
+                                onLeadClick={handleLeadClick}
+                                onMarkCompleted={handleMarkFollowUpCompleted}
+                            />
+                            <SmartMetricCards leads={leads} exchangeRates={exchangeRates} />
+
+                            {/* Status Filters */}
+                            <div className="flex items-center gap-2 flex-wrap bg-white p-3 rounded-lg border">
+                                <Filter className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium text-muted-foreground">Status:</span>
+                                {['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'].map((status) => {
+                                    const count = leads.filter(l => l.status === status).length;
+                                    const isActive = statusFilters.includes(status);
+                                    return (
+                                        <Badge
+                                            key={status}
+                                            variant={isActive ? "default" : "outline"}
+                                            className={`cursor-pointer transition-all ${isActive ? '' : 'hover:bg-slate-100'}`}
+                                            onClick={() => {
+                                                if (isActive) {
+                                                    setStatusFilters(statusFilters.filter(s => s !== status));
+                                                } else {
+                                                    setStatusFilters([...statusFilters, status]);
+                                                }
+                                            }}
+                                        >
+                                            {status} ({count})
+                                        </Badge>
+                                    );
+                                })}
+                                {statusFilters.length > 0 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 text-xs"
+                                        onClick={() => setStatusFilters([])}
                                     >
-                                        {status} ({count})
-                                    </Badge>
-                                );
-                            })}
-                            {statusFilters.length > 0 && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-xs"
-                                    onClick={() => setStatusFilters([])}
-                                >
-                                    Clear
-                                </Button>
-                            )}
-                        </div>
+                                        Clear
+                                    </Button>
+                                )}
+                            </div>
 
-                        {/* Results count */}
-                        <div className="text-sm text-muted-foreground">
-                            Showing {filteredAndSortedLeads.length} of {leads.length} leads
-                        </div>
+                            {/* Results count */}
+                            <div className="text-sm text-muted-foreground">
+                                Showing {filteredAndSortedLeads.length} of {leads.length} leads
+                            </div>
 
-                        <LeadTable
-                            leads={filteredAndSortedLeads}
-                            onEdit={handleEditLead}
-                            onDelete={confirmDeleteLead}
-                            onAddToCalendar={() => toast.info("Calendar integration coming soon")}
-                            onLeadClick={handleLeadClick}
-                            userMap={userMap}
-                            getFollowUpStatus={getFollowUpStatus}
-                            onSnooze={handleSnoozeFollowUp}
-                            onMarkCompleted={handleMarkFollowUpCompleted}
-                        />
-                    </TabsContent>
-                    <TabsContent value="contacts" className="space-y-4">
-                        <ContactTable
-                            contacts={contacts.filter(contact => {
-                                if (!searchQuery) return true;
-                                const query = searchQuery.toLowerCase();
-                                return (
-                                    contact.name.toLowerCase().includes(query) ||
-                                    (contact.email && contact.email.toLowerCase().includes(query)) ||
-                                    (contact.company_name && contact.company_name.toLowerCase().includes(query))
-                                );
-                            })}
-                            onEdit={handleEditContact}
-                            onDelete={confirmDeleteContact}
-                            onContactClick={handleContactClick}
-                        />
-                    </TabsContent>
+                            <LeadTable
+                                leads={filteredAndSortedLeads}
+                                onEdit={handleEditLead}
+                                onDelete={confirmDeleteLead}
+                                onAddToCalendar={() => toast.info("Calendar integration coming soon")}
+                                onLeadClick={handleLeadClick}
+                                userMap={userMap}
+                                getFollowUpStatus={getFollowUpStatus}
+                                onSnooze={handleSnoozeFollowUp}
+                                onMarkCompleted={handleMarkFollowUpCompleted}
+                            />
+                        </TabsContent>
+                        <TabsContent value="contacts" className="space-y-4">
+                            <ContactTable
+                                contacts={contacts.filter(contact => {
+                                    if (!searchQuery) return true;
+                                    const query = searchQuery.toLowerCase();
+                                    return (
+                                        contact.name.toLowerCase().includes(query) ||
+                                        (contact.email && contact.email.toLowerCase().includes(query)) ||
+                                        (contact.company_name && contact.company_name.toLowerCase().includes(query))
+                                    );
+                                })}
+                                onEdit={handleEditContact}
+                                onDelete={confirmDeleteContact}
+                                onContactClick={handleContactClick}
+                            />
+                        </TabsContent>
+                    </div>
                 </Tabs>
 
                 <Sheet
@@ -791,6 +804,7 @@ export const GrowthDashboard = () => {
                         side="right"
                         className="p-0 border-l border-slate-200 w-[450px] sm:max-w-[450px]"
                         overlayClassName="hidden"
+                        hideCloseButton={true}
                         onInteractOutside={(e) => e.preventDefault()} // Prevent auto-closing by Radix, we handle it manually via click
                         onClick={(e) => e.stopPropagation()} // Prevent React event bubbling to the parent div which closes panels
                     >
