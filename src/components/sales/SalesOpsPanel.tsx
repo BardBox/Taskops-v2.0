@@ -2,13 +2,23 @@ import React, { useState } from 'react';
 import {
     Phone, MessageSquare, Mail, Calendar,
     FileText, ArrowRight, Settings, CheckCircle,
-    Clock, AlertCircle, X, Loader2, Pencil, Globe
+    Clock, AlertCircle, X, Loader2, Pencil, Globe, ChevronDown
 } from 'lucide-react';
 import { Lead } from './LeadTable';
 import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { ActivityLogDialog } from './ActivityLogDialog';
 import { ScheduleFollowUpDialog } from './ScheduleFollowUpDialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { logActivity } from "@/utils/activityLogger";
 
 export interface Activity {
     id: string;
@@ -125,6 +135,47 @@ const TimelineItem = ({ event }: { event: Activity }) => {
 export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onViewContact, onMarkWon, userMap }: SalesOpsPanelProps) => {
     const [activityDialogOpen, setActivityDialogOpen] = useState(false);
     const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [updatingLevel, setUpdatingLevel] = useState(false);
+
+    const handleStatusChange = async (newStatus: string) => {
+        if (newStatus === lead.status) return;
+        setUpdatingStatus(true);
+        try {
+            const { error } = await supabase
+                .from('leads')
+                .update({ status: newStatus as any })
+                .eq('id', lead.id);
+            if (error) throw error;
+            await logActivity(lead.id, 'StageChange', `Status changed from ${lead.status} to ${newStatus}`);
+            toast.success(`Status updated to ${newStatus}`);
+            onRefresh();
+        } catch (error: any) {
+            console.error('Error updating status:', error);
+            toast.error('Failed to update status');
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
+
+    const handleFollowUpLevelChange = async (newLevel: string) => {
+        if (newLevel === lead.follow_up_level) return;
+        setUpdatingLevel(true);
+        try {
+            const { error } = await supabase
+                .from('leads')
+                .update({ follow_up_level: newLevel as Lead['follow_up_level'] })
+                .eq('id', lead.id);
+            if (error) throw error;
+            toast.success(`Follow-up level updated to ${newLevel}`);
+            onRefresh();
+        } catch (error: any) {
+            console.error('Error updating follow-up level:', error);
+            toast.error('Failed to update level');
+        } finally {
+            setUpdatingLevel(false);
+        }
+    };
 
     const managerName = userMap[lead.owner_id || ''] || 'Unassigned';
 
@@ -189,37 +240,79 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onView
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-6">
-                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold border border-blue-100">{lead.status}</span>
-                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold border border-indigo-100">
-                        Mgr: {managerName}
-                    </span>
-                    {lead.follow_up_level && (
-                        <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-xs font-bold border border-purple-100">
-                            {lead.follow_up_level}
-                        </span>
-                    )}
-                    <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-lg text-xs font-bold border border-orange-100">
-                        {heatmapLabel}
-                    </span>
+                {/* Quick Info Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    {/* Status */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Status</span>
+                        <Select value={lead.status} onValueChange={handleStatusChange} disabled={updatingStatus}>
+                            <SelectTrigger className="h-8 w-full bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-colors">
+                                {updatingStatus ? <Loader2 size={12} className="animate-spin" /> : <SelectValue />}
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="New">New</SelectItem>
+                                <SelectItem value="Contacted">Contacted</SelectItem>
+                                <SelectItem value="Qualified">Qualified</SelectItem>
+                                <SelectItem value="Proposal">Proposal</SelectItem>
+                                <SelectItem value="Negotiation">Negotiation</SelectItem>
+                                <SelectItem value="Won">Won</SelectItem>
+                                <SelectItem value="Lost">Lost</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Follow-up Level */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Follow-up Level</span>
+                        <Select value={lead.follow_up_level || 'L0'} onValueChange={handleFollowUpLevelChange} disabled={updatingLevel}>
+                            <SelectTrigger className="h-8 w-full bg-purple-50 text-purple-700 rounded-lg text-xs font-bold border border-purple-100 hover:bg-purple-100 transition-colors">
+                                {updatingLevel ? <Loader2 size={12} className="animate-spin" /> : <SelectValue />}
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="L0">L0 - Captured</SelectItem>
+                                <SelectItem value="L1">L1 - Attempted</SelectItem>
+                                <SelectItem value="L2">L2 - Connected</SelectItem>
+                                <SelectItem value="L3">L3 - Discovery</SelectItem>
+                                <SelectItem value="L4">L4 - Meeting</SelectItem>
+                                <SelectItem value="L5">L5 - Proposal</SelectItem>
+                                <SelectItem value="L6">L6 - Negotiation</SelectItem>
+                                <SelectItem value="L7">L7 - Closed</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Manager */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Manager</span>
+                        <div className="h-8 px-3 flex items-center bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100">
+                            {managerName}
+                        </div>
+                    </div>
+
+                    {/* Heat Score */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Heat Score</span>
+                        <div className="h-8 px-3 flex items-center bg-orange-50 text-orange-600 rounded-lg text-xs font-bold border border-orange-100">
+                            {heatmapLabel}
+                        </div>
+                    </div>
                 </div>
 
-                {/* Social Media & Website */}
-                <div className="flex items-center gap-3 mb-6">
-                    {lead.website && (
-                        <a href={lead.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-colors">
-                            <span className="sr-only">Website</span>
-                            <Globe size={16} />
-                        </a>
-                    )}
-                    {lead.linkedin && (
-                        <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-blue-50 rounded-full text-blue-600 hover:bg-blue-100 transition-colors">
-                            <span className="sr-only">LinkedIn</span>
-                            <span className="text-xs font-bold px-1">in</span>
-                        </a>
-                    )}
-                    {/* Placeholder for generic socials if icons not available */}
-                </div>
+                {/* Social Links - Compact Row */}
+                {(lead.website || lead.linkedin) && (
+                    <div className="flex items-center gap-2 mb-4">
+                        {lead.website && (
+                            <a href={lead.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-colors" title="Website">
+                                <Globe size={14} />
+                            </a>
+                        )}
+                        {lead.linkedin && (
+                            <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-blue-50 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors" title="LinkedIn">
+                                <span className="text-[10px] font-bold">in</span>
+                            </a>
+                        )}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
                     <div>
@@ -285,6 +378,14 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onView
                 open={activityDialogOpen}
                 onOpenChange={setActivityDialogOpen}
                 leadId={lead.id}
+                onSuccess={onRefresh}
+            />
+            <ScheduleFollowUpDialog
+                open={scheduleDialogOpen}
+                onOpenChange={setScheduleDialogOpen}
+                leadId={lead.id}
+                currentDate={lead.next_follow_up}
+                currentAgenda={lead.next_follow_up_agenda}
                 onSuccess={onRefresh}
             />
         </div>
