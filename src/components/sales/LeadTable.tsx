@@ -152,6 +152,7 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                             <TableHead>Value</TableHead>
                             {/* Removed Priority */}
                             <TableHead>Status</TableHead>
+                            <TableHead className="text-center">Level</TableHead>
                             <TableHead>Follow Up</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -159,7 +160,7 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                     <TableBody>
                         {leads.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                                     No leads found. Add one to get started!
                                 </TableCell>
                             </TableRow>
@@ -233,17 +234,25 @@ export const LeadTable = ({ leads, onEdit, onDelete, onAddToCalendar, onLeadClic
                                                 {lead.status}
                                             </Badge>
                                         </TableCell>
+                                        <TableCell className="text-center">
+                                            {lead.follow_up_level ? (
+                                                <Badge variant="outline" className="text-sm px-3 py-1 bg-purple-50 border-purple-200 text-purple-700 font-bold">
+                                                    {lead.follow_up_level}
+                                                </Badge>
+                                            ) : (
+                                                <span className="text-slate-400">-</span>
+                                            )}
+                                        </TableCell>
                                         <TableCell id={`lead-${lead.id}`}>
-                                            <div className={cn("text-sm flex flex-col gap-1", overdue ? "text-red-600 font-bold" : "text-slate-600")}>
+                                            <div className={cn("text-sm", overdue ? "text-red-600 font-bold" : "text-slate-600")}>
                                                 <div className="flex items-center gap-2">
-                                                    {lead.next_follow_up ? format(new Date(lead.next_follow_up), 'MMM d') : '-'}
+                                                    {lead.next_follow_up ? (
+                                                        <span>{format(new Date(lead.next_follow_up), 'MMM d')}</span>
+                                                    ) : (
+                                                        <span className="text-slate-400">-</span>
+                                                    )}
                                                     {getFollowUpBadge(lead)}
                                                 </div>
-                                                {lead.follow_up_level && (
-                                                    <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded w-fit">
-                                                        {lead.follow_up_level}
-                                                    </span>
-                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>

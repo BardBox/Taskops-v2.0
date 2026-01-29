@@ -637,43 +637,49 @@ export const GrowthDashboard = () => {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-                    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 md:px-8 py-4 space-y-4 shadow-sm">
-                        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-                            <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-                            <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                        </TabsList>
+                    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 md:px-8 py-3 shadow-sm">
+                        {/* Single Row Toolbar */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            {/* Tabs */}
+                            <TabsList className="grid grid-cols-2 w-[200px] shrink-0">
+                                <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+                                <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                            </TabsList>
 
-                        {/* Common Toolbar */}
-                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                            {/* Divider */}
+                            <div className="hidden sm:block w-px h-8 bg-slate-200" />
+
                             {/* Search */}
-                            <div className="relative flex-1 w-full sm:max-w-md">
+                            <div className="relative flex-1 min-w-[180px] max-w-sm">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     placeholder={`Search ${activeTab === 'pipeline' ? 'leads' : 'contacts'}...`}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10 bg-white"
+                                    className="pl-10 bg-white h-9"
                                 />
                             </div>
 
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto bg-white">
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Template
+                            {/* Right Side Actions */}
+                            <div className="flex items-center gap-2 ml-auto">
+                                <Button variant="outline" size="sm" onClick={handleExport} className="bg-white h-9">
+                                    <Download className="mr-1.5 h-4 w-4" />
+                                    <span className="hidden sm:inline">Template</span>
                                 </Button>
-                                <div className="relative w-full sm:w-auto">
+                                <div className="relative">
                                     <Button
                                         variant="outline"
+                                        size="sm"
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={isImporting}
-                                        className="w-full sm:w-auto bg-white"
+                                        className="bg-white h-9"
                                     >
                                         {isImporting ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                                         ) : (
-                                            <Upload className="mr-2 h-4 w-4" />
+                                            <Upload className="mr-1.5 h-4 w-4" />
                                         )}
-                                        Import
+                                        <span className="hidden sm:inline">Import</span>
                                     </Button>
                                     <input
                                         type="file"
@@ -684,31 +690,35 @@ export const GrowthDashboard = () => {
                                         title="Import Data"
                                     />
                                 </div>
-                                {/* Sort (only for pipeline for now, can extend) */}
+
+                                {/* Sort Dropdown */}
                                 {activeTab === 'pipeline' && (
-                                    <div className="flex items-center gap-1 sm:ml-2">
-                                        <SortAsc className="h-4 w-4 text-muted-foreground" />
-                                        <select
-                                            value={`${sortBy}-${sortOrder}`}
-                                            onChange={(e) => {
-                                                const [field, order] = e.target.value.split('-');
-                                                setSortBy(field as any);
-                                                setSortOrder(order as 'asc' | 'desc');
-                                            }}
-                                            className="text-sm border rounded-md px-2 py-2 bg-white w-full sm:w-auto"
-                                            title="Sort Leads"
-                                            aria-label="Sort Leads"
-                                        >
-                                            <option value="created_at-desc">Newest First</option>
-                                            <option value="created_at-asc">Oldest First</option>
-                                            <option value="next_follow_up-asc">Follow-up (Earliest)</option>
-                                            <option value="next_follow_up-desc">Follow-up (Latest)</option>
-                                            <option value="expected_value-desc">Value (High to Low)</option>
-                                            <option value="expected_value-asc">Value (Low to High)</option>
-                                            <option value="lead_code-desc">Lead Code (Desc)</option>
-                                            <option value="lead_code-asc">Lead Code (Asc)</option>
-                                        </select>
-                                    </div>
+                                    <>
+                                        <div className="hidden sm:block w-px h-6 bg-slate-200" />
+                                        <div className="flex items-center gap-1">
+                                            <SortAsc className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                                            <select
+                                                value={`${sortBy}-${sortOrder}`}
+                                                onChange={(e) => {
+                                                    const [field, order] = e.target.value.split('-');
+                                                    setSortBy(field as any);
+                                                    setSortOrder(order as 'asc' | 'desc');
+                                                }}
+                                                className="text-sm border rounded-md px-2 py-1.5 bg-white h-9"
+                                                title="Sort Leads"
+                                                aria-label="Sort Leads"
+                                            >
+                                                <option value="created_at-desc">Newest First</option>
+                                                <option value="created_at-asc">Oldest First</option>
+                                                <option value="next_follow_up-asc">Follow-up (Earliest)</option>
+                                                <option value="next_follow_up-desc">Follow-up (Latest)</option>
+                                                <option value="expected_value-desc">Value (High to Low)</option>
+                                                <option value="expected_value-asc">Value (Low to High)</option>
+                                                <option value="lead_code-desc">Lead Code (Desc)</option>
+                                                <option value="lead_code-asc">Lead Code (Asc)</option>
+                                            </select>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -718,6 +728,7 @@ export const GrowthDashboard = () => {
                         <TabsContent value="pipeline" className="space-y-4 mt-0">
                             <TodaysAgendaCard
                                 leads={followUpStats.today}
+                                allLeads={leads}
                                 onLeadClick={handleLeadClick}
                                 onMarkCompleted={handleMarkFollowUpCompleted}
                             />
@@ -813,7 +824,21 @@ export const GrowthDashboard = () => {
                                 lead={selectedLeadForPanel}
                                 events={activities}
                                 onClose={() => setSelectedLeadForPanel(null)}
-                                onRefresh={() => fetchActivities(selectedLeadForPanel.id)}
+                                onRefresh={async () => {
+                                    // Refresh activities
+                                    await fetchActivities(selectedLeadForPanel.id);
+                                    // Refresh leads list
+                                    const { data } = await supabase
+                                        .from('leads')
+                                        .select(`*, contact:contacts(name, company_name)`)
+                                        .eq('id', selectedLeadForPanel.id)
+                                        .single();
+                                    if (data) {
+                                        setSelectedLeadForPanel(data as Lead);
+                                    }
+                                    // Refresh main table
+                                    fetchLeads();
+                                }}
                                 onEdit={handleEditLead}
                                 onViewContact={handleViewContact}
                                 onMarkWon={async (lead) => {
@@ -858,7 +883,20 @@ export const GrowthDashboard = () => {
                     open={leadDialogOpen}
                     onOpenChange={setLeadDialogOpen}
                     lead={selectedLead}
-                    onSuccess={fetchLeads}
+                    onSuccess={async () => {
+                        fetchLeads();
+                        // Also refresh the selected panel if open
+                        if (selectedLeadForPanel) {
+                            const { data } = await supabase
+                                .from('leads')
+                                .select(`*, contact:contacts(name, company_name)`)
+                                .eq('id', selectedLeadForPanel.id)
+                                .single();
+                            if (data) {
+                                setSelectedLeadForPanel(data as Lead);
+                            }
+                        }
+                    }}
                 />
 
                 <ContactDialog

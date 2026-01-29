@@ -269,14 +269,14 @@ export const SalesOpsPanel = ({ lead, events, onClose, onRefresh, onEdit, onView
                                 {updatingLevel ? <Loader2 size={12} className="animate-spin" /> : <SelectValue />}
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="L0">L0 - Captured</SelectItem>
-                                <SelectItem value="L1">L1 - Attempted</SelectItem>
-                                <SelectItem value="L2">L2 - Connected</SelectItem>
-                                <SelectItem value="L3">L3 - Discovery</SelectItem>
-                                <SelectItem value="L4">L4 - Meeting</SelectItem>
-                                <SelectItem value="L5">L5 - Proposal</SelectItem>
-                                <SelectItem value="L6">L6 - Negotiation</SelectItem>
-                                <SelectItem value="L7">L7 - Closed</SelectItem>
+                                <SelectItem value="L0">L0</SelectItem>
+                                <SelectItem value="L1">L1</SelectItem>
+                                <SelectItem value="L2">L2</SelectItem>
+                                <SelectItem value="L3">L3</SelectItem>
+                                <SelectItem value="L4">L4</SelectItem>
+                                <SelectItem value="L5">L5</SelectItem>
+                                <SelectItem value="L6">L6</SelectItem>
+                                <SelectItem value="L7">L7</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
