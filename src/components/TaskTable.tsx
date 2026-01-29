@@ -1037,7 +1037,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   return (
     <>
       {/* View Toggle and Bulk Actions Bar - Sticky */}
-      <div className={cn("z-30 bg-background py-2 flex items-center justify-between gap-2 md:gap-4 flex-wrap border-b border-border/30", isFocusMode ? "relative px-2 flex-none w-full" : "sticky top-[5.5rem] -mx-3 md:-mx-4 px-3 md:px-4 mb-2")}>
+      <div className={cn("z-30 bg-background py-2 flex items-center justify-between gap-2 md:gap-4 flex-wrap border-b border-border/30", isFocusMode ? "relative px-2 flex-none w-full" : "sticky top-0 -mx-3 md:-mx-4 px-3 md:px-4 mb-2")}>
         {/* Mobile: Dropdown | Desktop: Button Grid */}
         {isMobile ? (
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
@@ -1172,9 +1172,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-6 bg-gradient-to-l from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
             </>
           )}
-          <div className={cn("overflow-auto custom-scrollbar scroll-smooth", isFocusMode ? "flex-1 max-h-none h-full" : "max-h-[70vh]")}>
+          <div className={cn("scroll-smooth", isFocusMode ? "overflow-auto custom-scrollbar flex-1 max-h-none h-full" : "")}>
             <Table className="table-fixed">
-              <TableHeader className="sticky top-0 z-20 bg-card">
+              <TableHeader className={cn("sticky z-20 bg-card", isFocusMode ? "top-0" : "top-[3.8rem]")}>
                 <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
                   {isSelectionMode && (userRole === "project_owner" || userRole === "project_manager") && (
                     <TableHead className="w-12 bg-card">
