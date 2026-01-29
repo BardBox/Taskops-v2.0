@@ -32,7 +32,7 @@ import { MentionInput } from "@/components/hive/MentionInput";
 import { MessageWithMentions } from "@/components/hive/MessageWithMentions";
 import { useTaskTimeTracking, calculateTotalTime } from "@/hooks/useTaskTimeTracking";
 import { TimeTrackingBadge } from "@/components/TimeTrackingBadge";
-import { TimerPieChart } from "@/components/TimerPieChart";
+import { TimeBudgetIndicator } from "@/components/TimeBudgetIndicator";
 import { formatTimeTracking, formatTimeTrackingFull } from "@/hooks/useTaskTimeTracking";
 
 interface Task {
@@ -1257,7 +1257,8 @@ export function TaskDetailDialog({
               />
 
               {/* Time Tracking Display */}
-              {timeRecords.length > 0 && (
+              {/* Time Tracking Display - Show if time tracked OR if estimate exists */}
+              {(timeRecords.length > 0 || (task.estimated_minutes && task.estimated_minutes > 0)) && (
                 <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border">
                   <div className="flex items-center gap-2">
                     <Timer className="h-4 w-4 text-primary" />
@@ -1266,27 +1267,14 @@ export function TaskDetailDialog({
                     </Label>
                   </div>
 
-                  {task.estimated_minutes ? (
-                    <div className="flex items-center gap-4">
-                      <TimerPieChart
-                        totalSeconds={timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0)}
-                        budgetSeconds={task.estimated_minutes * 60}
-                        isRunning={timeRecords.some(r => r.is_running)}
-                        size={48}
-                        text={formatTimeTracking(timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0))}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {formatTimeTrackingFull(timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0))}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          of {task.estimated_minutes / 60}h estimated
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <TimeTrackingBadge records={timeRecords} variant="card" showStatus />
-                  )}
+                  {/* Always use TimeBudgetIndicator for consistent UI */}
+                  <div className="flex-1 min-w-[250px]">
+                    <TimeBudgetIndicator
+                      totalSeconds={timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0)}
+                      budgetSeconds={task.estimated_minutes ? task.estimated_minutes * 60 : 0}
+                      isRunning={timeRecords.some(r => r.is_running)}
+                    />
+                  </div>
                 </div>
               )}
 
