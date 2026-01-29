@@ -50,6 +50,13 @@ export const TaskTimeDisplay = ({
     // State for the displayed time
     const [displaySeconds, setDisplaySeconds] = useState(baseSeconds);
 
+    // Update display when baseSeconds updates (e.g. data loaded) and not running
+    useEffect(() => {
+        if (!isRunning) {
+            setDisplaySeconds(baseSeconds);
+        }
+    }, [baseSeconds, isRunning]);
+
     // Main timer effect - ONLY reacts to isRunning changes
     useEffect(() => {
         // Detect transition from not-running to running

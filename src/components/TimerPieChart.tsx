@@ -18,20 +18,37 @@ export const TimerPieChart = ({
     size = 40,
     text
 }: TimerPieChartProps) => {
-    // Calculate percentage
-    const percentage = Math.min((totalSeconds / budgetSeconds) * 100, 100);
-    const isOverBudget = totalSeconds > budgetSeconds;
-
     // SVG Config
     const center = size / 2;
-    const strokeWidth = 4; // Thicker for donut look
+    const strokeWidth = 4;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
 
-    // Calculate stroke dash offset
-    // If over budget, we show a full red ring (or special effect), 
-    // but for "Under Budget" we show partial green.
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    const isOverBudget = totalSeconds > budgetSeconds;
+
+    // Calculate progress for normal time (0-100% of budget = 0-100% green fill)
+    const normalPercentage = Math.min((totalSeconds / budgetSeconds) * 100, 100);
+
+    // Calculate overtime red fill percentage
+    // Red starts at 0% when time = budget (1x)
+    // Red reaches 100% when time = 2x budget
+    // Formula: overtime ratio from 0 to 1, mapped to 0-100%
+    let overtimeRedPercentage = 0;
+    if (isOverBudget) {
+        // How much over budget (in terms of budget units)
+        // At 1x budget: overtimeRatio = 0
+        // At 1.5x budget: overtimeRatio = 0.5 -> 50% red
+        // At 2x budget: overtimeRatio = 1 -> 100% red
+        const overtimeRatio = (totalSeconds - budgetSeconds) / budgetSeconds;
+        overtimeRedPercentage = Math.min(overtimeRatio * 100, 100);
+    }
+
+    // Calculate stroke dash offsets
+    // For green ring: shows progress from 0 to budget (or full if over budget)
+    const greenOffset = circumference - (normalPercentage / 100) * circumference;
+
+    // For red overtime ring: shows how much over budget
+    const redOffset = circumference - (overtimeRedPercentage / 100) * circumference;
 
     return (
         <div className={cn("relative inline-flex items-center justify-center select-none", className)} style={{ width: size, height: size }}>
@@ -52,7 +69,7 @@ export const TimerPieChart = ({
                     className="text-slate-200 dark:text-slate-800"
                 />
 
-                {/* Progress Ring */}
+                {/* Green Progress Ring - shows time used within budget */}
                 <circle
                     cx={center}
                     cy={center}
@@ -61,20 +78,35 @@ export const TimerPieChart = ({
                     stroke="currentColor"
                     strokeWidth={strokeWidth}
                     strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
+                    strokeDashoffset={greenOffset}
                     strokeLinecap="round"
-                    className={cn(
-                        "transition-all duration-500 ease-in-out",
-                        isOverBudget ? "text-red-500" : "text-green-500"
-                    )}
+                    className="transition-all duration-500 ease-in-out text-green-500"
                 />
+
+                {/* Red Overtime Ring - gradually fills as time exceeds budget */}
+                {isOverBudget && (
+                    <circle
+                        cx={center}
+                        cy={center}
+                        r={radius}
+                        fill="transparent"
+                        stroke="currentColor"
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={circumference}
+                        strokeDashoffset={redOffset}
+                        strokeLinecap="round"
+                        className="transition-all duration-500 ease-in-out text-red-500"
+                    />
+                )}
             </svg>
             {text && (
                 <div className={cn(
                     "absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums",
                     isRunning
                         ? "text-blue-500 animate-pulse"
-                        : "text-muted-foreground"
+                        : isOverBudget
+                            ? "text-red-500"
+                            : "text-muted-foreground"
                 )}>
                     {text}
                 </div>

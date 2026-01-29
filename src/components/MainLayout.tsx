@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { TimeBar } from "@/components/layout/TimeBar";
 import { Sidebar } from "@/components/Sidebar";
+import { AutoClockOutManager } from "@/components/AutoClockOutManager";
 import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
@@ -182,6 +183,9 @@ export function MainLayout({ children, showRoleBadge = true }: MainLayoutProps) 
           showRoleBadge={showRoleBadge}
           isCompact={isCompact}
         />
+
+        {/* Auto Clock Out Manager - Silent until triggered */}
+        <AutoClockOutManager />
 
         {/* TimeBar Container - Slides in/out based on compact mode */}
         <div className={cn(
