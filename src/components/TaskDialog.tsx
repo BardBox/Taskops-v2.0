@@ -26,6 +26,7 @@ import { BadgeDropdown } from "@/components/BadgeDropdown";
 import { X, ClipboardList, Users, AlertCircle, Link2, StickyNote, Calendar, Activity, User, UsersRound, Wand2, Zap, Link, Paperclip } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskTimeline } from "@/components/TaskTimeline";
+import { ensureSingleActiveTask } from "@/utils/taskOperations";
 
 interface TaskDialogProps {
   onTaskSaved?: () => void;
@@ -501,6 +502,11 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
         notes: validated.notes || null,
       };
 
+      // Enforce Single Active Task Rule
+      if (taskData.status === "In Progress" && taskData.assignee_id) {
+        await ensureSingleActiveTask(taskData.assignee_id, task?.id);
+      }
+
       if (!canEditNotes) {
         if (task) {
           delete taskData.notes;
@@ -845,8 +851,8 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
                     id="estimated_hours"
                     type="number"
                     min="0"
-                    step="0.5"
-                    value={formData.estimated_minutes ? formData.estimated_minutes / 60 : ""}
+                    step="0.1"
+                    value={formData.estimated_minutes ? (formData.estimated_minutes / 60).toString() : ""}
                     onChange={(e) => {
                       const val = parseFloat(e.target.value);
                       setFormData({

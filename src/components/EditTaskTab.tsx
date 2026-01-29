@@ -18,6 +18,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useStatusUrgency } from "@/hooks/useStatusUrgency";
 import { BadgeDropdown } from "@/components/BadgeDropdown";
 import { TaskTimeline } from "@/components/TaskTimeline";
+import { ensureSingleActiveTask } from "@/utils/taskOperations";
 
 interface EditTaskTabProps {
   task: any;
@@ -341,6 +342,11 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
         updateData.notes = formData.notes || null;
       }
 
+      // Enforce Single Active Task Rule
+      if (formData.status === "In Progress" && task.status !== "In Progress") {
+        await ensureSingleActiveTask(formData.assignee_id || task.assignee_id, task.id);
+      }
+
       const { error } = await supabase
         .from("tasks")
         .update(updateData)
@@ -578,7 +584,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
                 id="estimated_hours"
                 type="number"
                 min="0"
-                step="0.5"
+                step="0.1"
                 value={formData.estimated_minutes ? formData.estimated_minutes / 60 : ""}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);

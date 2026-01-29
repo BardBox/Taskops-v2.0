@@ -28,6 +28,7 @@ import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { cn } from "@/lib/utils";
 import { TaskTimeDisplay } from "./TaskTimeDisplay";
 import { TaskTimer } from "./TaskTimer";
+import { ensureSingleActiveTask } from "@/utils/taskOperations";
 
 interface Task {
   id: string;
@@ -790,10 +791,15 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     // TIME TRACKING 2.0: Hybrid Approach - Client handles timer + DB trigger as safety net
     // IMPORTANT: Timer tracks the ASSIGNEE's time, not the person changing status
     const assigneeId = task?.assignee_id;
-    console.log("[Timer Debug] Status Change:", { taskId, oldStatus, newStatus, assigneeId, task: task?.title });
+    console.log("[Timer Debug] Status Change:", { taskId, oldStatus, newStatus, assigneeId, task: task?.task_name });
 
     if (newStatus === "In Progress" && oldStatus !== "In Progress" && assigneeId) {
       // STARTING task - start the timer
+      // Ensure single active task per user
+      await ensureSingleActiveTask(assigneeId, taskId);
+      // Wait for the background update to complete and force a refresh of all tasks
+      await fetchTasks();
+
       console.log("[Timer Debug] Starting timer for task:", taskId, "assignee:", assigneeId);
       const now = new Date().toISOString();
 
@@ -1729,6 +1735,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               setSelectedTask(taskData);
               setNotesDialogOpen(true);
             }}
+            onRefresh={fetchTasks}
           />
         )
       }
@@ -1775,6 +1782,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
         taskId={selectedTaskId}
         userRole={userRole}
         userId={userId}
+        onTaskRefresh={fetchTasks}
         onDuplicate={(duplicateData) => {
           if (onDuplicate) {
             onDuplicate(duplicateData);

@@ -19,6 +19,7 @@ import { canChangeUrgency, canTeamMemberChangeStatus } from "@/utils/roleHelpers
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerConfetti, triggerStarBurst } from "@/utils/celebrationEffects";
+import { ensureSingleActiveTask } from "@/utils/taskOperations";
 
 interface Task {
   id: string;
@@ -66,11 +67,12 @@ interface KanbanBoardProps {
   onAppreciationToggle: (taskId: string, e: React.MouseEvent) => void;
   onSubmit: (task: Task) => void;
   onNotesClick: (task: Task) => void;
+  onRefresh?: () => void;
 }
 
-const SortableTaskCard = ({ 
-  task, 
-  userRole, 
+const SortableTaskCard = ({
+  task,
+  userRole,
   userId,
   isSelected,
   isAppreciated,
@@ -86,8 +88,8 @@ const SortableTaskCard = ({
 }: any) => {
   // Enable dragging based on user permissions
   const isDragDisabled = !canEdit || (userRole === "team_member" && !canTeamMemberChangeStatus(task.status));
-  
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     disabled: isDragDisabled
   });
@@ -122,13 +124,13 @@ const SortableTaskCard = ({
   const getStickyNoteColor = (urgency: string) => {
     const urgencyItem = urgencies.find((u: any) => u.label === urgency);
     if (!urgencyItem) return 'bg-[hsl(50,40%,96%)] border-[hsl(50,40%,88%)]'; // default soft yellow
-    
+
     // Extract urgency level number from color class (e.g., "bg-urgency-15" -> 15)
     const colorMatch = urgencyItem.color.match(/urgency-(\d+)/);
     if (!colorMatch) return 'bg-[hsl(50,40%,96%)] border-[hsl(50,40%,88%)]';
-    
+
     const level = parseInt(colorMatch[1]);
-    
+
     // Map urgency levels to very light, desaturated sticky note colors
     // Lower levels (1-7): Cool blues/cyans - very light and desaturated
     // Mid levels (8-13): Warm yellows/oranges - very light and desaturated
@@ -155,33 +157,33 @@ const SortableTaskCard = ({
       19: 'bg-[hsl(5,51%,96%)] border-[hsl(5,51%,88%)]',
       20: 'bg-[hsl(0,52%,96%)] border-[hsl(0,52%,88%)]'
     };
-    
+
     return colorMap[level] || 'bg-[hsl(50,40%,96%)] border-[hsl(50,40%,88%)]';
   };
 
   // Check if task is overdue
   const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'Completed';
-  
+
   // Check if task is fresh (created within last hour)
   const isFresh = new Date().getTime() - new Date(task.date).getTime() < 3600000;
 
   return (
-    <motion.div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
       {...listeners}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.8 }}
-      whileHover={{ 
-        scale: 1.05, 
+      whileHover={{
+        scale: 1.05,
         rotate: 0,
         transition: { type: "spring", stiffness: 300, damping: 20 }
       }}
       whileTap={{ scale: 0.98 }}
     >
-      <Card 
+      <Card
         className={`p-4 mb-3 transition-all group relative ${randomRotation} ${getStickyNoteColor(task.urgency)} border-2 overflow-hidden shadow-lg hover:shadow-2xl ${isOverdue ? 'ring-2 ring-red-500/50' : ''} ${isFresh ? 'ring-2 ring-yellow-400/50' : ''} ${isDragDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         style={{
           backgroundImage: `repeating-linear-gradient(
@@ -202,7 +204,7 @@ const SortableTaskCard = ({
           </div>
         )}
         {/* Page curl effect on bottom-right corner - realistic with shadow */}
-        <div 
+        <div
           className="absolute bottom-0 right-0 w-0 h-0 group-hover:w-14 group-hover:h-14 pointer-events-none transition-all duration-300 ease-out"
           style={{
             background: 'linear-gradient(135deg, transparent 45%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.15) 55%, rgba(255,255,255,0.1) 100%)',
@@ -211,7 +213,7 @@ const SortableTaskCard = ({
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
           }}
         />
-        
+
         {/* Task content - NO PIN ELEMENTS */}
         <div className="space-y-3 pt-2">
           {/* Header */}
@@ -321,7 +323,7 @@ const SortableTaskCard = ({
                 )}
               </div>
             )}
-            
+
             {/* TM View - Only show PM who assigned */}
             {userRole === "team_member" && task.assigned_by && (
               <div className="flex items-start gap-1.5">
@@ -360,7 +362,7 @@ const SortableTaskCard = ({
                 </div>
               </div>
             )}
-            
+
             {task.deadline && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="h-3 w-3" />
@@ -373,7 +375,7 @@ const SortableTaskCard = ({
           <div className="flex flex-col gap-2">
             {/* SMO Posted Checkbox - Only for task owner on SMO projects */}
             {task.projects?.name === "SMO" && task.assignee_id === userId && (
-              <div 
+              <div
                 className="flex items-center gap-1.5 p-1.5 bg-background/50 rounded border border-border/50"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -389,7 +391,7 @@ const SortableTaskCard = ({
                           posted_by: checked === true ? userId : null,
                         })
                         .eq("id", task.id);
-                      
+
                       if (error) throw error;
                     } catch (error) {
                       console.error("Error updating posted status:", error);
@@ -400,7 +402,7 @@ const SortableTaskCard = ({
                 <span className="text-[10px] text-muted-foreground">Posted</span>
               </div>
             )}
-            
+
             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {userRole !== "project_manager" && (
                 <Button
@@ -461,12 +463,12 @@ const SortableTaskCard = ({
 const customCollisionDetection = (args: any) => {
   // First, try to find collisions with pointer within droppable areas
   const pointerCollisions = pointerWithin(args);
-  
+
   // If we found collisions with pointerWithin, use those
   if (pointerCollisions.length > 0) {
     return pointerCollisions;
   }
-  
+
   // Otherwise, fall back to rectangle intersection
   return rectIntersection(args);
 };
@@ -487,13 +489,14 @@ export const KanbanBoard = ({
   onAppreciationToggle,
   onSubmit,
   onNotesClick,
+  onRefresh,
 }: KanbanBoardProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [roles, setRoles] = useState<Map<string, string>>(new Map());
-  
+
   // Initialize gamification hook
   const { stats, onTaskCompleted } = useGamification(userId);
-  
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -522,35 +525,35 @@ export const KanbanBoard = ({
     playNotificationSound('whoosh', 0.3);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over) {
       setActiveId(null);
       return;
     }
 
     const taskId = active.id as string;
-    
+
     // Check if we dropped on a task or a column
     // If over.id matches a task ID, use that task's status as the new status
     const overTask = tasks.find(t => t.id === over.id);
     const newStatus = overTask ? overTask.status : (over.id as string);
-    
+
     const task = tasks.find(t => t.id === taskId);
-    
+
     if (!task) {
       console.error("Task not found:", taskId);
       setActiveId(null);
       return;
     }
-    
+
     console.log("Drag attempt - over.id:", over.id, "newStatus:", newStatus, "userRole:", userRole);
-    
+
     // Check if team member can make this status change
     if (userRole === "team_member") {
       const allowedStatuses = ["Not Started", "In Progress", "In Approval"];
-      
+
       console.log("TM validation:", {
         taskAssignedTo: task.assignee_id,
         currentUserId: userId,
@@ -559,32 +562,39 @@ export const KanbanBoard = ({
         isAllowedStatus: allowedStatuses.includes(newStatus),
         canChangeFromCurrent: canTeamMemberChangeStatus(task.status)
       });
-      
+
       // Check if task is assigned to this user
       if (task.assignee_id !== userId) {
         toast.error("You can only move tasks assigned to you");
         setActiveId(null);
         return;
       }
-      
+
       // If current status is restricted, prevent any changes
       if (!canTeamMemberChangeStatus(task.status)) {
         toast.error("You cannot change this task's status");
         setActiveId(null);
         return;
       }
-      
+
       // Only allow dropping to allowed statuses
       if (!allowedStatuses.includes(newStatus)) {
         toast.error("You can only move tasks to: Not Started, In Progress, or In Approval");
         setActiveId(null);
         return;
       }
-      
+
       // If all TM validations pass, make the change
       if (task.status !== newStatus) {
+        // Check for Single Active Task rule
+        if (newStatus === "In Progress") {
+          await ensureSingleActiveTask(task.assignee_id, task.id);
+          // Refetch tasks to update the ones moved to "On Hold"
+          onRefresh?.();
+        }
+
         onStatusChange(taskId, newStatus);
-        
+
         // Different celebrations for different statuses
         if (newStatus.toLowerCase() === 'in approval') {
           // Star burst animation and twinkle sound for "In Approval"
@@ -607,11 +617,18 @@ export const KanbanBoard = ({
       setActiveId(null);
       return; // Exit early for team members
     }
-    
+
     // For PM and PO, use the canEdit check
     if (task && task.status !== newStatus && canEdit(task)) {
+      // Check for Single Active Task rule
+      if (newStatus === "In Progress") {
+        await ensureSingleActiveTask(task.assignee_id, task.id);
+        // Refetch tasks to update the ones moved to "On Hold"
+        onRefresh?.();
+      }
+
       onStatusChange(taskId, newStatus);
-      
+
       // Different celebrations for different statuses
       if (newStatus.toLowerCase() === 'in approval') {
         // Star burst animation and twinkle sound for "In Approval"
@@ -649,16 +666,16 @@ export const KanbanBoard = ({
 
   const DroppableColumn = ({ status, children }: { status: { label: string; color: string }; children: React.ReactNode }) => {
     const { setNodeRef, isOver } = useDroppable({ id: status.label });
-    
+
     return (
-      <motion.div 
+      <motion.div
         className="flex-shrink-0 w-80"
         animate={{
           scale: isOver ? 1.02 : 1,
         }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
-        <div 
+        <div
           className="rounded-lg p-4 h-full bg-muted/30 flex flex-col"
         >
           <div className="flex items-center justify-between mb-4">
@@ -693,13 +710,13 @@ export const KanbanBoard = ({
   return (
     <div className="space-y-4">
       {/* Gamification Stats */}
-      <GamificationStats 
+      <GamificationStats
         points={stats.points}
         currentStreak={stats.currentStreak}
         completedToday={stats.completedToday}
         achievements={stats.achievements}
       />
-      
+
       <DndContext
         sensors={sensors}
         collisionDetection={customCollisionDetection}

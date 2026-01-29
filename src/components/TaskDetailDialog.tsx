@@ -97,6 +97,7 @@ interface TaskDetailDialogProps {
   userRole: string;
   userId: string;
   onDuplicate?: (data: any) => void;
+  onTaskRefresh?: () => void;
 }
 
 export function TaskDetailDialog({
@@ -106,6 +107,7 @@ export function TaskDetailDialog({
   userRole,
   userId,
   onDuplicate,
+  onTaskRefresh,
 }: TaskDetailDialogProps) {
   const [task, setTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -1895,6 +1897,7 @@ export function TaskDetailDialog({
             task={task}
             onTaskUpdated={() => {
               fetchTaskDetails();
+              onTaskRefresh?.();
               setShowEditDialog(false);
               toast.success("Task updated successfully");
             }}
