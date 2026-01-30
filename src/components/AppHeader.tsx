@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Clock3, Coffee, Zap, ZapOff } from "lucide-react";
+import { Clock3, Coffee, Zap, ZapOff, User } from "lucide-react";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 import { useFocusMode } from "@/contexts/FocusModeContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AppHeaderProps {
   userRole?: string;
@@ -27,6 +28,10 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
   // Calculate display time for header (simple version of TimeBar logic)
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [breakTime, setBreakTime] = useState("00:00:00");
+
+  // Get first name
+  const firstName = userName?.split(' ')[0] || 'User';
+  const initials = userName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -86,8 +91,37 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
       isCompact || isFocusMode ? "h-10 text-sm shadow-md" : "h-14",
       isFocusMode ? "px-2" : "px-4"
     )}>
-      {/* Left Section: Spacer to balance Right Section (or specific left content if needed) */}
-      <div className="w-10"></div>
+      {/* Left Section: User Avatar & Name */}
+      <motion.div
+        className="flex items-center gap-3 min-w-[140px]"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <div
+          className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate('/profile')}
+        >
+          <Avatar className={cn(
+            "ring-2 ring-primary/20 ring-offset-1 ring-offset-background transition-all shadow-sm",
+            isFocusMode ? "h-7 w-7" : "h-9 w-9"
+          )}>
+            <AvatarImage src={avatarUrl} alt={userName} className="object-cover" />
+            <AvatarFallback className="bg-gradient-to-br from-primary/80 to-primary text-white font-semibold text-xs">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className={cn(
+            "hidden sm:flex flex-col transition-all",
+            isFocusMode && "hidden"
+          )}>
+            <span className="text-sm font-bold text-foreground leading-tight">{userName || 'User'}</span>
+            {showRoleBadge && userRole && (
+              <span className="text-[10px] text-muted-foreground capitalize leading-tight">{userRole}</span>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
       {/* Center Section: Branding */}
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
@@ -145,3 +179,4 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
     </header>
   );
 }
+
