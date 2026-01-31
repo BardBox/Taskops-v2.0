@@ -41,14 +41,14 @@ export const DescriptionVersionDialog = ({
   const currentVersionIndex = allVersions.findIndex(v => v.id === version.id);
   const currentVersionNumber = allVersions.length - currentVersionIndex;
 
-  const compareVersion = compareWith 
+  const compareVersion = compareWith
     ? allVersions.find(v => v.id === compareWith)
     : null;
 
   const highlightDifferences = (text1: string, text2: string) => {
     const words1 = text1.split(/(\s+)/);
     const words2 = text2.split(/(\s+)/);
-    
+
     const maxLength = Math.max(words1.length, words2.length);
     const result: JSX.Element[] = [];
 
@@ -79,22 +79,29 @@ export const DescriptionVersionDialog = ({
     return result;
   };
 
+  const parseContent = (content: string | null) => {
+    if (!content) return "";
+    try {
+      // Try to parse as JSON
+      const parsed = JSON.parse(content);
+      // If it's a task object (has id, task_name etc), return the notes
+      if (parsed.id && parsed.hasOwnProperty('notes')) {
+        return parsed.notes || "(No description)";
+      }
+      return content;
+    } catch (e) {
+      // Not JSON, return as is
+      return content;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-primary" />
-              <DialogTitle>Description Version #{currentVersionNumber}</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <FileText className="h-5 w-5 text-primary" />
+            <DialogTitle>Description Version #{currentVersionNumber}</DialogTitle>
           </div>
         </DialogHeader>
 
@@ -109,8 +116,8 @@ export const DescriptionVersionDialog = ({
                 </div>
               </div>
               <Badge variant="outline">
-                {version.editor.role === 'project_owner' ? 'PO' : 
-                 version.editor.role === 'project_manager' ? 'PM' : 'TM'}
+                {version.editor.role === 'project_owner' ? 'PO' :
+                  version.editor.role === 'project_manager' ? 'PM' : 'TM'}
               </Badge>
             </div>
           </div>
@@ -152,7 +159,7 @@ export const DescriptionVersionDialog = ({
                     </span>
                   </div>
                   <div className="prose prose-sm dark:prose-invert max-w-none p-4 rounded-lg bg-muted/30">
-                    <p className="whitespace-pre-wrap">{compareVersion.version_snapshot || compareVersion.new_value}</p>
+                    <p className="whitespace-pre-wrap">{parseContent(compareVersion.version_snapshot || compareVersion.new_value)}</p>
                   </div>
                 </div>
 
@@ -167,13 +174,13 @@ export const DescriptionVersionDialog = ({
                     </span>
                   </div>
                   <div className="prose prose-sm dark:prose-invert max-w-none p-4 rounded-lg bg-muted/30">
-                    <p className="whitespace-pre-wrap">{version.version_snapshot || version.new_value}</p>
+                    <p className="whitespace-pre-wrap">{parseContent(version.version_snapshot || version.new_value)}</p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none p-6 rounded-lg bg-muted/30">
-                <p className="whitespace-pre-wrap">{version.version_snapshot || version.new_value}</p>
+                <p className="whitespace-pre-wrap">{parseContent(version.version_snapshot || version.new_value)}</p>
               </div>
             )}
           </ScrollArea>

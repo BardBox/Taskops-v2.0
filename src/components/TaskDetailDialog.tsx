@@ -30,10 +30,9 @@ import { RequestRevisionDialog } from "@/components/RequestRevisionDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MentionInput } from "@/components/hive/MentionInput";
 import { MessageWithMentions } from "@/components/hive/MessageWithMentions";
-import { useTaskTimeTracking, calculateTotalTime } from "@/hooks/useTaskTimeTracking";
+import { useTaskTimeTracking, calculateTotalTime, formatTimeTracking, formatTimeTrackingFull } from "@/hooks/useTaskTimeTracking";
 import { TimeTrackingBadge } from "@/components/TimeTrackingBadge";
 import { TimeBudgetIndicator } from "@/components/TimeBudgetIndicator";
-import { formatTimeTracking, formatTimeTrackingFull } from "@/hooks/useTaskTimeTracking";
 
 interface Task {
   id: string;
@@ -147,8 +146,8 @@ export function TaskDetailDialog({
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const typingChannelRef = useRef<any>(null);
 
-  // Time tracking hook - pass userId to enable global session subscription
-  const { records: timeRecords, isLoading: timeLoading } = useTaskTimeTracking({ taskId: taskId || undefined, userId });
+  // Time tracking hook - pass userId to enable global session subscription, but fetch all users
+  const { records: timeRecords, isLoading: timeLoading } = useTaskTimeTracking({ taskId: taskId || undefined, userId, fetchAllUsers: true });
 
   // Force re-render for live timer in the dialog
   const isTimerRunning = timeRecords.some(r => r.is_running);
@@ -1072,6 +1071,44 @@ export function TaskDetailDialog({
         )}>
         <div className="p-6 pb-4 border-b flex-shrink-0 relative">
           <div className="absolute top-6 right-6 flex items-center gap-1 z-10">
+            {(userRole === 'project_manager' || userRole === 'project_owner') && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-primary"
+                  onClick={() => setShowEditDialog(true)}
+                  title="Edit task"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-primary"
+                  onClick={() => {
+                    if (onDuplicate && task) {
+                      onDuplicate({
+                        task_name: task.task_name,
+                        client_id: task.client_id,
+                        project_id: task.project_id,
+                        assignee_id: task.assignee_id,
+                        urgency: task.urgency,
+                        reference_link_1: task.reference_link_1,
+                        reference_link_2: task.reference_link_2,
+                        reference_link_3: task.reference_link_3,
+                        reference_image: task.reference_image,
+                        notes: task.notes,
+                      });
+                    }
+                  }}
+                  title="Duplicate task"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <div className="w-px h-4 bg-border mx-1" />
+              </>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -1088,7 +1125,7 @@ export function TaskDetailDialog({
             </DialogClose>
           </div>
 
-          <div className="flex items-start gap-3 pr-24">
+          <div className="flex items-start gap-3 pr-40">
             <div className={`w-1 h-12 ${getStatusColor(task.status)} rounded-full flex-shrink-0`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1138,45 +1175,7 @@ export function TaskDetailDialog({
               </TabsTrigger>
             </TabsList>
 
-            {(userRole === 'project_manager' || userRole === 'project_owner') && (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (onDuplicate && task) {
-                      onDuplicate({
-                        task_name: task.task_name,
-                        client_id: task.client_id,
-                        project_id: task.project_id,
-                        assignee_id: task.assignee_id,
-                        urgency: task.urgency,
-                        reference_link_1: task.reference_link_1,
-                        reference_link_2: task.reference_link_2,
-                        reference_link_3: task.reference_link_3,
-                        reference_image: task.reference_image,
-                        notes: task.notes,
-                      });
-                    }
-                  }}
-                  title="Duplicate task"
-                  className="gap-2"
-                >
-                  <Copy className="h-4 w-4" />
-                  Duplicate
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowEditDialog(true)}
-                  title="Edit task"
-                  className="gap-2"
-                >
-                  <Edit2 className="h-4 w-4" />
-                  Edit
-                </Button>
-              </div>
-            )}
+
           </div>
 
           <TabsContent value="details" className="flex-1 overflow-y-auto m-0">
@@ -1184,7 +1183,7 @@ export function TaskDetailDialog({
               {/* Team Row - Task Owner, Collaborators, Project Manager in one row */}
               <div className="flex flex-wrap items-start gap-4 pb-4 border-b">
                 {/* Task Owner */}
-                <div className="flex-1 min-w-[180px]">
+                <div className="flex-1 min-w-[140px]">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5" />
                     Task Owner
@@ -1207,7 +1206,7 @@ export function TaskDetailDialog({
 
                 {/* Collaborators (Read-only display) */}
                 {collaborators.length > 0 && (
-                  <div className="flex-1 min-w-[180px]">
+                  <div className="flex-1 min-w-[140px]">
                     <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                       <UsersRound className="h-3.5 w-3.5" />
                       Collaborators
@@ -1229,7 +1228,7 @@ export function TaskDetailDialog({
                 )}
 
                 {/* Project Manager */}
-                <div className="flex-1 min-w-[180px]">
+                <div className="flex-1 min-w-[140px]">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                     <Wand2 className="h-3.5 w-3.5 text-purple-500" />
                     Project Manager
@@ -1261,22 +1260,48 @@ export function TaskDetailDialog({
               {/* Time Tracking Display */}
               {/* Time Tracking Display - Show if time tracked OR if estimate exists */}
               {(timeRecords.length > 0 || (task.estimated_minutes && task.estimated_minutes > 0)) && (
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border">
-                  <div className="flex items-center gap-2">
-                    <Timer className="h-4 w-4 text-primary" />
-                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-                      Time Tracked
-                    </Label>
+                <div className="flex flex-col gap-3 p-3 rounded-lg bg-muted/30 border">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Timer className="h-4 w-4 text-primary" />
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Time Tracked
+                      </Label>
+                    </div>
+
+                    {/* Always use TimeBudgetIndicator for consistent UI */}
+                    <div className="flex-1 min-w-[250px]">
+                      <TimeBudgetIndicator
+                        totalSeconds={timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0)}
+                        budgetSeconds={task.estimated_minutes ? task.estimated_minutes * 60 : 0}
+                        isRunning={timeRecords.some(r => r.is_running)}
+                      />
+                    </div>
                   </div>
 
-                  {/* Always use TimeBudgetIndicator for consistent UI */}
-                  <div className="flex-1 min-w-[250px]">
-                    <TimeBudgetIndicator
-                      totalSeconds={timeRecords.reduce((total, r) => total + calculateTotalTime(r), 0)}
-                      budgetSeconds={task.estimated_minutes ? task.estimated_minutes * 60 : 0}
-                      isRunning={timeRecords.some(r => r.is_running)}
-                    />
-                  </div>
+                  {/* Individual Time Breakdown */}
+                  {timeRecords.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-3 pl-6 pt-2 border-t border-border/50">
+                      {timeRecords.map(record => {
+                        const seconds = calculateTotalTime(record);
+                        if (seconds < 60 && !record.is_running) return null; // Hide insignificant records unless running
+
+                        return (
+                          <div key={record.id} className="flex items-center gap-2 text-xs bg-background/50 px-2 py-1 rounded-full border border-border/50">
+                            <Avatar className="h-4 w-4">
+                              <AvatarImage src={record.profiles?.avatar_url || undefined} />
+                              <AvatarFallback className="text-[9px]">
+                                {(record.profiles?.full_name || "?").substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className={cn("font-medium", record.is_running && "text-green-600 dark:text-green-400 animate-pulse")}>
+                              {formatTimeTracking(seconds)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 

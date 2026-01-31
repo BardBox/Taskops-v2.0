@@ -3,7 +3,7 @@ import { format, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
@@ -112,20 +112,7 @@ export const DailyStandup = () => {
         setIsEditingEvening(false);
     }, [currentDate]);
 
-    // Auto-resize effect
-    useEffect(() => {
-        if (morningRef.current) {
-            morningRef.current.style.height = 'auto';
-            morningRef.current.style.height = morningRef.current.scrollHeight + 'px';
-        }
-    }, [notes.morning_notes, isEditingMorning]);
 
-    useEffect(() => {
-        if (eveningRef.current) {
-            eveningRef.current.style.height = 'auto';
-            eveningRef.current.style.height = eveningRef.current.scrollHeight + 'px';
-        }
-    }, [notes.evening_notes, isEditingEvening]);
 
 
     const fetchNotes = async (date: Date) => {
@@ -325,7 +312,7 @@ export const DailyStandup = () => {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0"
+                                    className="h-8 w-8 p-0 rounded-full hover:bg-background/40"
                                     onClick={() => {
                                         const textarea = textAreaRef.current;
                                         if (!textarea) return;
@@ -350,7 +337,7 @@ export const DailyStandup = () => {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0"
+                                    className="h-8 w-8 p-0 rounded-full hover:bg-background/40"
                                     onClick={() => {
                                         const textarea = textAreaRef.current;
                                         if (!textarea) return;
@@ -375,7 +362,7 @@ export const DailyStandup = () => {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 font-mono text-xs"
+                                    className="h-8 w-8 p-0 font-mono text-xs rounded-full hover:bg-background/40"
                                     onClick={() => {
                                         const textarea = textAreaRef.current;
                                         if (!textarea) return;
@@ -400,7 +387,7 @@ export const DailyStandup = () => {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 font-mono text-xs"
+                                    className="h-8 w-8 p-0 font-mono text-xs rounded-full hover:bg-background/40"
                                     onClick={() => {
                                         const textarea = textAreaRef.current;
                                         if (!textarea) return;
@@ -421,7 +408,7 @@ export const DailyStandup = () => {
                                     1.
                                 </Button>
                             </div>
-                            <Textarea
+                            <AutoResizeTextarea
                                 ref={textAreaRef}
                                 value={noteContent}
                                 onChange={(e) => setNotes(prev => ({
@@ -429,7 +416,7 @@ export const DailyStandup = () => {
                                     [isMorning ? 'morning_notes' : 'evening_notes']: e.target.value
                                 }))}
                                 placeholder={isMorning ? "List your top priorities..." : "Reflect on your day..."}
-                                className="flex-1 min-h-[200px] resize-none border-none focus-visible:ring-0 bg-muted/30 p-4 text-base leading-relaxed"
+                                className="flex-1 min-h-[200px] border-none focus-visible:ring-0 bg-transparent p-4 text-base leading-relaxed resize-none"
                             />
                             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/50">
                                 <Button
@@ -448,7 +435,7 @@ export const DailyStandup = () => {
                                     size="sm"
                                     onClick={() => handleSave(section)}
                                     disabled={saving}
-                                    className="rounded-full"
+                                    className={cn("rounded-full border shadow-sm transition-all", isMorning ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20" : "bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20")}
                                 >
                                     {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                                     Save Changes

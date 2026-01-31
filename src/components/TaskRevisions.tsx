@@ -42,47 +42,100 @@ export function TaskRevisions({
   const fetchRevisionHistory = async () => {
     setLoading(true);
     try {
-      // Fetch all revision records from tasks table where parent_task_id = taskId
-      const { data: revisionTasks, error } = await supabase
+      // Fetch revision history from the audit log (task_edit_history)
+      // This allows us to see ALL past revisions, not just the latest one on the task row
+      const { data: historyData, error: historyError } = await supabase
+        .from("task_edit_history")
+        .select(`
+          edited_at,
+          edited_by_id,
+          old_value,
+          new_value,
+          version_snapshot,
+          profiles:edited_by_id (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq("task_id", taskId)
+        .eq("field_name", "revision_count")
+        .order("edited_at", { ascending: false });
+
+      if (historyError) {
+        console.error("Error fetching revision history log:", historyError);
+        // Fallback to task row (current behavior) if history fails
+      }
+
+      const history: RevisionHistory[] = [];
+      const processedRevisions = new Set<number>();
+
+      // 1. Process history logs (for past revisions)
+      if (historyData) {
+        historyData.forEach((entry) => {
+          const snapshot = entry.version_snapshot ? JSON.parse(entry.version_snapshot) : null;
+          const revNum = parseInt(entry.new_value || "0");
+
+          if (revNum > 0 && !processedRevisions.has(revNum)) {
+            history.push({
+              revision_number: revNum,
+              date_requested: entry.edited_at,
+              requested_by_name: (entry.profiles as any)?.full_name || "Unknown",
+              requested_by_avatar: (entry.profiles as any)?.avatar_url || null,
+              comment: snapshot?.revision_comment || null,
+              reference_link: snapshot?.revision_reference_link || null,
+              reference_image: snapshot?.revision_reference_image || null,
+              status: snapshot?.status || "Pending",
+            });
+            processedRevisions.add(revNum);
+          }
+        });
+      }
+
+      // 2. Add current task state if it's a newer revision not in history yet
+      // (This handles the "latest" revision which might not be in history if trigger just ran or slight delay)
+      const { data: currentTask, error: taskError } = await supabase
         .from("tasks")
         .select(`
-          revision_number,
+          revision_count,
           revision_requested_at,
           revision_requested_by,
           revision_comment,
           revision_reference_link,
           revision_reference_image,
-          status,
-          profiles:revision_requested_by (
-            full_name,
-            avatar_url
-          )
+          status
         `)
         .eq("id", taskId)
-        .order("revision_number", { ascending: false });
+        .single();
 
-      if (error) throw error;
+      if (!taskError && currentTask && currentTask.revision_count > 0) {
+        if (!processedRevisions.has(currentTask.revision_count)) {
+          // Fetch profile for current requester
+          let requesterName = "Unknown";
+          let requesterAvatar = null;
+          if (currentTask.revision_requested_by) {
+            const { data: profile } = await supabase.from("profiles").select("full_name, avatar_url").eq("id", currentTask.revision_requested_by).single();
+            if (profile) {
+              requesterName = profile.full_name;
+              requesterAvatar = profile.avatar_url;
+            }
+          }
 
-      // Build revision history from the data
-      const history: RevisionHistory[] = [];
-      
-      if (revisionTasks && revisionTasks.length > 0) {
-        const task = revisionTasks[0];
-        
-        // If there are revisions, create entries for each
-        for (let i = task.revision_number; i >= 1; i--) {
           history.push({
-            revision_number: i,
-            date_requested: task.revision_requested_at || new Date().toISOString(),
-            requested_by_name: (task.profiles as any)?.full_name || "Unknown",
-            requested_by_avatar: (task.profiles as any)?.avatar_url || null,
-            comment: task.revision_comment || null,
-            reference_link: task.revision_reference_link || null,
-            reference_image: task.revision_reference_image || null,
-            status: task.status,
+            revision_number: currentTask.revision_count,
+            date_requested: currentTask.revision_requested_at || new Date().toISOString(),
+            requested_by_name: requesterName,
+            requested_by_avatar: requesterAvatar,
+            comment: currentTask.revision_comment,
+            reference_link: currentTask.revision_reference_link,
+            reference_image: currentTask.revision_reference_image,
+            status: currentTask.status
           });
+          processedRevisions.add(currentTask.revision_count);
         }
       }
+
+      // Sort by revision number descending
+      history.sort((a, b) => b.revision_number - a.revision_number);
 
       setRevisions(history);
     } catch (error) {
@@ -133,7 +186,7 @@ export function TaskRevisions({
                     {revision.requested_by_name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
                     <div>

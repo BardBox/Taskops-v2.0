@@ -152,7 +152,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
   const fetchCollaborators = async () => {
     const { data } = await supabase
       .from("task_collaborators")
-      .select("*, profiles(id, full_name, avatar_url)")
+      .select("*, profiles!task_collaborators_user_id_fkey(id, full_name, avatar_url)")
       .eq("task_id", task.id);
     if (data) setCollaborators(data);
   };
@@ -442,7 +442,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
           {/* Team Row - Task Owner, Collaborators, Project Manager */}
           <div className="flex flex-wrap items-start gap-4">
             {/* Task Owner */}
-            <div className="flex-1 min-w-[200px] space-y-2">
+            <div className="flex-1 min-w-[140px] space-y-2">
               <Label htmlFor="assignee_id" className="text-sm font-medium flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" />
                 Task Owner *
@@ -465,7 +465,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
             </div>
 
             {/* Collaborators */}
-            <div className="flex-1 min-w-[200px] space-y-2">
+            <div className="flex-1 min-w-[140px] space-y-2">
               <Label className="text-sm font-medium flex items-center gap-1.5">
                 <UsersRound className="h-3.5 w-3.5" />
                 Collaborators ({collaborators.length}/2)
@@ -536,7 +536,7 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
 
             {/* Project Manager */}
             {task && assignedBy && (
-              <div className="flex-1 min-w-[200px] space-y-2">
+              <div className="flex-1 min-w-[140px] space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-1.5">
                   <Wand2 className="h-3.5 w-3.5 text-purple-500" />
                   Project Manager

@@ -21,7 +21,9 @@ interface TimeTrackingRecord {
 interface UseTaskTimeTrackingOptions {
   taskId?: string;
   userId?: string;
+  fetchAllUsers?: boolean;
 }
+
 
 // Format seconds to H:MM or HH:MM format
 export const formatTimeTracking = (totalSeconds: number, currentlyActive: boolean = false, startedAt: string | null = null): string => {
@@ -74,7 +76,7 @@ export const calculateTotalTime = (record: TimeTrackingRecord): number => {
 };
 
 export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) => {
-  const { taskId, userId } = options;
+  const { taskId, userId, fetchAllUsers } = options;
   const [records, setRecords] = useState<TimeTrackingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +98,7 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
         `)
         .eq("task_id", taskId);
 
-      if (userId) {
+      if (userId && !fetchAllUsers) {
         query = query.eq("user_id", userId);
       }
 

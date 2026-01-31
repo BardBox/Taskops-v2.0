@@ -174,6 +174,9 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
                 case "i":
                     navigate("/inspiration");
                     break;
+                case "s":
+                    navigate("/standup");
+                    break;
                 case "a":
                     if (hasAdminAccess) {
                         navigate("/admin");
@@ -307,7 +310,7 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
                     <NavItem icon={Users} label="My Team" path="/team" isActive={location.pathname === "/team"} shortcut="T" />
                     <NavItem icon={Hexagon} label="The Hive" path="/hive" isActive={location.pathname === "/hive"} shortcut="H" />
                     <NavItem icon={Zap} label="Inspiration" path="/inspiration" isActive={location.pathname === "/inspiration"} shortcut="I" />
-                    <NavItem icon={BookOpen} label="Daily Standup" path="/standup" isActive={location.pathname === "/standup"} />
+                    <NavItem icon={BookOpen} label="Daily Standup" path="/standup" isActive={location.pathname === "/standup"} shortcut="S" />
                     <NavItem icon={BarChart3} label="Analytics" path="/analytics" isActive={location.pathname.startsWith("/analytics")} />
                     <NavItem icon={CheckCircle2} label="Posting Status" path="/posting-status" isActive={location.pathname === "/posting-status"} />
 
