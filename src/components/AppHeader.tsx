@@ -136,7 +136,7 @@ export function AppHeader({ userRole, userName, avatarUrl, showRoleBadge = true,
             className={cn("w-auto object-contain drop-shadow-sm dark:invert", isFocusMode ? "h-5" : "h-6")}
           />
           <h1 className={cn("font-bold tracking-tight transition-colors flex items-center gap-1", (isCompact || isFocusMode) ? "text-sm" : "text-base")}>
-            TaskOPS<sup className="text-[8px] text-primary">™</sup>
+            TaskOPS 2.0<sup className="text-[8px] text-primary">™</sup>
           </h1>
         </div>
       </div>

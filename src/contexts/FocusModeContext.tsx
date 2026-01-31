@@ -29,13 +29,32 @@ export const FocusModeProvider = ({ children }: { children: ReactNode }) => {
     // Helper to actually trigger browser fullscreen
     const triggerFullscreen = useCallback(async (enable: boolean) => {
         try {
+            const doc = document as any;
+            const docEl = document.documentElement as any;
+
             if (enable) {
-                if (!document.fullscreenElement) {
-                    await document.documentElement.requestFullscreen();
+                if (!document.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
+                    if (docEl.requestFullscreen) {
+                        await docEl.requestFullscreen();
+                    } else if (docEl.webkitRequestFullscreen) {
+                        await docEl.webkitRequestFullscreen();
+                    } else if (docEl.mozRequestFullScreen) {
+                        await docEl.mozRequestFullScreen();
+                    } else if (docEl.msRequestFullscreen) {
+                        await docEl.msRequestFullscreen();
+                    }
                 }
             } else {
-                if (document.fullscreenElement) {
-                    await document.exitFullscreen();
+                if (document.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement) {
+                    if (document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    } else if (doc.webkitExitFullscreen) {
+                        await doc.webkitExitFullscreen();
+                    } else if (doc.mozCancelFullScreen) {
+                        await doc.mozCancelFullScreen();
+                    } else if (doc.msExitFullscreen) {
+                        await doc.msExitFullscreen();
+                    }
                 }
             }
         } catch (error) {
@@ -95,7 +114,13 @@ export const FocusModeProvider = ({ children }: { children: ReactNode }) => {
     // Sync with browser fullscreen changes (e.g. user presses Esc)
     useEffect(() => {
         const handleFullscreenChange = () => {
-            if (!document.fullscreenElement && isFocusMode) {
+            const doc = document as any;
+            const isFullscreen = document.fullscreenElement ||
+                doc.webkitFullscreenElement ||
+                doc.mozFullScreenElement ||
+                doc.msFullscreenElement;
+
+            if (!isFullscreen && isFocusMode) {
                 // User exited fullscreen manually (e.g. Esc key), so we disable focus mode
                 setIsFocusMode(false);
                 localStorage.setItem("focusMode", "false");
@@ -103,7 +128,16 @@ export const FocusModeProvider = ({ children }: { children: ReactNode }) => {
         };
 
         document.addEventListener("fullscreenchange", handleFullscreenChange);
-        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+        document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+        document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+        document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener("fullscreenchange", handleFullscreenChange);
+            document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+            document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+            document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
+        };
     }, [isFocusMode]);
 
     return (

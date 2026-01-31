@@ -221,7 +221,7 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
                 <div className="h-14 flex items-center justify-between px-3 border-b border-border/50 flex-shrink-0">
                     <div className={cn("flex items-center gap-2 overflow-hidden transition-all duration-300", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>
                         <img src="/bardbox-logo.png" alt="BardBox" className="h-6 w-auto object-contain dark:invert" />
-                        <span className="font-bold text-sm tracking-tight whitespace-nowrap">TaskOPS</span>
+                        <span className="font-bold text-sm tracking-tight whitespace-nowrap">TaskOPS 2.0</span>
                     </div>
                     <Button
                         variant="ghost"
