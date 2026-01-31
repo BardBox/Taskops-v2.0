@@ -25,6 +25,7 @@ Fix the task timer functionality so that it updates in real-time without requiri
 
 ### 5. Legacy Code Cleanup
 - **`TimeTrackingBadge.tsx`**: Updated to support the new `TimeTrackingRecord` schema (using `is_running` instead of legacy `tracking_status`).
+- [x] Fix syntax error in `src/pages/DailyStandup.tsx` (caused blank page)
 - **`TaskDetailDialog.tsx`**: Suppressed TypeScript errors in legacy manual timer handling logic (which is now redundant due to DB triggers).
 
 ## Verification

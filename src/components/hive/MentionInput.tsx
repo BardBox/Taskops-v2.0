@@ -20,9 +20,9 @@ interface MentionInputProps {
   disabled?: boolean;
 }
 
-export const MentionInput = ({ 
-  value, 
-  onChange, 
+export const MentionInput = ({
+  value,
+  onChange,
   onMention,
   placeholder = "Type your message...",
   className,
@@ -41,7 +41,7 @@ export const MentionInput = ({
         .from("profiles")
         .select("id, full_name, avatar_url")
         .order("full_name");
-      
+
       if (error) throw error;
       return data as User[];
     },
@@ -51,42 +51,34 @@ export const MentionInput = ({
     user.full_name.toLowerCase().includes(mentionSearch.toLowerCase())
   );
 
-  useEffect(() => {
-    const handleInput = () => {
-      const input = inputRef.current;
-      if (!input) return;
+  const checkTrigger = (text: string, position: number) => {
+    const textBeforeCursor = text.substring(0, position);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
 
-      const text = input.value;
-      const position = input.selectionStart || 0;
-      
-      // Find @ symbol before cursor
-      const textBeforeCursor = text.substring(0, position);
-      const lastAtIndex = textBeforeCursor.lastIndexOf("@");
-      
-      if (lastAtIndex !== -1) {
-        const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
-        // Check if there's no space after @ (still typing mention)
-        if (!textAfterAt.includes(" ")) {
-          setMentionSearch(textAfterAt);
-          setShowSuggestions(true);
-          setCursorPosition(lastAtIndex);
-          return;
-        }
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      // Check if there's no space after @ (still typing mention)
+      if (!textAfterAt.includes(" ")) {
+        setMentionSearch(textAfterAt);
+        setShowSuggestions(true);
+        setCursorPosition(lastAtIndex);
+        return;
       }
-      
-      setShowSuggestions(false);
-    };
-
-    const input = inputRef.current;
-    if (input) {
-      input.addEventListener("input", handleInput);
-      input.addEventListener("click", handleInput);
-      return () => {
-        input.removeEventListener("input", handleInput);
-        input.removeEventListener("click", handleInput);
-      };
     }
-  }, []);
+
+    setShowSuggestions(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+    checkTrigger(newValue, e.target.selectionStart || 0);
+  };
+
+  const handleCursorChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const target = e.currentTarget;
+    checkTrigger(target.value, target.selectionStart || 0);
+  };
 
   const selectUser = (user: User) => {
     const input = inputRef.current;
@@ -95,19 +87,21 @@ export const MentionInput = ({
     const text = value;
     const beforeMention = text.substring(0, cursorPosition);
     const afterMention = text.substring(input.selectionStart || 0);
-    
+
+    // Use user.full_name explicitly
     const newValue = `${beforeMention}@${user.full_name} ${afterMention}`;
     onChange(newValue);
     setShowSuggestions(false);
     setMentionSearch("");
-    
+
     if (onMention) {
       onMention(user.id, user.full_name);
     }
 
     // Set cursor after mention
     setTimeout(() => {
-      const newPosition = beforeMention.length + user.full_name.length + 2;
+      // Calculate new position based on the inserted name length
+      const newPosition = beforeMention.length + user.full_name.length + 2; // +2 for @ and space
       input.focus();
       input.setSelectionRange(newPosition, newPosition);
     }, 0);
@@ -118,14 +112,16 @@ export const MentionInput = ({
       <Input
         ref={inputRef}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleInputChange}
         onKeyDown={onKeyDown}
+        onKeyUp={handleCursorChange}
+        onClick={handleCursorChange}
         placeholder={placeholder}
         className={className}
         disabled={disabled}
       />
       {showSuggestions && filteredUsers.length > 0 && (
-        <div className="absolute bottom-full left-0 mb-2 w-full max-w-xs bg-popover border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
+        <div className="absolute bottom-full left-0 mb-2 w-full max-w-xs bg-popover border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto z-[100]">
           {filteredUsers.slice(0, 5).map((user) => (
             <button
               key={user.id}

@@ -5,7 +5,7 @@ const createUserSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(8).max(128),
   full_name: z.string().trim().min(2).max(100),
-  role: z.enum(['team_member', 'project_manager', 'project_owner']),
+  role: z.enum(['team_member', 'project_manager', 'project_owner', 'sales_team', 'production_superviser', 'business_head']),
   avatar_url: z.string().nullable().optional()
 })
 
@@ -13,7 +13,7 @@ const updateUserSchema = z.object({
   userId: z.string().uuid(),
   email: z.string().email().max(255).optional(),
   full_name: z.string().trim().min(2).max(100).optional(),
-  role: z.enum(['team_member', 'project_manager', 'project_owner']).optional(),
+  role: z.enum(['team_member', 'project_manager', 'project_owner', 'sales_team', 'production_superviser', 'business_head']).optional(),
   creative_title: z.string().max(50).nullable().optional(),
   avatar_url: z.string().nullable().optional()
 })
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization')!
     const token = authHeader.replace('Bearer ', '')
-    
+
     // Verify the user's token and check their role
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
     if (userError || !user) {
@@ -135,6 +135,23 @@ Deno.serve(async (req) => {
 
         if (authError) throw authError
 
+        // Explicitly set the user role in the user_roles table
+        // This ensures the role is set correctly even if triggers fail or default to team_member
+        if (authData.user) {
+          const { error: roleError } = await supabaseClient
+            .from('user_roles')
+            .upsert({
+              user_id: authData.user.id,
+              role: role
+            }, { onConflict: 'user_id' })
+
+          if (roleError) {
+            console.error('Error setting user role:', roleError)
+            // We don't throw here to avoid failing the whole request if the user was created
+            // but we log it. The role might default to team_member via trigger.
+          }
+        }
+
         return new Response(JSON.stringify({ success: true, user: authData.user }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
@@ -182,7 +199,7 @@ Deno.serve(async (req) => {
         if (full_name !== undefined) profileUpdates.full_name = full_name
         if (creative_title !== undefined) profileUpdates.creative_title = creative_title
         if (avatar_url !== undefined) profileUpdates.avatar_url = avatar_url
-        
+
         if (Object.keys(profileUpdates).length > 0) {
           const { error: profileError } = await supabaseClient
             .from('profiles')
@@ -192,12 +209,14 @@ Deno.serve(async (req) => {
           if (profileError) throw profileError
         }
 
-        // Update role if provided
+        // Update role if provided - Use upsert to handle cases where role row might be missing
         if (role) {
           const { error: roleError } = await supabaseClient
             .from('user_roles')
-            .update({ role })
-            .eq('user_id', userId)
+            .upsert({
+              user_id: userId,
+              role: role
+            }, { onConflict: 'user_id' })
 
           if (roleError) throw roleError
         }
@@ -258,10 +277,10 @@ Deno.serve(async (req) => {
 
         if (resetError) throw resetError
 
-        return new Response(JSON.stringify({ 
-          success: true, 
+        return new Response(JSON.stringify({
+          success: true,
           message: 'Password reset email sent successfully',
-          resetLink: data.properties.action_link 
+          resetLink: data.properties.action_link
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
@@ -294,8 +313,8 @@ Deno.serve(async (req) => {
 
         if (updateError) throw updateError
 
-        return new Response(JSON.stringify({ 
-          success: true, 
+        return new Response(JSON.stringify({
+          success: true,
           message: 'Password changed successfully'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

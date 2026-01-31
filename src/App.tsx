@@ -37,6 +37,8 @@ import About from "./pages/About";
 import NotificationCenter from "./pages/NotificationCenter";
 import Team from "./pages/Team";
 import TheHive from "./pages/TheHive";
+import InspirationBoard from "./pages/InspirationBoard";
+import DailyStandup from "./pages/DailyStandup";
 import PostingStatus from "./pages/PostingStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
@@ -76,6 +78,8 @@ function AnimatedRoutes() {
         <Route path="/notifications" element={<PageTransition><NotificationCenter /></PageTransition>} />
         <Route path="/team" element={<PageTransition><Team /></PageTransition>} />
         <Route path="/hive" element={<PageTransition><TheHive /></PageTransition>} />
+        <Route path="/inspiration" element={<PageTransition><InspirationBoard /></PageTransition>} />
+        <Route path="/standup" element={<PageTransition><DailyStandup /></PageTransition>} />
         <Route path="/posting-status" element={<PageTransition><PostingStatus /></PageTransition>} />
 
         {/* Admin Routes */}

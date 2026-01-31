@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
     LogOut, Settings, Sliders, Home, Shield, User, BarChart3,
     Hexagon, CheckCircle2, TrendingUp, Info, Menu, ChevronLeft,
-    Users, Moon, Sun, Monitor, Activity, Clock3, DoorOpen, BellOff, Plane, Smile
+    Users, Moon, Sun, Monitor, Activity, Clock3, DoorOpen, BellOff, Plane, Smile, Zap, BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,6 +148,44 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
     const hasAdminAccess = userRole === "project_owner" || userRole === "project_manager";
     const initials = userName?.split(" ").map((n) => n[0]).join("").toUpperCase() || "U";
 
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if user is typing in an input, textarea, or contentEditable
+            const target = e.target as HTMLElement;
+            if (
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.isContentEditable
+            ) {
+                return;
+            }
+
+            switch (e.key.toLowerCase()) {
+                case "p":
+                    navigate("/profile");
+                    break;
+                case "t":
+                    navigate("/team");
+                    break;
+                case "h":
+                    navigate("/hive");
+                    break;
+                case "i":
+                    navigate("/inspiration");
+                    break;
+                case "a":
+                    if (hasAdminAccess) {
+                        navigate("/admin");
+                    }
+                    break;
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [navigate, hasAdminAccess]);
+
     interface NavItemProps {
         icon: React.ElementType;
         label: string;
@@ -155,9 +193,10 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
         isActive?: boolean;
         onClick?: () => void;
         className?: string;
+        shortcut?: string;
     }
 
-    const NavItem = ({ icon: Icon, label, path, isActive, onClick, className }: NavItemProps) => (
+    const NavItem = ({ icon: Icon, label, path, isActive, onClick, className, shortcut }: NavItemProps) => (
         <Button
             variant="ghost"
             className={cn(
@@ -167,7 +206,7 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
                 className
             )}
             onClick={onClick || (() => path && navigate(path))}
-            title={collapsed ? label : undefined}
+            title={shortcut ? `${label} (${shortcut})` : label}
         >
             {/* Active Indicator (Royal Yellow Circle) */}
             {isActive && (
@@ -185,6 +224,13 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
             )}>
                 {label}
             </span>
+
+            {/* Shortcut hint when expanded */}
+            {shortcut && !collapsed && (
+                <span className="ml-auto text-xs text-muted-foreground/50 hidden group-hover:inline-block">
+                    {shortcut}
+                </span>
+            )}
         </Button>
     );
 
@@ -257,9 +303,11 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
 
                     <div className="my-2 border-t border-border/50" />
 
-                    <NavItem icon={User} label="My Profile" path="/profile" isActive={location.pathname === "/profile"} />
-                    <NavItem icon={Users} label="My Team" path="/team" isActive={location.pathname === "/team"} />
-                    <NavItem icon={Hexagon} label="The Hive" path="/hive" isActive={location.pathname === "/hive"} />
+                    <NavItem icon={User} label="My Profile" path="/profile" isActive={location.pathname === "/profile"} shortcut="P" />
+                    <NavItem icon={Users} label="My Team" path="/team" isActive={location.pathname === "/team"} shortcut="T" />
+                    <NavItem icon={Hexagon} label="The Hive" path="/hive" isActive={location.pathname === "/hive"} shortcut="H" />
+                    <NavItem icon={Zap} label="Inspiration" path="/inspiration" isActive={location.pathname === "/inspiration"} shortcut="I" />
+                    <NavItem icon={BookOpen} label="Daily Standup" path="/standup" isActive={location.pathname === "/standup"} />
                     <NavItem icon={BarChart3} label="Analytics" path="/analytics" isActive={location.pathname.startsWith("/analytics")} />
                     <NavItem icon={CheckCircle2} label="Posting Status" path="/posting-status" isActive={location.pathname === "/posting-status"} />
 

@@ -19,11 +19,14 @@ import { fetchExchangeRates, ExchangeRates } from "@/utils/currency";
 import { MainLayout } from "@/components/MainLayout";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useFollowUpReminders } from "@/hooks/useFollowUpReminders";
-import { Search, Filter, SortAsc, Download, Upload, FileSpreadsheet } from "lucide-react";
+import { useRef } from "react";
+import { Search, Filter, SortAsc, Download, Upload, FileSpreadsheet, Link as LinkIcon, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { generateExcelTemplate, parseExcel } from "@/utils/excelHelpers";
-import { useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { parseCSV } from "@/utils/csvHelpers";
 
 export const GrowthDashboard = () => {
     // Lead State
@@ -67,6 +70,8 @@ export const GrowthDashboard = () => {
 
     // Import/Export State
     const [isImporting, setIsImporting] = useState(false);
+    const [googleSheetDialogOpen, setGoogleSheetDialogOpen] = useState(false);
+    const [googleSheetUrl, setGoogleSheetUrl] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -465,61 +470,138 @@ export const GrowthDashboard = () => {
         }
     };
 
+    const handleGoogleSheetImport = async () => {
+        if (!googleSheetUrl) {
+            toast.error("Please enter a valid Google Sheet URL");
+            return;
+        }
+
+        setIsImporting(true);
+        setGoogleSheetDialogOpen(false);
+
+        try {
+            // Convert /edit URL to /export?format=csv
+            let exportUrl = googleSheetUrl;
+            if (googleSheetUrl.includes('/edit')) {
+                exportUrl = googleSheetUrl.replace(/\/edit.*$/, '/export?format=csv');
+            } else if (!googleSheetUrl.includes('export?format=csv')) {
+                // If it's just the ID, try to append
+                toast.error("URL format not recognized. Please use the 'Link to this Sheet' or browser URL.");
+                setIsImporting(false);
+                return;
+            }
+
+            const response = await fetch(exportUrl);
+            if (!response.ok) throw new Error("Failed to fetch Google Sheet. Make sure it is public (Anyone with link).");
+
+            const blob = await response.blob();
+            const file = new File([blob], "sheet_import.csv", { type: "text/csv" });
+
+            if (activeTab === "pipeline") {
+                const data = await parseCSV<any>(file);
+                await processLeadsData(data);
+            } else {
+                const data = await parseCSV<any>(file);
+                await processContactsData(data);
+            }
+
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Import failed: " + error.message);
+        } finally {
+            setIsImporting(false);
+            setGoogleSheetUrl("");
+        }
+    };
+
     const importLeads = async (file: File) => {
         const data = await parseExcel<any>(file);
-        const leadsToInsert = [];
+        await processLeadsData(data);
+    };
 
+    const processLeadsData = async (data: any[]) => {
+        const leadsProcessing = [];
+        const titles: string[] = [];
+
+        // 1. Prepare Data
         for (const row of data) {
-            if (!row["Title"] && !row["title"]) continue;
+            if ((!row["Title"] && !row["title"])) continue;
 
             const title = row["Title"] || row["title"];
             const contactEmail = row["Contact Email"] || row["contact_email"];
-            const status = row["Status"] || row["status"];
-            const expectedValue = row["Expected Value"] || row["expected_value"];
-            const currency = row["Currency"] || row["currency"];
-            const probability = row["Probability (0-100)"] || row["probability"];
-            const source = row["Source"] || row["source"];
-            const nextFollowUp = row["Next Follow Up (YYYY-MM-DD)"] || row["next_follow_up"];
-            const followUpLevel = row["Follow Up Level"] || row["follow_up_level"];
 
+            titles.push(title);
+
+            // Resolve Contact ID
             let contactId = null;
             if (contactEmail) {
                 const { data: contact } = await supabase
                     .from('contacts')
                     .select('id')
                     .eq('email', contactEmail)
-                    .single();
+                    .maybeSingle(); // Use maybeSingle to avoid error if not found
                 if (contact) contactId = contact.id;
             }
 
-            leadsToInsert.push({
+            // Clean other fields
+            leadsProcessing.push({
                 title: title,
                 contact_id: contactId,
-                status: status || 'New',
-                expected_value: expectedValue ? parseFloat(expectedValue) : null,
-                currency: currency || 'USD',
-                probability: probability ? parseInt(probability) : null,
-                source: source || null,
-                next_follow_up: nextFollowUp ? new Date(nextFollowUp).toISOString() : null,
-                follow_up_level: followUpLevel || null,
+                status: row["Status"] || row["status"] || 'New',
+                expected_value: (row["Expected Value"] || row["expected_value"]) ? parseFloat(row["Expected Value"] || row["expected_value"]) : null,
+                currency: row["Currency"] || row["currency"] || 'USD',
+                probability: (row["Probability (0-100)"] || row["probability"]) ? parseInt(row["Probability (0-100)"] || row["probability"]) : null,
+                source: row["Source"] || row["source"] || null,
+                next_follow_up: (row["Next Follow Up (YYYY-MM-DD)"] || row["next_follow_up"]) ? new Date(row["Next Follow Up (YYYY-MM-DD)"] || row["next_follow_up"]).toISOString() : null,
+                follow_up_level: row["Follow Up Level"] || row["follow_up_level"] || null,
             });
         }
 
-        if (leadsToInsert.length === 0) {
+        if (leadsProcessing.length === 0) {
             toast.error("No valid leads found in file");
             return;
         }
 
-        const { error } = await supabase.from('leads').insert(leadsToInsert);
+        // 2. Deduplication Strategy
+        // Fetch existing leads with these titles to identify updates
+        // Note: Chunking might be needed for huge datasets, but assuming manageable size for now
+        const { data: existingLeads } = await supabase
+            .from('leads')
+            .select('id, title, contact_id')
+            .in('title', titles);
+
+        const existingMap = new Map();
+        if (existingLeads) {
+            existingLeads.forEach(l => existingMap.set(l.title.toLowerCase(), l.id)); // Matching by Title (case-insensitive) as primary key proxy
+        }
+
+        const leadsToUpsert = leadsProcessing.map(lead => {
+            const existingId = existingMap.get(lead.title.toLowerCase());
+            if (existingId) {
+                return { ...lead, id: existingId }; // Add ID to trigger update
+            }
+            return lead; // No ID triggers insert
+        });
+
+        // 3. Upsert
+        const { error } = await supabase.from('leads').upsert(leadsToUpsert, { onConflict: 'id' }); // If ID is present, it updates.
+        // Note: For new items (no ID), it inserts. For existing (with ID), it updates.
+        // Since we manually attached IDs based on Title match, this works as "Update if Title exists, else Insert".
+
         if (error) throw error;
 
-        toast.success(`Successfully imported ${leadsToInsert.length} leads`);
+        toast.success(`Successfully processed ${leadsToUpsert.length} leads`);
         fetchLeads();
     };
 
+
     const importContacts = async (file: File) => {
         const data = await parseExcel<any>(file);
-        const contactsToInsert = data.map(row => {
+        await processContactsData(data);
+    };
+
+    const processContactsData = async (data: any[]) => {
+        const contactsProcessing = data.map(row => {
             return {
                 name: row["Name"] || row["name"],
                 email: row["Email"] || row["email"] || null,
@@ -532,18 +614,46 @@ export const GrowthDashboard = () => {
                 facebook: row["Facebook"] || row["facebook"] || null,
                 instagram: row["Instagram"] || row["instagram"] || null
             };
-        }).filter(c => c.name);
+        }).filter(c => c.name && c.email); // Assume Email is required for deduplication
 
-        if (contactsToInsert.length === 0) {
-            toast.error("No valid contacts found in file");
+        if (contactsProcessing.length === 0) {
+            toast.error("No valid contacts found (Name and Email required)");
             return;
         }
 
-        const { error } = await supabase.from('contacts').insert(contactsToInsert);
-        if (error) throw error;
+        // Deduplication: Upsert based on Email
+        // Supabase upsert requires a unique constraint on the conflict column(s).
+        // Assuming unique constraint on 'email'.
+        const { error } = await supabase.from('contacts').upsert(contactsProcessing, { onConflict: 'email' });
 
-        toast.success(`Successfully imported ${contactsToInsert.length} contacts`);
+        if (error) {
+            // Fallback if no unique constraint or other error: Manual Check
+            if (error.code === '23505') { // Unique violation if not using upsert properly? No, upsert handles it.
+                // If error is unrelated to constraint, we throw.
+                throw error;
+            }
+            // If implicit constraint missing, we might need manual handling, but let's try Upsert first.
+            console.warn("Upsert failed, trying manual deduplication", error);
+
+            // Manual Deduplication (Slower but safer if schema unclear)
+            const emails = contactsProcessing.map(c => c.email);
+            const { data: existingContacts } = await supabase.from('contacts').select('id, email').in('email', emails);
+
+            const existingMap = new Map();
+            existingContacts?.forEach(c => existingMap.set(c.email, c.id));
+
+            const contactsToUpsert = contactsProcessing.map(c => {
+                const id = existingMap.get(c.email);
+                return id ? { ...c, id } : c;
+            });
+
+            const { error: manualError } = await supabase.from('contacts').upsert(contactsToUpsert);
+            if (manualError) throw manualError;
+        }
+
+        toast.success(`Successfully processed ${contactsProcessing.length} contacts`);
         fetchContacts();
+        fetchLeads(); // Refresh leads in case contacts linked
     };
 
     const handleViewContact = (contactId: string) => {
@@ -666,6 +776,53 @@ export const GrowthDashboard = () => {
                                     <Download className="mr-1.5 h-4 w-4" />
                                     <span className="hidden sm:inline">Template</span>
                                 </Button>
+
+                                <Dialog open={googleSheetDialogOpen} onOpenChange={setGoogleSheetDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" className="bg-white h-9" disabled={isImporting}>
+                                            <LinkIcon className="mr-1.5 h-4 w-4" />
+                                            <span className="hidden sm:inline">Google Sheet</span>
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Import from Google Sheet</DialogTitle>
+                                            <DialogDescription>
+                                                Paste the URL of a public Google Sheet. Ensure the sheet is accessible to "Anyone with the link".
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="sheet-url">Sheet URL</Label>
+                                                <div className="flex gap-2">
+                                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-muted">
+                                                        <Globe className="h-4 w-4 text-muted-foreground" />
+                                                    </span>
+                                                    <Input
+                                                        id="sheet-url"
+                                                        placeholder="https://docs.google.com/spreadsheets/d/..."
+                                                        value={googleSheetUrl}
+                                                        onChange={(e) => setGoogleSheetUrl(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-muted-foreground">
+                                                <p><strong>Note:</strong></p>
+                                                <ul className="list-disc list-inside space-y-1">
+                                                    <li>The sheet must have the same column headers as the template.</li>
+                                                    <li>Duplicates will be updated (based on Title for Leads, Email for Contacts).</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setGoogleSheetDialogOpen(false)}>Cancel</Button>
+                                            <Button onClick={handleGoogleSheetImport} disabled={isImporting}>
+                                                {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                Import Data
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                                 <div className="relative">
                                     <Button
                                         variant="outline"
