@@ -198,11 +198,27 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
       // Only override for the currently authenticated user
       // If global state is NOT active, then this user's tasks cannot be running
       if (record.user_id === currentAuthUserId && globalState.status !== 'active') {
+
+        // Refinement: If strictly on "Break", we can calculate the time accrued up to the break start
+        // to avoid the timer jumping back to the previous saved state (visual glitch).
+        if (globalState.status === 'break' && globalState.lastBreakStart && record.is_running && record.started_at) {
+          const breakTime = new Date(globalState.lastBreakStart).getTime();
+          const startTime = new Date(record.started_at).getTime();
+          if (breakTime > startTime) {
+            const elapsedBeforeBreak = Math.floor((breakTime - startTime) / 1000);
+            return {
+              ...record,
+              is_running: false,
+              total_seconds: record.total_seconds + elapsedBeforeBreak
+            };
+          }
+        }
+
         return { ...record, is_running: false };
       }
       return record;
     });
-  }, [records, globalState.status, currentAuthUserId]);
+  }, [records, globalState.status, globalState.lastBreakStart, currentAuthUserId]);
 
   return {
     records: processedRecords,
@@ -331,6 +347,21 @@ export const useMultipleTasksTimeTracking = (taskIds: string[], userId?: string)
     timeMap.forEach((records, taskId) => {
       const processedRecords = records.map(record => {
         if (record.user_id === currentAuthUserId && globalState.status !== 'active') {
+
+          // Refinement: If strictly on "Break", calculate partial time
+          if (globalState.status === 'break' && globalState.lastBreakStart && record.is_running && record.started_at) {
+            const breakTime = new Date(globalState.lastBreakStart).getTime();
+            const startTime = new Date(record.started_at).getTime();
+            if (breakTime > startTime) {
+              const elapsedBeforeBreak = Math.floor((breakTime - startTime) / 1000);
+              return {
+                ...record,
+                is_running: false,
+                total_seconds: record.total_seconds + elapsedBeforeBreak
+              };
+            }
+          }
+
           return { ...record, is_running: false };
         }
         return record;
@@ -339,7 +370,7 @@ export const useMultipleTasksTimeTracking = (taskIds: string[], userId?: string)
     });
 
     return newMap;
-  }, [timeMap, globalState.status, currentAuthUserId]);
+  }, [timeMap, globalState.status, globalState.lastBreakStart, currentAuthUserId]);
 
   const getTaskTotalTime = useCallback((taskId: string): number => {
     const records = processedTimeMap.get(taskId) || [];

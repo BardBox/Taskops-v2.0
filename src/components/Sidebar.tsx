@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
     LogOut, Settings, Sliders, Home, Shield, User, BarChart3,
     Hexagon, CheckCircle2, TrendingUp, Info, Menu, ChevronLeft,
-    Users, Moon, Sun, Monitor, Activity, Clock3, DoorOpen, BellOff, Plane, Smile, Zap, BookOpen
+    Users, Moon, Sun, Monitor, Activity, Clock3, DoorOpen, BellOff, Plane, Smile, Zap, BookOpen, Lightbulb
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -309,7 +309,7 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
                     <NavItem icon={User} label="My Profile" path="/profile" isActive={location.pathname === "/profile"} shortcut="P" />
                     <NavItem icon={Users} label="My Team" path="/team" isActive={location.pathname === "/team"} shortcut="T" />
                     <NavItem icon={Hexagon} label="The Hive" path="/hive" isActive={location.pathname === "/hive"} shortcut="H" />
-                    <NavItem icon={Zap} label="Inspiration" path="/inspiration" isActive={location.pathname === "/inspiration"} shortcut="I" />
+                    <NavItem icon={Lightbulb} label="Inspiration" path="/inspiration" isActive={location.pathname === "/inspiration"} shortcut="I" />
                     <NavItem icon={BookOpen} label="Daily Standup" path="/standup" isActive={location.pathname === "/standup"} shortcut="S" />
                     <NavItem icon={BarChart3} label="Analytics" path="/analytics" isActive={location.pathname.startsWith("/analytics")} />
                     <NavItem icon={CheckCircle2} label="Posting Status" path="/posting-status" isActive={location.pathname === "/posting-status"} />
