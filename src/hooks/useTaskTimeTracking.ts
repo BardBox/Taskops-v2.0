@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTimeTracking } from "@/contexts/TimeTrackingContext";
 
 interface TimeTrackingRecord {
   id: string;
@@ -80,6 +81,9 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
   const [records, setRecords] = useState<TimeTrackingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Get global tracking state to override local "is_running" if user is clocked out
+  const { state: globalState, userId: currentAuthUserId } = useTimeTracking();
 
   const fetchTimeTracking = useCallback(async () => {
     if (!taskId) {
@@ -188,20 +192,37 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
     return records[0] || null;
   }, [records]);
 
-  // Check if any user is currently tracking
-  const isAnyoneTracking = useCallback((): boolean => {
-    return records.some(r => r.is_running);
-  }, [records]);
+  // Process records to respect global clock-out state
+  const processedRecords = useMemo(() => {
+    return records.map(record => {
+      // Only override for the currently authenticated user
+      // If global state is NOT active, then this user's tasks cannot be running
+      if (record.user_id === currentAuthUserId && globalState.status !== 'active') {
+        return { ...record, is_running: false };
+      }
+      return record;
+    });
+  }, [records, globalState.status, currentAuthUserId]);
 
   return {
-    records,
+    records: processedRecords,
     isLoading,
     error,
     refetch: fetchTimeTracking,
-    getUserTotalTime,
-    getTotalTime,
-    getPrimaryRecord,
-    isAnyoneTracking,
+    getUserTotalTime: (uid: string) => {
+      const record = processedRecords.find(r => r.user_id === uid);
+      if (!record) return 0;
+      return calculateTotalTime(record);
+    },
+    getTotalTime: () => {
+      return processedRecords.reduce((total, record) => total + calculateTotalTime(record), 0);
+    },
+    getPrimaryRecord: () => {
+      return processedRecords[0] || null;
+    },
+    isAnyoneTracking: () => {
+      return processedRecords.some(r => r.is_running);
+    },
   };
 };
 
@@ -209,6 +230,9 @@ export const useTaskTimeTracking = (options: UseTaskTimeTrackingOptions = {}) =>
 export const useMultipleTasksTimeTracking = (taskIds: string[], userId?: string) => {
   const [timeMap, setTimeMap] = useState<Map<string, TimeTrackingRecord[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
+
+  // Get global tracking state
+  const { state: globalState, userId: currentAuthUserId } = useTimeTracking();
 
   const fetchAll = useCallback(async () => {
     if (taskIds.length === 0) {
@@ -300,22 +324,39 @@ export const useMultipleTasksTimeTracking = (taskIds: string[], userId?: string)
     };
   }, [userId, fetchAll]);
 
+  // Process timeMap to respect global clock-out state
+  const processedTimeMap = useMemo(() => {
+    const newMap = new Map<string, TimeTrackingRecord[]>();
+
+    timeMap.forEach((records, taskId) => {
+      const processedRecords = records.map(record => {
+        if (record.user_id === currentAuthUserId && globalState.status !== 'active') {
+          return { ...record, is_running: false };
+        }
+        return record;
+      });
+      newMap.set(taskId, processedRecords);
+    });
+
+    return newMap;
+  }, [timeMap, globalState.status, currentAuthUserId]);
+
   const getTaskTotalTime = useCallback((taskId: string): number => {
-    const records = timeMap.get(taskId) || [];
+    const records = processedTimeMap.get(taskId) || [];
     return records.reduce((total, record) => total + calculateTotalTime(record), 0);
-  }, [timeMap]);
+  }, [processedTimeMap]);
 
   const getTaskRecords = useCallback((taskId: string): TimeTrackingRecord[] => {
-    return timeMap.get(taskId) || [];
-  }, [timeMap]);
+    return processedTimeMap.get(taskId) || [];
+  }, [processedTimeMap]);
 
   const isTaskActive = useCallback((taskId: string): boolean => {
-    const records = timeMap.get(taskId) || [];
+    const records = processedTimeMap.get(taskId) || [];
     return records.some(r => r.is_running);
-  }, [timeMap]);
+  }, [processedTimeMap]);
 
   return {
-    timeMap,
+    timeMap: processedTimeMap,
     isLoading,
     getTaskTotalTime,
     getTaskRecords,

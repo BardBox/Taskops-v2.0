@@ -19,6 +19,7 @@ interface TimeTrackingContextType {
     pauseWork: () => Promise<void>;
     resumeWork: () => Promise<void>;
     isLoading: boolean;
+    userId: string | null;
 }
 
 const TimeTrackingContext = createContext<TimeTrackingContextType | null>(null);
@@ -373,7 +374,7 @@ export const TimeTrackingProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <TimeTrackingContext.Provider value={{ state, clockIn, clockOut, pauseWork, resumeWork, isLoading }}>
+        <TimeTrackingContext.Provider value={{ state, clockIn, clockOut, pauseWork, resumeWork, isLoading, userId }}>
             {children}
         </TimeTrackingContext.Provider>
     );
