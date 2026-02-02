@@ -426,16 +426,16 @@ export default function AdminUsers() {
 
   const filteredAndSortedUsers = users
     .filter((user) => {
-      if (filters.userId && !user.user_code.toLowerCase().includes(filters.userId.toLowerCase())) {
+      if (filters.userId && !String(user.user_code || "").toLowerCase().includes(filters.userId.toLowerCase())) {
         return false;
       }
-      if (filters.name && !user.full_name.toLowerCase().includes(filters.name.toLowerCase())) {
+      if (filters.name && !String(user.full_name || "").toLowerCase().includes(filters.name.toLowerCase())) {
         return false;
       }
       if (filters.role && user.role !== filters.role) {
         return false;
       }
-      if (filters.creativeTitle && !user.creative_title?.toLowerCase().includes(filters.creativeTitle.toLowerCase())) {
+      if (filters.creativeTitle && !String(user.creative_title || "").toLowerCase().includes(filters.creativeTitle.toLowerCase())) {
         return false;
       }
       return true;
@@ -443,8 +443,8 @@ export default function AdminUsers() {
     .sort((a, b) => {
       if (!sortField) return 0;
 
-      const aValue = a[sortField]?.toLowerCase() || "";
-      const bValue = b[sortField]?.toLowerCase() || "";
+      const aValue = String(a[sortField] || "").toLowerCase();
+      const bValue = String(b[sortField] || "").toLowerCase();
 
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
