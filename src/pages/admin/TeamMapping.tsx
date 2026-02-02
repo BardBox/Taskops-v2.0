@@ -54,42 +54,31 @@ export default function TeamMapping() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Fetch all profiles first
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, user_code")
-        .order("full_name");
 
-      if (profilesError) throw profilesError;
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        return;
+      }
 
-      // Fetch all roles
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-
-      if (rolesError) throw rolesError;
-
-      const pmUsers: User[] = [];
-      const tmUsers: User[] = [];
-
-      profiles?.forEach(profile => {
-        const userRoles = roles?.filter(r => r.user_id === profile.id);
-        const hasPmRole = userRoles?.some(r => r.role === 'project_manager');
-        const hasTmRole = userRoles?.some(r => r.role === 'team_member');
-
-        // Also include project_owner as PM capable if needed, but strict request: PM and TM
-        // If a user is BOTH, they might appear in both lists? Usually roles are unique per user in this system?
-        // Assuming unique or primary role.
-
-        if (hasPmRole) {
-          pmUsers.push(profile);
-        }
-        if (hasTmRole) {
-          tmUsers.push(profile);
-        }
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ action: 'list' }),
       });
 
-      // Fallback: If no PMs found via roles, maybe check if we should show all? No, strict role is safer for mapping.
+      if (!response.ok) {
+        throw new Error('Failed to fetch users via Edge Function');
+      }
+
+      // The Edge Function returns { users: User[] } where User has role property
+      const { users } = await response.json();
+
+      const pmUsers = users.filter((u: any) => u.role === 'project_manager' || u.role === 'project_owner');
+      const tmUsers = users.filter((u: any) => u.role === 'team_member');
 
       setProjectManagers(pmUsers);
       setTeamMembers(tmUsers);
