@@ -268,192 +268,191 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
 
                 {/* Header / Toggle */}
                 <div className="h-14 flex items-center justify-between px-3 border-b border-border/50 flex-shrink-0">
-                    <div className={cn("flex items-center gap-2 overflow-hidden transition-all duration-300", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>
-                        <img src="/bardbox-logo.png" alt="BardBox" className="h-6 w-auto object-contain dark:invert" />
-                        <span className="font-bold text-sm tracking-tight whitespace-nowrap">TaskOPS 2.0</span>
-                    </div>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 ml-auto text-muted-foreground hover:text-foreground"
-                        onClick={() => setCollapsed(!collapsed)}
-                    >
-                        {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                    </Button>
+                    <img src="/bardbox-logo.png" alt="BardBox" className="h-6 w-auto object-contain dark:invert" />
+                    <span className="font-bold text-sm tracking-tight whitespace-nowrap">TaskOPS 2.0 (v2)</span>
                 </div>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 ml-auto text-muted-foreground hover:text-foreground"
+                    onClick={() => setCollapsed(!collapsed)}
+                >
+                    {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                </Button>
+            </div>
 
-                {/* Navigation */}
-                <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-1 px-2 scrollbar-none">
-                    {/* Ops Center Dashboard */}
-                    {userRole !== "sales_team" && (
-                        <NavItem
-                            icon={Home}
-                            label="Dashboard"
-                            path="/dashboard"
-                            isActive={location.pathname === "/dashboard" && !location.search.includes("view=growth")}
-                        />
-                    )}
-
-                    {/* Growth Engine */}
-                    {(userRole === "project_owner" || userRole === "business_head" || userRole === "sales_team") && (
-                        <NavItem
-                            icon={TrendingUp}
-                            label="Growth Engine"
-                            path="/growth"
-                            isActive={location.pathname.startsWith("/growth")}
-                        />
-                    )}
-
-                    <div className="my-2 border-t border-border/50" />
-
+            {/* Navigation */}
+            <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-1 px-2 scrollbar-none">
+                {/* Ops Center Dashboard */}
+                {userRole !== "sales_team" && (
                     <NavItem
-                        icon={LogOut}
-                        label="Sign Out"
-                        onClick={async () => {
-                            await supabase.auth.signOut();
-                            toast.success("Signed out");
-                            navigate("/auth");
-                        }}
-                        className="text-muted-foreground hover:text-destructive"
+                        icon={Home}
+                        label="Dashboard"
+                        path="/dashboard"
+                        isActive={location.pathname === "/dashboard" && !location.search.includes("view=growth")}
                     />
-                    <NavItem icon={Users} label="My Team" path="/team" isActive={location.pathname === "/team"} shortcut="T" />
-                    <NavItem icon={Hexagon} label="The Hive" path="/hive" isActive={location.pathname === "/hive"} shortcut="H" />
-                    <NavItem icon={Lightbulb} label="Inspiration" path="/inspiration" isActive={location.pathname === "/inspiration"} shortcut="I" />
-                    <NavItem icon={BookOpen} label="Daily Standup" path="/standup" isActive={location.pathname === "/standup"} shortcut="S" />
-                    <NavItem icon={BarChart3} label="Analytics" path="/analytics" isActive={location.pathname.startsWith("/analytics")} />
-                    <NavItem icon={CheckCircle2} label="Posting Status" path="/posting-status" isActive={location.pathname === "/posting-status"} />
+                )}
 
-                    <div className="my-2 border-t border-border/50" />
+                {/* Growth Engine */}
+                {(userRole === "project_owner" || userRole === "business_head" || userRole === "sales_team") && (
+                    <NavItem
+                        icon={TrendingUp}
+                        label="Growth Engine"
+                        path="/growth"
+                        isActive={location.pathname.startsWith("/growth")}
+                    />
+                )}
 
-                    <NavItem icon={Sliders} label="Preferences" path="/preferences" isActive={location.pathname === "/preferences"} />
-                    <NavItem icon={Info} label="About" path="/about" isActive={location.pathname === "/about"} />
+                <div className="my-2 border-t border-border/50" />
 
-                    {hasAdminAccess && (
-                        <>
-                            <div className="my-2 border-t border-border/50" />
-                            <NavItem icon={Shield} label="Admin Panel" path="/admin" isActive={location.pathname.startsWith("/admin")} />
-                        </>
+                <NavItem
+                    icon={LogOut}
+                    label="Sign Out"
+                    onClick={async () => {
+                        await supabase.auth.signOut();
+                        toast.success("Signed out");
+                        navigate("/auth");
+                    }}
+                    className="text-muted-foreground hover:text-destructive"
+                />
+                <NavItem icon={Users} label="My Team" path="/team" isActive={location.pathname === "/team"} shortcut="T" />
+                <NavItem icon={Hexagon} label="The Hive" path="/hive" isActive={location.pathname === "/hive"} shortcut="H" />
+                <NavItem icon={Lightbulb} label="Inspiration" path="/inspiration" isActive={location.pathname === "/inspiration"} shortcut="I" />
+                <NavItem icon={BookOpen} label="Daily Standup" path="/standup" isActive={location.pathname === "/standup"} shortcut="S" />
+                <NavItem icon={BarChart3} label="Analytics" path="/analytics" isActive={location.pathname.startsWith("/analytics")} />
+                <NavItem icon={CheckCircle2} label="Posting Status" path="/posting-status" isActive={location.pathname === "/posting-status"} />
+
+                <div className="my-2 border-t border-border/50" />
+
+                <NavItem icon={Sliders} label="Preferences" path="/preferences" isActive={location.pathname === "/preferences"} />
+                <NavItem icon={Info} label="About" path="/about" isActive={location.pathname === "/about"} />
+
+                {hasAdminAccess && (
+                    <>
+                        <div className="my-2 border-t border-border/50" />
+                        <NavItem icon={Shield} label="Admin Panel" path="/admin" isActive={location.pathname.startsWith("/admin")} />
+                    </>
+                )}
+            </div>
+
+            {/* Bottom Controls (Personal & Theme) */}
+            <div className="p-2 flex flex-col gap-2 border-t border-border/50 flex-shrink-0">
+                {/* Theme Toggle - Compressed Row */}
+                <Button
+                    variant="ghost"
+                    className={cn(
+                        "w-full justify-start gap-3 relative group overflow-hidden transition-all duration-200",
+                        collapsed ? "px-0 justify-center h-10 w-10 mx-auto" : "px-3 w-full",
+                        "text-muted-foreground hover:text-foreground"
                     )}
-                </div>
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    title="Toggle Theme"
+                >
+                    {theme === "dark" ?
+                        <Sun className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-[#F6BE00]" /> :
+                        <Moon className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-[#F6BE00]" />
+                    }
+                    <span className={cn(
+                        "transition-all duration-300 transform whitespace-nowrap",
+                        collapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto"
+                    )}>
+                        {theme === "dark" ? "Dark Mode" : "Light Mode"}
+                    </span>
+                </Button>
 
-                {/* Bottom Controls (Personal & Theme) */}
-                <div className="p-2 flex flex-col gap-2 border-t border-border/50 flex-shrink-0">
-                    {/* Theme Toggle - Compressed Row */}
-                    <Button
-                        variant="ghost"
-                        className={cn(
-                            "w-full justify-start gap-3 relative group overflow-hidden transition-all duration-200",
-                            collapsed ? "px-0 justify-center h-10 w-10 mx-auto" : "px-3 w-full",
-                            "text-muted-foreground hover:text-foreground"
-                        )}
-                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        title="Toggle Theme"
-                    >
-                        {theme === "dark" ?
-                            <Sun className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-[#F6BE00]" /> :
-                            <Moon className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-[#F6BE00]" />
-                        }
-                        <span className={cn(
-                            "transition-all duration-300 transform whitespace-nowrap",
-                            collapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto"
-                        )}>
-                            {theme === "dark" ? "Dark Mode" : "Light Mode"}
-                        </span>
-                    </Button>
-
-                    {/* Status & Mood - Compressed or Expanded */}
-                    <div className={cn("flex flex-col gap-1 transition-all pt-2", collapsed ? "items-center" : "items-stretch px-2")}>
-                        {/* Status */}
-                        <Popover open={statusOpen} onOpenChange={setStatusOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" className={cn("justify-start gap-3 relative group", collapsed ? "h-8 w-8 justify-center px-0" : "w-full px-2")}>
-                                    {(() => {
-                                        const Icon = getStatusIcon(status);
-                                        return <Icon className={cn("h-4 w-4 flex-shrink-0",
-                                            status === "Available" ? "text-green-500" :
-                                                status === "Busy" ? "text-red-500" :
-                                                    status === "Out of Office" ? "text-orange-500" : "text-muted-foreground"
-                                        )} />;
-                                    })()}
-                                    {!collapsed && <span className="text-sm truncate">{status || "Set Status"}</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-48 p-2" align="start" side="right">
-                                <div className="space-y-1">
-                                    {statuses.map((s) => (
-                                        <Button key={s} variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={() => updateStatus(s)}>
-                                            <div className={`h-2 w-2 rounded-full ${getStatusDotColor(s)}`} />
-                                            {s}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-
-                        {/* Mood */}
-                        <Popover open={moodOpen} onOpenChange={setMoodOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" className={cn("justify-start gap-3", collapsed ? "h-8 w-8 justify-center px-0" : "w-full px-2")}>
-                                    {mood ? <span className="text-base leading-none flex-shrink-0">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4 flex-shrink-0" />}
-                                    {!collapsed && <span className="text-sm truncate">{mood ? mood.substring(mood.indexOf(" ") + 1) : "Set Mood"}</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-64 p-2" align="start" side="right">
-                                <div className="grid grid-cols-2 gap-1">
-                                    {moods.map((m) => (
-                                        <Button key={m} variant="ghost" size="sm" className="justify-start text-sm h-auto py-2 px-2" onClick={() => updateMood(m)}>
-                                            {m}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
-
-
-                {/* Footer / User Profile */}
-                <div className="p-3 border-t border-border/50 bg-muted/20 flex-shrink-0">
-                    <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "")}>
-                        <div className="relative group cursor-pointer" onClick={() => navigate("/profile")}>
-                            <Avatar className="h-8 w-8 transition-transform hover:scale-105 border border-border">
-                                <AvatarImage src={avatarUrl} alt={userName} />
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                                    {initials}
-                                </AvatarFallback>
-                            </Avatar>
-                        </div>
-
-                        <div className={cn(
-                            "flex flex-col overflow-hidden transition-all duration-300",
-                            collapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100"
-                        )}>
-                            <span className="text-xs font-semibold truncate">{userName || "User"}</span>
-                            {userRole && (
-                                <span className="text-[10px] text-muted-foreground capitalize">
-                                    {userRole.replace(/_/g, ' ')}
-                                </span>
-                            )}
-                        </div>
-
-                        {!collapsed && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-muted-foreground hover:text-destructive transition-colors ml-auto"
-                                onClick={async () => {
-                                    await supabase.auth.signOut();
-                                    toast.success("Signed out");
-                                    navigate("/auth");
-                                }}
-                                title="Sign Out"
-                            >
-                                <LogOut className="h-3.5 w-3.5" />
+                {/* Status & Mood - Compressed or Expanded */}
+                <div className={cn("flex flex-col gap-1 transition-all pt-2", collapsed ? "items-center" : "items-stretch px-2")}>
+                    {/* Status */}
+                    <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" className={cn("justify-start gap-3 relative group", collapsed ? "h-8 w-8 justify-center px-0" : "w-full px-2")}>
+                                {(() => {
+                                    const Icon = getStatusIcon(status);
+                                    return <Icon className={cn("h-4 w-4 flex-shrink-0",
+                                        status === "Available" ? "text-green-500" :
+                                            status === "Busy" ? "text-red-500" :
+                                                status === "Out of Office" ? "text-orange-500" : "text-muted-foreground"
+                                    )} />;
+                                })()}
+                                {!collapsed && <span className="text-sm truncate">{status || "Set Status"}</span>}
                             </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-2" align="start" side="right">
+                            <div className="space-y-1">
+                                {statuses.map((s) => (
+                                    <Button key={s} variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={() => updateStatus(s)}>
+                                        <div className={`h-2 w-2 rounded-full ${getStatusDotColor(s)}`} />
+                                        {s}
+                                    </Button>
+                                ))}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+
+                    {/* Mood */}
+                    <Popover open={moodOpen} onOpenChange={setMoodOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" className={cn("justify-start gap-3", collapsed ? "h-8 w-8 justify-center px-0" : "w-full px-2")}>
+                                {mood ? <span className="text-base leading-none flex-shrink-0">{mood.split(" ")[0]}</span> : <Smile className="h-4 w-4 flex-shrink-0" />}
+                                {!collapsed && <span className="text-sm truncate">{mood ? mood.substring(mood.indexOf(" ") + 1) : "Set Mood"}</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-2" align="start" side="right">
+                            <div className="grid grid-cols-2 gap-1">
+                                {moods.map((m) => (
+                                    <Button key={m} variant="ghost" size="sm" className="justify-start text-sm h-auto py-2 px-2" onClick={() => updateMood(m)}>
+                                        {m}
+                                    </Button>
+                                ))}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </div>
+
+
+            {/* Footer / User Profile */}
+            <div className="p-3 border-t border-border/50 bg-muted/20 flex-shrink-0">
+                <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "")}>
+                    <div className="relative group cursor-pointer" onClick={() => navigate("/profile")}>
+                        <Avatar className="h-8 w-8 transition-transform hover:scale-105 border border-border">
+                            <AvatarImage src={avatarUrl} alt={userName} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                                {initials}
+                            </AvatarFallback>
+                        </Avatar>
+                    </div>
+
+                    <div className={cn(
+                        "flex flex-col overflow-hidden transition-all duration-300",
+                        collapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100"
+                    )}>
+                        <span className="text-xs font-semibold truncate">{userName || "User"}</span>
+                        {userRole && (
+                            <span className="text-[10px] text-muted-foreground capitalize">
+                                {userRole.replace(/_/g, ' ')}
+                            </span>
                         )}
                     </div>
+
+                    {!collapsed && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive transition-colors ml-auto"
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                toast.success("Signed out");
+                                navigate("/auth");
+                            }}
+                            title="Sign Out"
+                        >
+                            <LogOut className="h-3.5 w-3.5" />
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>
+        </div >
     );
 }
