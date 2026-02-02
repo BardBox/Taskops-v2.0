@@ -443,8 +443,14 @@ export default function AdminUsers() {
     .sort((a, b) => {
       if (!sortField) return 0;
 
-      const aValue = String(a[sortField] || "").toLowerCase();
-      const bValue = String(b[sortField] || "").toLowerCase();
+      let aValue = String(a[sortField] || "").toLowerCase();
+      let bValue = String(b[sortField] || "").toLowerCase();
+
+      // Apply padding for user_code sorting
+      if (sortField === "user_code") {
+        aValue = aValue.padStart(3, "0");
+        bValue = bValue.padStart(3, "0");
+      }
 
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
@@ -592,7 +598,9 @@ export default function AdminUsers() {
             <TableBody>
               {filteredAndSortedUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-mono text-sm">{user.user_code}</TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {String(user.user_code || "").padStart(3, "0")}
+                  </TableCell>
                   <TableCell className="font-medium">{user.full_name}</TableCell>
                   <TableCell>
                     <span className="text-sm text-primary">
