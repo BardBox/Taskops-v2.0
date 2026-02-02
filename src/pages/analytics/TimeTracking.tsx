@@ -226,7 +226,7 @@ const TimeTracking = () => {
       const { count } = await supabase
         .from('task_time_tracking')
         .select('*', { count: 'exact', head: true })
-        .eq('tracking_status', 'active');
+        .eq('is_running', true);
 
       setActiveTrackers(count || 0);
 
