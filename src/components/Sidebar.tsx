@@ -306,7 +306,16 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
 
                     <div className="my-2 border-t border-border/50" />
 
-                    <NavItem icon={User} label="My Profile" path="/profile" isActive={location.pathname === "/profile"} shortcut="P" />
+                    <NavItem
+                        icon={LogOut}
+                        label="Sign Out"
+                        onClick={async () => {
+                            await supabase.auth.signOut();
+                            toast.success("Signed out");
+                            navigate("/auth");
+                        }}
+                        className="text-muted-foreground hover:text-destructive"
+                    />
                     <NavItem icon={Users} label="My Team" path="/team" isActive={location.pathname === "/team"} shortcut="T" />
                     <NavItem icon={Hexagon} label="The Hive" path="/hive" isActive={location.pathname === "/hive"} shortcut="H" />
                     <NavItem icon={Lightbulb} label="Inspiration" path="/inspiration" isActive={location.pathname === "/inspiration"} shortcut="I" />
