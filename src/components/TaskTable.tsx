@@ -1609,7 +1609,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                               options={
                                 userRole === "team_member"
                                   ? statuses.filter(s => ["Not Started", "In Progress", "In Approval"].includes(s.label))
-                                  : userRole === "project_manager"
+                                  : userRole === "project_manager" && task.assignee_id !== userId
                                     ? statuses.filter(s => !["Not Started", "In Progress", "In Approval"].includes(s.label))
                                     : statuses
                               }
