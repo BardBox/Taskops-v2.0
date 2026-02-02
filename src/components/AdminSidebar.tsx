@@ -25,7 +25,11 @@ const items = [
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  userRole?: string | null;
+}
+
+export function AdminSidebar({ userRole }: AdminSidebarProps) {
   const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,6 +37,15 @@ export function AdminSidebar() {
   const collapsed = state === "collapsed";
 
   const isActive = (path: string) => currentPath === path;
+
+  // Filter items based on role
+  const filteredItems = items.filter(item => {
+    // Only show Avatar Generator to project owners
+    if (item.title === "Avatar Generator") {
+      return userRole === "project_owner";
+    }
+    return true;
+  });
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-60"}>
@@ -52,12 +65,12 @@ export function AdminSidebar() {
           <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className="hover:bg-muted/50" 
+                    <NavLink
+                      to={item.url}
+                      className="hover:bg-muted/50"
                       activeClassName="bg-muted text-primary font-medium"
                     >
                       <item.icon className="h-4 w-4" />

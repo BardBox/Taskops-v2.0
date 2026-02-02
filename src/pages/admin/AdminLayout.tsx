@@ -20,7 +20,7 @@ export default function AdminLayout() {
   const checkAuth = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         navigate("/auth");
         return;
@@ -75,8 +75,8 @@ export default function AdminLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AdminSidebar />
-        
+        <AdminSidebar userRole={userRole} />
+
         <div className="flex-1 flex flex-col">
           <div className="sticky top-0 z-50 flex items-center border-b bg-background shadow-sm">
             <div className="flex items-center px-4 h-14">
@@ -84,9 +84,9 @@ export default function AdminLayout() {
               <span className="ml-2 text-sm text-muted-foreground">Admin</span>
             </div>
             <div className="flex-1">
-              <AppHeader 
-                userRole={userRole || undefined} 
-                userName={userName} 
+              <AppHeader
+                userRole={userRole || undefined}
+                userName={userName}
                 avatarUrl={avatarUrl}
                 showRoleBadge={false}
               />
