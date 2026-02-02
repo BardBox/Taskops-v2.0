@@ -115,11 +115,6 @@ export default function TeamMapping() {
       .map(m => m.team_member_id),
     [teamMappings, selectedPmId]);
 
-  // Track ALL assigned users to prevent double-booking if one-to-one constraint exists
-  const allAssignedUserIds = useMemo(() =>
-    teamMappings.map(m => m.team_member_id),
-    [teamMappings]);
-
   const assignedUsers = useMemo(() =>
     allUsers.filter(u => assignedUserIds.includes(u.id)),
     [allUsers, assignedUserIds]);
@@ -127,13 +122,13 @@ export default function TeamMapping() {
   const availableUsers = useMemo(() =>
     allUsers.filter(u =>
       u.id !== selectedPmId && // Can't assign self
-      !allAssignedUserIds.includes(u.id) && // Not already assigned to ANYONE
+      !assignedUserIds.includes(u.id) && // Not already assigned to THIS PM
       (searchQuery === "" ||
         u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.user_code?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     ),
-    [allUsers, selectedPmId, allAssignedUserIds, searchQuery]);
+    [allUsers, selectedPmId, assignedUserIds, searchQuery]);
 
   const handleAssign = async (userId: string) => {
     if (!selectedPmId) return;
@@ -153,7 +148,7 @@ export default function TeamMapping() {
     } catch (error: any) {
       console.error("Assign error", error);
       if (error.code === '23505') {
-        toast.error("User is already assigned to a team");
+        toast.error("User is already assigned to this team");
       } else {
         toast.error(`Failed to assign user: ${error.message}`);
       }
