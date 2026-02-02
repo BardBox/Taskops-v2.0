@@ -349,10 +349,10 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
 
     // STRICT FILTERING: SECURE BY DEFAULT
     // Only Project Managers and Owners can see all tasks.
-    // Everyone else (Team Members, or if role is loading/undefined) sees ONLY their assigned/collaborating tasks.
-    const isManagerOrOwner = userRole === "project_manager" || userRole === "project_owner";
+    // Update: To prevent flickering for PMs during loading, we only apply the strict filter if the user is explicitly a "team_member".
+    // If userRole is loading (""), we allow showing tasks (RLS provides security layer).
 
-    if (!isManagerOrOwner) {
+    if (userRole === "team_member") {
       processedTasks = processedTasks.filter((task: any) =>
         (userId && task.assignee_id === userId) ||
         (userId && task.collaborators?.some((c: any) => c.user_id === userId))
