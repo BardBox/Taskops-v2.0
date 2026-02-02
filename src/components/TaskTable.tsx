@@ -1669,7 +1669,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     statuses={
                       userRole === "team_member"
                         ? statuses.filter(s => ["Not Started", "In Progress", "Waiting for Approval"].includes(s.label))
-                        : statuses
+                        : userRole === "project_manager" && task.assignee_id !== userId
+                          ? statuses.filter(s => !["Not Started", "In Progress", "In Approval"].includes(s.label))
+                          : statuses
                     }
                     urgencies={urgencies}
                     onSelect={(checked) => handleSelectTask(task.id, checked)}
