@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Trash2, Sparkles, CheckCircle2 } from "lucide-react";
+import { Loader2, Trash2, Sparkles, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -185,6 +188,9 @@ export default function AvatarGenerator() {
   const [currentAvatar, setCurrentAvatar] = useState<string>("");
   const [generatedCount, setGeneratedCount] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>("human");
+  const [generationMode, setGenerationMode] = useState<"vector" | "realistic">("vector");
+  const [hfApiKey, setHfApiKey] = useState<string>("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const generateDefaultLibrary = async () => {
     setGenerating(true);
@@ -206,7 +212,9 @@ export default function AvatarGenerator() {
             body: {
               prompt: fullPrompt,
               name: avatarData.name,
-              category: avatarData.category
+              category: avatarData.category,
+              style: generationMode,
+              apiKey: generationMode === 'realistic' ? hfApiKey : undefined
             }
           });
 
@@ -283,6 +291,11 @@ export default function AvatarGenerator() {
       return;
     }
 
+    if (generationMode === 'realistic' && !hfApiKey) {
+      toast.error("Please enter your Hugging Face API Token");
+      return;
+    }
+
     setGenerating(true);
     setProgress(0);
     setGeneratedCount(0);
@@ -300,32 +313,50 @@ export default function AvatarGenerator() {
         let basePrompt = "";
         switch (selectedCategory) {
           case "human":
-            basePrompt = `${personality} person, diverse ethnicity, professional portrait`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} human, highly detailed portrait, photorealistic, 4k`
+              : `${personality} person, diverse ethnicity, professional portrait`;
             break;
           case "animal":
-            basePrompt = `${personality} animal character, anthropomorphic style, expressive features`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} animal, highly detailed fur/scales, national geographic style, 4k`
+              : `${personality} animal character, anthropomorphic style, expressive features`;
             break;
           case "fantasy":
-            basePrompt = `${personality} fantasy creature, magical aura, enchanted appearance`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} fantasy creature, cinematic lighting, epic composition, 4k`
+              : `${personality} fantasy creature, magical aura, enchanted appearance`;
             break;
           case "superhero":
-            basePrompt = `${personality} superhero character, heroic pose, iconic costume`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} superhero, marvel cinematic style, detailed costume, dramatic lighting`
+              : `${personality} superhero character, heroic pose, iconic costume`;
             break;
           case "supervillain":
-            basePrompt = `${personality} villain character, intimidating presence, dramatic appearance`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} supervillain, dark atmosphere, cinematic, detailed`
+              : `${personality} villain character, intimidating presence, dramatic appearance`;
             break;
           case "droid":
-            basePrompt = `${personality} robot or droid, futuristic design, mechanical details`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} robot droid, sci-fi movie style, octane render, 8k`
+              : `${personality} robot or droid, futuristic design, mechanical details`;
             break;
           case "abstract":
-            basePrompt = `${personality} abstract art, unique patterns, creative composition`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} abstract art 3d render, colorful, glass shapes, raytracing`
+              : `${personality} abstract art, unique patterns, creative composition`;
             break;
           case "nature":
-            basePrompt = `${personality} natural landscape, scenic view, beautiful environment`;
+            basePrompt = generationMode === 'realistic'
+              ? `${personality} nature photography, landscape, 8k, realistic`
+              : `${personality} natural landscape, scenic view, beautiful environment`;
             break;
         }
 
-        const fullPrompt = `${basePrompt}, high quality avatar portrait, professional digital art`;
+        const fullPrompt = generationMode === 'realistic'
+          ? `${basePrompt}, centered composition`
+          : `${basePrompt}, high quality avatar portrait, professional digital art`;
 
         setCurrentAvatar(avatarName);
         console.log(`Generating ${i + 1}/${total}: ${avatarName}`);
@@ -335,7 +366,9 @@ export default function AvatarGenerator() {
             body: {
               prompt: fullPrompt,
               name: avatarName,
-              category: selectedCategory
+              category: selectedCategory,
+              style: generationMode,
+              apiKey: generationMode === 'realistic' ? hfApiKey : undefined
             }
           });
 
@@ -467,6 +500,72 @@ export default function AvatarGenerator() {
         </Button>
       </div>
 
+      <Card className="p-6 border-primary/20 bg-primary/5">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Configuration
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Choose your generation engine. Realistic mode requires a Hugging Face API key.
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="space-y-3">
+              <Label>Generation Mode</Label>
+              <RadioGroup
+                value={generationMode}
+                onValueChange={(val: "vector" | "realistic") => setGenerationMode(val)}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="vector" id="vector" />
+                  <Label htmlFor="vector" className="cursor-pointer">Vector (Gemini SVG)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="realistic" id="realistic" />
+                  <Label htmlFor="realistic" className="cursor-pointer">Realistic (Hugging Face)</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {generationMode === "realistic" && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 flex-1 max-w-md">
+                <Label htmlFor="hf-key">Hugging Face API Token (Read Access)</Label>
+                <div className="relative">
+                  <Input
+                    id="hf-key"
+                    type={showApiKey ? "text" : "password"}
+                    placeholder="hf_..."
+                    value={hfApiKey}
+                    onChange={(e) => setHfApiKey(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                  >
+                    {showApiKey ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Your key is sent directly to the server and not stored.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-6">
         <div className="space-y-6">
           <div>
@@ -477,6 +576,8 @@ export default function AvatarGenerator() {
             <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
               ⚠️ This will take approximately 1 minute to complete. Each avatar is generated with a 2-second delay.
             </p>
+
+
 
             <div className="flex gap-4 items-end">
               <div className="flex-1">

@@ -10,12 +10,66 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { prompt, name, category } = await req.json();
+
+    const { prompt, name, category, style = 'vector', apiKey } = await req.json();
 
     if (!prompt) {
       throw new Error("Prompt is required");
     }
 
+    // --- REALISTIC GENERATION (Hugging Face) ---
+    if (style === 'realistic') {
+      if (!apiKey) {
+        throw new Error("Hugging Face API Key is required for realistic generation");
+      }
+
+      console.log(`🎨 Generating Avatar (Hugging Face / FLUX.1-schnell) for: ${name} (${category})`);
+      const startTime = Date.now();
+      const model = "black-forest-labs/FLUX.1-schnell"; // Fast, high quality
+
+      try {
+        const response = await fetch(
+          `https://api-inference.huggingface.co/models/${model}`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+              "x-use-cache": "false"
+            },
+            body: JSON.stringify({
+              inputs: `avatar of ${prompt}, high quality, realistic, detailed, centered, plain background, 8k resolution, trending on artstation`,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`HF API Error (${response.status}): ${errText}`);
+        }
+
+        // HF returns a binary blob (image/jpeg usually)
+        const imageBlob = await response.blob();
+        const arrayBuffer = await imageBlob.arrayBuffer();
+        const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const mimeType = imageBlob.type || "image/jpeg";
+        const imageUrl = `data:${mimeType};base64,${base64Image}`;
+
+        const elapsedTime = Date.now() - startTime;
+        console.log(`✅ Successfully generated Realistic avatar in ${elapsedTime}ms`);
+
+        return new Response(
+          JSON.stringify({ imageUrl, name, category, style }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+
+      } catch (err: any) {
+        console.error("HF Generation Failed:", err);
+        throw new Error(`Realistic generation failed: ${err.message}`);
+      }
+    }
+
+    // --- VECTOR GENERATION (Gemini) ---
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
     if (!GOOGLE_API_KEY) {
       throw new Error("GOOGLE_API_KEY is not configured");
@@ -89,7 +143,7 @@ Deno.serve(async (req) => {
     console.log(`✅ Successfully generated SVG avatar in ${elapsedTime}ms`);
 
     return new Response(
-      JSON.stringify({ imageUrl, name, category }),
+      JSON.stringify({ imageUrl, name, category, style }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
@@ -105,3 +159,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+
