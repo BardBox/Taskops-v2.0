@@ -195,9 +195,13 @@ export default function TeamMapping() {
       if (error) throw error;
       await fetchTeamMappings();
       toast.success(`Assigned ${mappings.length} users`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Assign All error", error);
-      toast.error("Failed to assign all users");
+      if (error.code === '23505') {
+        toast.error("Some users are already assigned to this team");
+      } else {
+        toast.error("Failed to assign all users");
+      }
     } finally {
       setActionLoading(false);
     }
