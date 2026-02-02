@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,9 +10,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Plus, X, Camera, Sparkles } from "lucide-react";
+import { Loader2, Plus, X, Camera, Sparkles, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ImageCropper } from "@/components/ImageCropper";
 
 interface EditProfileDrawerProps {
   open: boolean;
@@ -49,6 +50,11 @@ export function EditProfileDrawer({
   const [customAvatarPrompt, setCustomAvatarPrompt] = useState("");
   const [generatingCustom, setGeneratingCustom] = useState(false);
   const [avatarRefreshTrigger, setAvatarRefreshTrigger] = useState(0);
+
+  // Image Cropper State
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile) {
@@ -286,6 +292,7 @@ export function EditProfileDrawer({
           category: 'custom'
         });
 
+        // Also add to mapped category for better discovery
         await supabase.from('default_avatars').insert({
           name: smartName,
           image_url: publicUrl,
@@ -302,6 +309,51 @@ export function EditProfileDrawer({
       toast.error(error.message || 'Failed to generate avatar');
     } finally {
       setGeneratingCustom(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        setImageSrc(reader.result?.toString() || null);
+        setCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    try {
+      const fileName = `upload_${profile.id}_${Date.now()}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, croppedBlob, {
+          contentType: 'image/png',
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Add to default_avatars as 'custom' so it appears in the list
+      await supabase.from('default_avatars').insert({
+        name: 'Custom Upload',
+        image_url: publicUrl,
+        category: 'custom'
+      });
+
+      setAvatarUrl(publicUrl);
+      setAvatarRefreshTrigger(prev => prev + 1);
+      toast.success("Avatar uploaded successfully!");
+    } catch (error) {
+      console.error("Upload error", error);
+      toast.error("Failed to upload avatar");
     }
   };
 
@@ -342,6 +394,25 @@ export function EditProfileDrawer({
                         <DialogTitle>Choose Your Avatar</DialogTitle>
                       </DialogHeader>
                       <div className="flex flex-col items-center gap-2 py-4 border-b mb-4">
+                        {/* Upload Section */}
+                        <div className="flex gap-2 mb-4">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+                          <Button
+                            variant="secondary"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="gap-2"
+                          >
+                            <Upload className="h-4 w-4" />
+                            Upload & Crop Image
+                          </Button>
+                        </div>
+
                         <p className="text-sm text-muted-foreground">Selected Avatar</p>
                         <Avatar className="w-20 h-20">
                           <AvatarImage src={avatarUrl || undefined} />
@@ -394,6 +465,7 @@ export function EditProfileDrawer({
                 </div>
               </div>
 
+              {/* Profile Fields */}
               <div>
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
@@ -674,6 +746,13 @@ export function EditProfileDrawer({
           </div>
         </div>
       </DrawerContent>
+
+      <ImageCropper
+        imageSrc={imageSrc}
+        open={cropperOpen}
+        onClose={() => setCropperOpen(false)}
+        onCropComplete={handleCropComplete}
+      />
     </Drawer>
   );
 }
