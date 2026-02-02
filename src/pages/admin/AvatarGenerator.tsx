@@ -201,7 +201,9 @@ export default function AvatarGenerator() {
     try {
       for (let i = 0; i < total; i++) {
         const avatarData = AVATAR_LIBRARY[i];
-        const fullPrompt = `${avatarData.prompt}, high quality avatar portrait, professional digital art`;
+        const fullPrompt = generationMode === 'realistic'
+          ? `avatar of ${avatarData.prompt}, highly detailed, photorealistic, 4k, trending on artstation`
+          : `${avatarData.prompt}, high quality avatar portrait, professional digital art`;
 
         setCurrentAvatar(avatarData.name);
         console.log(`Generating ${i + 1}/${total}: ${avatarData.name}`);
