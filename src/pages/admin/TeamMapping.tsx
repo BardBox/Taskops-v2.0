@@ -53,24 +53,43 @@ export default function TeamMapping() {
 
   const fetchUsers = async () => {
     try {
-      // Fetch all PMs
-      const { data: pms, error: pmError } = await supabase
+      setLoading(true);
+      // Fetch all profiles first
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, user_code")
+        .order("full_name");
+
+      if (profilesError) throw profilesError;
+
+      // Fetch all roles
+      const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("user_id, profiles!inner(id, full_name, avatar_url, user_code)")
-        .eq("role", "project_manager");
+        .select("user_id, role");
 
-      if (pmError) throw pmError;
+      if (rolesError) throw rolesError;
 
-      // Fetch all TMs
-      const { data: tms, error: tmError } = await supabase
-        .from("user_roles")
-        .select("user_id, profiles!inner(id, full_name, avatar_url, user_code)")
-        .eq("role", "team_member");
+      const pmUsers: User[] = [];
+      const tmUsers: User[] = [];
 
-      if (tmError) throw tmError;
+      profiles?.forEach(profile => {
+        const userRoles = roles?.filter(r => r.user_id === profile.id);
+        const hasPmRole = userRoles?.some(r => r.role === 'project_manager');
+        const hasTmRole = userRoles?.some(r => r.role === 'team_member');
 
-      const pmUsers = pms?.map((pm: any) => pm.profiles) || [];
-      const tmUsers = tms?.map((tm: any) => tm.profiles) || [];
+        // Also include project_owner as PM capable if needed, but strict request: PM and TM
+        // If a user is BOTH, they might appear in both lists? Usually roles are unique per user in this system?
+        // Assuming unique or primary role.
+
+        if (hasPmRole) {
+          pmUsers.push(profile);
+        }
+        if (hasTmRole) {
+          tmUsers.push(profile);
+        }
+      });
+
+      // Fallback: If no PMs found via roles, maybe check if we should show all? No, strict role is safer for mapping.
 
       setProjectManagers(pmUsers);
       setTeamMembers(tmUsers);

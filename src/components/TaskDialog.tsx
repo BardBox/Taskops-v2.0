@@ -308,13 +308,34 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*, user_roles!inner(role)")
-      .order("full_name");
+    try {
+      // Fetch profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("full_name");
 
-    if (data) {
-      setUsers(data);
+      if (profilesError) throw profilesError;
+
+      // Fetch roles
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role");
+
+      if (rolesError) throw rolesError;
+
+      // Merge data
+      const usersWithRoles = profiles.map(profile => {
+        const userRole = roles.find(r => r.user_id === profile.id);
+        return {
+          ...profile,
+          user_roles: userRole ? { role: userRole.role } : null
+        };
+      });
+
+      setUsers(usersWithRoles);
+    } catch (error) {
+      console.error("Error fetching users:", error);
     }
   };
 
