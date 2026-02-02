@@ -52,7 +52,14 @@ Deno.serve(async (req) => {
         // HF returns a binary blob (image/jpeg usually)
         const imageBlob = await response.blob();
         const arrayBuffer = await imageBlob.arrayBuffer();
-        const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        const len = bytes.byteLength;
+        // Process in chunks to avoid stack overflow with large images
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64Image = btoa(binary);
         const mimeType = imageBlob.type || "image/jpeg";
         const imageUrl = `data:${mimeType};base64,${base64Image}`;
 
