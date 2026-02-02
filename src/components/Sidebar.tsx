@@ -270,7 +270,7 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
                 <div className="h-14 flex items-center justify-between px-3 border-b border-border/50 flex-shrink-0">
                     <div className={cn("flex items-center gap-2 overflow-hidden transition-all duration-300", collapsed ? "w-0 opacity-0" : "w-auto opacity-100")}>
                         <img src="/bardbox-logo.png" alt="BardBox" className="h-6 w-auto object-contain dark:invert" />
-                        <span className="font-bold text-sm tracking-tight whitespace-nowrap">TaskOPS 2.0 (v2)</span>
+                        <span className="font-bold text-sm tracking-tight whitespace-nowrap">TaskOPS 2.0</span>
                     </div>
                     <Button
                         variant="ghost"
@@ -414,43 +414,28 @@ export function Sidebar({ userRole, className, collapsed: controlledCollapsed, o
 
                 {/* Footer / User Profile */}
                 <div className="p-3 border-t border-border/50 bg-muted/20 flex-shrink-0">
-                    <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "")}>
-                        <div className="relative group cursor-pointer" onClick={() => navigate("/profile")}>
-                            <Avatar className="h-8 w-8 transition-transform hover:scale-105 border border-border">
-                                <AvatarImage src={avatarUrl} alt={userName} />
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                                    {initials}
-                                </AvatarFallback>
-                            </Avatar>
-                        </div>
-
-                        <div className={cn(
-                            "flex flex-col overflow-hidden transition-all duration-300",
-                            collapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100"
-                        )}>
-                            <span className="text-xs font-semibold truncate">{userName || "User"}</span>
-                            {userRole && (
-                                <span className="text-[10px] text-muted-foreground capitalize">
-                                    {userRole.replace(/_/g, ' ')}
-                                </span>
+                    <div className={cn("flex items-center", collapsed ? "justify-center" : "")}>
+                        <Button
+                            variant="ghost"
+                            className={cn(
+                                "w-full justify-start gap-3 relative group overflow-hidden transition-all duration-200 text-destructive hover:text-destructive hover:bg-destructive/10",
+                                collapsed ? "px-0 justify-center h-10 w-10" : "px-3"
                             )}
-                        </div>
-
-                        {!collapsed && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-muted-foreground hover:text-destructive transition-colors ml-auto"
-                                onClick={async () => {
-                                    await supabase.auth.signOut();
-                                    toast.success("Signed out");
-                                    navigate("/auth");
-                                }}
-                                title="Sign Out"
-                            >
-                                <LogOut className="h-3.5 w-3.5" />
-                            </Button>
-                        )}
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                toast.success("Signed out");
+                                navigate("/auth");
+                            }}
+                            title="Sign Out"
+                        >
+                            <LogOut className="h-5 w-5 flex-shrink-0" />
+                            <span className={cn(
+                                "transition-all duration-300 transform whitespace-nowrap",
+                                collapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto"
+                            )}>
+                                Sign Out
+                            </span>
+                        </Button>
                     </div>
                 </div>
             </div>
