@@ -309,6 +309,23 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
 
   const fetchUsers = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      let myRole = userRole;
+      let currentId = currentUserId;
+
+      if (session) {
+        currentId = session.user.id;
+        if (!myRole) {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', currentId)
+            .single();
+          myRole = roleData?.role;
+        }
+      }
+
       // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
@@ -325,13 +342,28 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
       if (rolesError) throw rolesError;
 
       // Merge data
-      const usersWithRoles = profiles.map(profile => {
+      let usersWithRoles = profiles.map(profile => {
         const userRole = roles.find(r => r.user_id === profile.id);
         return {
           ...profile,
           user_roles: userRole ? { role: userRole.role } : null
         };
       });
+
+      // Constraint: If Project Manager, filter by Team Mapping
+      if (myRole === 'project_manager' && currentId) {
+        const { data: mappings } = await supabase
+          .from('team_mappings')
+          .select('team_member_id')
+          .eq('pm_id', currentId);
+
+        const allowedIds = mappings?.map(m => m.team_member_id) || [];
+        if (!allowedIds.includes(currentId)) {
+          allowedIds.push(currentId); // Allow assigning to self
+        }
+
+        usersWithRoles = usersWithRoles.filter(u => allowedIds.includes(u.id));
+      }
 
       setUsers(usersWithRoles);
     } catch (error) {
