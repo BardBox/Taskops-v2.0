@@ -189,8 +189,7 @@ export default function AvatarGenerator() {
   const [generatedCount, setGeneratedCount] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>("human");
   const [generationMode, setGenerationMode] = useState<"vector" | "realistic">("vector");
-  const [hfApiKey, setHfApiKey] = useState<string>("");
-  const [showApiKey, setShowApiKey] = useState(false);
+
 
   const generateDefaultLibrary = async () => {
     setGenerating(true);
@@ -213,8 +212,7 @@ export default function AvatarGenerator() {
               prompt: fullPrompt,
               name: avatarData.name,
               category: avatarData.category,
-              style: generationMode,
-              apiKey: generationMode === 'realistic' ? hfApiKey : undefined
+              style: generationMode
             }
           });
 
@@ -291,10 +289,7 @@ export default function AvatarGenerator() {
       return;
     }
 
-    if (generationMode === 'realistic' && !hfApiKey) {
-      toast.error("Please enter your Hugging Face API Token");
-      return;
-    }
+
 
     setGenerating(true);
     setProgress(0);
@@ -367,8 +362,7 @@ export default function AvatarGenerator() {
               prompt: fullPrompt,
               name: avatarName,
               category: selectedCategory,
-              style: generationMode,
-              apiKey: generationMode === 'realistic' ? hfApiKey : undefined
+              style: generationMode
             }
           });
 
@@ -531,37 +525,7 @@ export default function AvatarGenerator() {
               </RadioGroup>
             </div>
 
-            {generationMode === "realistic" && (
-              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 flex-1 max-w-md">
-                <Label htmlFor="hf-key">Hugging Face API Token (Read Access)</Label>
-                <div className="relative">
-                  <Input
-                    id="hf-key"
-                    type={showApiKey ? "text" : "password"}
-                    placeholder="hf_..."
-                    value={hfApiKey}
-                    onChange={(e) => setHfApiKey(e.target.value)}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                  >
-                    {showApiKey ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Your key is sent directly to the server and not stored.
-                </p>
-              </div>
-            )}
+
           </div>
         </div>
       </Card>

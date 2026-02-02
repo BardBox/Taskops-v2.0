@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
 
   try {
 
-    const { prompt, name, category, style = 'vector', apiKey } = await req.json();
+    const { prompt, name, category, style = 'vector' } = await req.json();
 
     if (!prompt) {
       throw new Error("Prompt is required");
@@ -19,8 +19,9 @@ Deno.serve(async (req) => {
 
     // --- REALISTIC GENERATION (Hugging Face) ---
     if (style === 'realistic') {
+      const apiKey = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
       if (!apiKey) {
-        throw new Error("Hugging Face API Key is required for realistic generation");
+        throw new Error("Hugging Face API Key is not configured on the server. Please set HUGGING_FACE_ACCESS_TOKEN secret.");
       }
 
       console.log(`🎨 Generating Avatar (Hugging Face / FLUX.1-schnell) for: ${name} (${category})`);
