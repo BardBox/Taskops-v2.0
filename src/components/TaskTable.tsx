@@ -890,7 +890,28 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
           .eq("task_id", taskId)
           .eq("user_id", assigneeId);
 
-        if (updateError) console.error("Timer stop failed:", updateError);
+        if (updateError) {
+          console.error("Timer stop failed:", updateError);
+        } else {
+          // SUCCESS: Now also record the session history for analytics
+          if (elapsedSeconds > 0) {
+            const { error: sessionError } = await supabase
+              .from("task_time_sessions")
+              .insert({
+                task_id: taskId,
+                user_id: assigneeId,
+                started_at: record.started_at, // Use the actual start time from the record
+                ended_at: now,
+                duration_seconds: elapsedSeconds
+              });
+
+            if (sessionError) {
+              console.error("Failed to save session history:", sessionError);
+            } else {
+              console.log("Session history saved successfully");
+            }
+          }
+        }
 
         // Immediately refetch time tracking data to update UI
         setTimeout(() => refetchTimeTracking(), 100);
