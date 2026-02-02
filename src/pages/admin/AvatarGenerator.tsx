@@ -261,9 +261,9 @@ export default function AvatarGenerator() {
             setGeneratedCount(successCount);
             console.log(`✅ Saved: ${avatarData.name}`);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error(`Failed to generate ${avatarData.name}:`, err);
-          toast.error(`Failed to generate ${avatarData.name}`);
+          toast.error(`Failed to generate ${avatarData.name}: ${err.message}`);
         }
 
         setProgress(((i + 1) / total) * 100);

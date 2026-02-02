@@ -261,7 +261,8 @@ export function EditProfileDrawer({
         body: {
           prompt: fullPrompt,
           name: finalName,
-          category: detectedCategory
+          category: detectedCategory,
+          style: 'realistic'
         }
       });
 
