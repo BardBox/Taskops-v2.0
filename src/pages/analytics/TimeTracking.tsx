@@ -108,6 +108,7 @@ const ReportsView = ({ dateFrom, dateTo }: { dateFrom?: Date, dateTo?: Date }) =
       ];
     }),
     filename: `project-reports-${new Date().toISOString().split('T')[0]}`,
+    title: 'Project Reports - Budget Analysis',
   });
 
   return (
