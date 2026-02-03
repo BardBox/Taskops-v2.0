@@ -94,19 +94,19 @@ interface ColumnWidths {
 }
 
 export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
-  date: 100,
-  task: 300,
-  client: 120,
-  project: 120,
-  taskOwner: 140,
-  pm: 130,
-  collaborators: 60,
-  deadline: 110,
-  submission: 110,
-  delay: 80,
-  time: 80,
-  status: 130,
-  urgency: 110,
+  date: 95,
+  task: 200,
+  client: 100,
+  project: 100,
+  taskOwner: 120,
+  pm: 110,
+  collaborators: 50,
+  deadline: 100,
+  submission: 100,
+  delay: 70,
+  time: 70,
+  status: 110,
+  urgency: 120,
 };
 
 interface TaskTableProps {
@@ -1193,7 +1193,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-6 bg-gradient-to-l from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
             </>
           )}
-          <div className={cn("scroll-smooth", isFocusMode ? "overflow-auto custom-scrollbar flex-1 max-h-none h-full" : "")}>
+          <div className={cn("scroll-smooth overflow-x-auto", isFocusMode ? "overflow-auto custom-scrollbar flex-1 max-h-none h-full" : "")}>
             <Table className="table-fixed">
               <TableHeader className={cn("sticky z-20 bg-card", isFocusMode ? "top-0" : "top-[3.8rem]")}>
                 <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
