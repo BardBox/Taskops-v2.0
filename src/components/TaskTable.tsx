@@ -1199,8 +1199,8 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
               <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-6 bg-gradient-to-l from-card/60 to-transparent opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300 z-10" />
             </>
           )}
-          <div className={cn("scroll-smooth overflow-x-auto", isFocusMode ? "overflow-auto custom-scrollbar flex-1 max-h-none h-full" : "")}>
-            <Table className="w-full min-w-max">
+          <div className={cn("scroll-smooth", isFocusMode ? "overflow-auto custom-scrollbar flex-1 max-h-none h-full" : "")}>
+            <Table className="w-full table-fixed border-collapse">
               <TableHeader className={cn("sticky z-20 bg-card", isFocusMode ? "top-0" : "top-[3.8rem]")}>
                 <TableRow className="[&:hover]:bg-card bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
                   {isSelectionMode && (userRole === "project_owner" || userRole === "project_manager") && (
@@ -1227,8 +1227,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     </TableHead>
                   )}
                   <TableHead
-                    style={{ width: columnWidths.task }}
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col w-auto"
                     onClick={() => toggleSort("task")}
                   >
                     <div className="flex items-center gap-2">
