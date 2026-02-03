@@ -1,4 +1,4 @@
-import { Users, Building2, Palette, Settings, LayoutDashboard, Home, FolderKanban, Sparkles, Network } from "lucide-react";
+import { Users, Building2, Palette, Settings, LayoutDashboard, Home, FolderKanban, Sparkles, Network, Layers, Folders } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,15 @@ import {
 const items = [
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Clients", url: "/admin/clients", icon: Building2 },
-  { title: "Projects", url: "/admin/projects", icon: FolderKanban },
+  { title: "Project Templates", url: "/admin/project-templates", icon: Layers },
+  { title: "Project Mapping", url: "/admin/project-mapping", icon: Folders },
   { title: "Team Mapping", url: "/admin/team-mapping", icon: Network },
   { title: "Avatar Generator", url: "/admin/avatar-generator", icon: Sparkles },
   { title: "Status & Urgency", url: "/admin/status-urgency", icon: Palette },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
+
+
 
 interface AdminSidebarProps {
   userRole?: string | null;

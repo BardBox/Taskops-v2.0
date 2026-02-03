@@ -947,6 +947,7 @@ export type Database = {
           is_archived: boolean
           is_default: boolean
           name: string
+          template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -956,6 +957,7 @@ export type Database = {
           is_archived?: boolean
           is_default?: boolean
           name: string
+          template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -965,6 +967,7 @@ export type Database = {
           is_archived?: boolean
           is_default?: boolean
           name?: string
+          template_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -975,8 +978,51 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projects_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
         ]
       }
+      project_templates: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          is_active: boolean
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+
       sales_activities: {
         Row: {
           created_at: string

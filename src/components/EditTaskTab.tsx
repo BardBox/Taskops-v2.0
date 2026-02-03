@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +102,46 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
       fetchProjects(task.client_id);
     }
   }, [task]);
+
+  // Handle Enter key to save and close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter from anywhere saves the form
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        const form = document.querySelector('form');
+        if (form) {
+          form.requestSubmit();
+        }
+        return;
+      }
+
+      // Plain Enter saves only if not in textarea or select
+      if (e.key === "Enter" && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        const tagName = target.tagName.toLowerCase();
+
+        // Don't trigger on textarea (allow line breaks) or selects/popovers
+        if (tagName === "textarea" || tagName === "select" || target.role === "combobox" || target.role === "option") {
+          return;
+        }
+
+        // Don't trigger if inside a dropdown menu
+        if (target.closest('[role="listbox"]') || target.closest('[role="menu"]')) {
+          return;
+        }
+
+        e.preventDefault();
+        const form = document.querySelector('form');
+        if (form) {
+          form.requestSubmit();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const fetchAssignedBy = async (userId: string) => {
     try {

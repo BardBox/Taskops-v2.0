@@ -27,6 +27,8 @@ import StatusUrgency from "./pages/admin/StatusUrgency";
 import AdminSettings from "./pages/admin/Settings";
 import AvatarGenerator from "./pages/admin/AvatarGenerator";
 import TeamMapping from "./pages/admin/TeamMapping";
+import ProjectTemplates from "./pages/admin/ProjectTemplates";
+import ProjectMapping from "./pages/admin/ProjectMapping";
 import PMPerformance from "./pages/analytics/PMPerformance";
 import ClientPerformance from "./pages/analytics/ClientPerformance";
 import Overview from "./pages/analytics/Overview";
@@ -89,6 +91,8 @@ function AnimatedRoutes() {
           <Route path="clients" element={<PageTransition><AdminClients /></PageTransition>} />
           <Route path="projects" element={<PageTransition><AdminProjects /></PageTransition>} />
           <Route path="team-mapping" element={<PageTransition><TeamMapping /></PageTransition>} />
+          <Route path="project-templates" element={<PageTransition><ProjectTemplates /></PageTransition>} />
+          <Route path="project-mapping" element={<PageTransition><ProjectMapping /></PageTransition>} />
           <Route path="status-urgency" element={<PageTransition><StatusUrgency /></PageTransition>} />
           <Route path="avatar-generator" element={<PageTransition><AvatarGenerator /></PageTransition>} />
           <Route path="settings" element={<PageTransition><AdminSettings /></PageTransition>} />
