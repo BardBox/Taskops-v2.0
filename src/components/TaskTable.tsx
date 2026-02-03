@@ -1396,7 +1396,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                       className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
                       onClick={() => toggleSort("urgency")}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-2 text-right w-full">
                         Urgency
                         {sortField === "urgency" && (
                           sortDirection === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
@@ -1646,19 +1646,21 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                         </TableCell>
                       )}
                       {columns.urgency && (
-                        <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent">
-                          {userRole === "team_member" ? (
-                            <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
-                              {task.urgency}
-                            </Badge>
-                          ) : (
-                            <BadgeDropdown
-                              value={task.urgency}
-                              options={urgencies}
-                              onChange={(value) => handleUrgencyChange(task.id, value)}
-                              disabled={!canEdit(task)}
-                            />
-                          )}
+                        <TableCell onClick={(e) => e.stopPropagation()} className="!bg-transparent text-right">
+                          <div className="flex justify-end w-full">
+                            {userRole === "team_member" ? (
+                              <Badge className={urgencies.find(u => u.label === task.urgency)?.color || "bg-muted"}>
+                                {task.urgency}
+                              </Badge>
+                            ) : (
+                              <BadgeDropdown
+                                value={task.urgency}
+                                options={urgencies}
+                                onChange={(value) => handleUrgencyChange(task.id, value)}
+                                disabled={!canEdit(task)}
+                              />
+                            )}
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
