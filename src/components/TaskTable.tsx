@@ -1200,9 +1200,9 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
             </>
           )}
           <div className={cn("scroll-smooth overflow-x-auto", isFocusMode ? "overflow-auto custom-scrollbar flex-1 max-h-none h-full" : "")}>
-            <Table className="table-fixed">
+            <Table className="w-full min-w-max">
               <TableHeader className={cn("sticky z-20 bg-card", isFocusMode ? "top-0" : "top-[3.8rem]")}>
-                <TableRow className="hover:bg-transparent bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
+                <TableRow className="[&:hover]:bg-card bg-card border-b-2 border-primary/30 relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-[-4px] after:h-[4px] after:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15)] after:pointer-events-none">
                   {isSelectionMode && (userRole === "project_owner" || userRole === "project_manager") && (
                     <TableHead className="w-12 bg-card">
                       <Checkbox
