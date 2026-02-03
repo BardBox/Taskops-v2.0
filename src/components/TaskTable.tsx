@@ -158,13 +158,27 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
   const [resizingColumn, setResizingColumn] = useState<keyof ColumnWidths | null>(null);
   const [startX, setStartX] = useState(0);
   const [startWidth, setStartWidth] = useState(0);
+  const [hasTaskResized, setHasTaskResized] = useState(columnWidths.task !== DEFAULT_COLUMN_WIDTHS.task);
 
   const handleResizeStart = (column: keyof ColumnWidths, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // If resizing task column from fluid state, snap to current specific width to avoid jumps
+    let currentStartWidth = columnWidths[column];
+    if (column === 'task' && !hasTaskResized) {
+      setHasTaskResized(true);
+      const th = (e.currentTarget as HTMLElement).parentElement;
+      if (th) {
+        currentStartWidth = th.offsetWidth;
+        // Update state to match visual width immediately
+        setColumnWidths(prev => ({ ...prev, task: currentStartWidth }));
+      }
+    }
+
     setResizingColumn(column);
     setStartX(e.clientX);
-    setStartWidth(columnWidths[column]);
+    setStartWidth(currentStartWidth);
   };
 
   // Render resize handle for column headers
@@ -1228,6 +1242,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   )}
                   <TableHead
                     className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col w-auto"
+                    style={hasTaskResized ? { width: columnWidths.task } : undefined}
                     onClick={() => toggleSort("task")}
                   >
                     <div className="flex items-center gap-2">
