@@ -427,10 +427,16 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
     if (status === "Cancelled") return null;
     if (!deadline) return null;
 
+    // Normalize deadline to midnight local time to avoid timezone issues
     const deadlineDate = new Date(deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    // Normalize compare date to midnight local time
     const compareDate = actualDelivery ? new Date(actualDelivery) : new Date();
+    compareDate.setHours(0, 0, 0, 0);
+
     const diffTime = compareDate.getTime() - deadlineDate.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     // Only show delay if submission happened OR current date is past deadline
     if (!actualDelivery && diffDays <= 0) return null;
