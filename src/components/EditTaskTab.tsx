@@ -126,8 +126,12 @@ export function EditTaskTab({ task, onTaskUpdated, userRole }: EditTaskTabProps)
           return;
         }
 
-        // Don't trigger if inside a dropdown menu
-        if (target.closest('[role="listbox"]') || target.closest('[role="menu"]')) {
+        // Don't trigger if inside a dropdown menu or other interactive elements
+        if (
+          target.closest('[role="listbox"]') ||
+          target.closest('[role="menu"]') ||
+          target.closest('[role="combobox"]')
+        ) {
           return;
         }
 

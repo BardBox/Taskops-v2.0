@@ -83,7 +83,10 @@ export const GrowthDashboard = () => {
             if (
                 target.tagName === "INPUT" ||
                 target.tagName === "TEXTAREA" ||
-                target.isContentEditable
+                target.isContentEditable ||
+                target.closest("[role='listbox']") ||
+                target.closest("[role='combobox']") ||
+                target.closest("[role='menu']")
             ) {
                 return;
             }

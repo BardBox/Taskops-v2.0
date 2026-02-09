@@ -100,8 +100,8 @@ export const TaskDialog = ({ open, onOpenChange, task, onClose, userRole, duplic
   const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Allow note editing if user is admin, manager, assignee, or creator
-  const canEditNotes = currentUserRole === "admin" || currentUserRole === "manager" || (currentUserId && (currentUserId === task?.assignee_id || currentUserId === task?.assigned_by_id));
+  // Allow note editing if it's a new task (task is null/undefined), or if user is admin, manager, assignee, or creator
+  const canEditNotes = !task || currentUserRole === "admin" || currentUserRole === "manager" || (currentUserId && (currentUserId === task?.assignee_id || currentUserId === task?.assigned_by_id));
 
   useEffect(() => {
     if (open) {

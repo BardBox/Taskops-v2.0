@@ -78,8 +78,16 @@ export const DailyStandup = () => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // Disable if typing in active element (textarea, input, etc.)
-            const activeTag = document.activeElement?.tagName.toLowerCase();
-            if (activeTag === 'textarea' || activeTag === 'input') return;
+            // Disable if typing in active element (textarea, input, etc.)
+            const target = document.activeElement as HTMLElement;
+            if (
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'INPUT' ||
+                target.isContentEditable ||
+                target.closest("[role='listbox']") ||
+                target.closest("[role='combobox']") ||
+                target.closest("[role='menu']")
+            ) return;
 
             if (e.key === 'ArrowLeft') {
                 handlePreviousDay();
