@@ -95,18 +95,18 @@ interface ColumnWidths {
 
 export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   date: 95,
-  task: 200,
-  client: 100,
-  project: 100,
-  taskOwner: 120,
-  pm: 110,
-  collaborators: 50,
-  deadline: 100,
-  submission: 100,
-  delay: 70,
-  time: 70,
-  status: 110,
-  urgency: 120,
+  task: 350,
+  client: 120,
+  project: 120,
+  taskOwner: 180,
+  pm: 150,
+  collaborators: 60,
+  deadline: 110,
+  submission: 110,
+  delay: 80,
+  time: 80,
+  status: 130,
+  urgency: 130,
 };
 
 interface TaskTableProps {
@@ -1244,7 +1244,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                     </TableHead>
                   )}
                   <TableHead
-                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col w-auto"
+                    className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col w-auto min-w-[300px]"
                     style={hasTaskResized ? { width: columnWidths.task } : undefined}
                     onClick={() => toggleSort("task")}
                   >
@@ -1289,7 +1289,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   {columns.taskOwner && userRole !== "team_member" && (
                     <TableHead
                       style={{ width: columnWidths.taskOwner }}
-                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col min-w-[150px]"
                       onClick={() => toggleSort("assignee")}
                     >
                       <div className="flex items-center gap-2">
@@ -1304,7 +1304,7 @@ export const TaskTable = ({ userRole, userId, filters, onDuplicate, visibleColum
                   {columns.pm && (
                     <TableHead
                       style={{ width: columnWidths.pm }}
-                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col"
+                      className="cursor-pointer hover:bg-secondary/30 transition-colors bg-card relative group/col min-w-[140px]"
                       onClick={() => toggleSort("assigned_by")}
                     >
                       <div className="flex items-center gap-2">
